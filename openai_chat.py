@@ -14,7 +14,9 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 # Usage:
-#   python openai_chat.py --base-url "http://localhost:8080/v1" [--model model-name] [--hide-thinking]
+#   python openai_chat.py \
+#        --base-url "http://localhost:8080/v1"
+#       [--model model] [--hide-thinking] [--system system-prompt]
 
 import os
 import sys
@@ -70,35 +72,45 @@ def get_model_name(base_url, model):
   raise ValueError(f"Error: Model '{model}' not found.")
 
 
-def print_response(console, content, hide_thinking):
-  answer_marker = None
-  if "<answer>" in content:
-    answer_marker = "<answer>"
-  elif "<|end|>" in content:
-    answer_marker = "<|end|>"
-
-  if not answer_marker:
-    console.print(Markdown(content))
+def print_response(console, response, hide_thinking):
+  content = response["content"]
+  if "reasoning_content" in response and response["reasoning_content"]:
+    thinking_text = response["reasoning_content"]
+    answer_text = content
   else:
-    parts = content.split(answer_marker, 1)
-    thinking_text = parts[0].strip()
-    answer_text = parts[1].strip()
-    if not hide_thinking and thinking_text:
-      cprint(thinking_text + "\n", "magenta")
-    console.print(Markdown(answer_text))
+    answer_marker = None
+    if "<answer>" in content:
+      answer_marker = "<answer>"
+    elif "<|end|>" in content:
+      answer_marker = "<|end|>"
+
+    if not answer_marker:
+      thinking_text = ""
+      answer_text = content
+    else:
+      parts = content.split(answer_marker, 1)
+      thinking_text = parts[0].strip()
+      answer_text = parts[1].strip()
+
+  if not hide_thinking and thinking_text:
+    cprint(thinking_text + "\n", "magenta")
+  console.print(Markdown(answer_text))
 
 
-def main(base_url, model, api_key, hide_thinking):
+def main(base_url, model, api_key, hide_thinking, system_prompt):
   model_name = get_model_name(base_url, model)
   if sys.stdin.isatty():
     print(f"Using model: {model_name}")
 
   messages = []
+  if system_prompt:
+    messages.append({"role": "system", "content": system_prompt})
   console = Console()
 
   while True:
     try:
       if sys.stdin.isatty():
+        print()
         console.print(Rule())
         user_input = input(colored("> ", "green", attrs=["bold"]))
         print()
@@ -134,7 +146,7 @@ def main(base_url, model, api_key, hide_thinking):
 
       assistant_message = response.json()["choices"][0]["message"]
       messages.append(assistant_message)
-      print_response(console, assistant_message["content"], hide_thinking)
+      print_response(console, assistant_message, hide_thinking)
 
     except requests.exceptions.RequestException as e:
       print(f"Error: {e}")
@@ -148,6 +160,7 @@ if __name__ == "__main__":
   parser.add_argument("--base-url", required=True, help="API base URL")
   parser.add_argument("--model", default="", help="Model name")
   parser.add_argument("--api-key", default=os.environ.get("OPENAI_API_KEY"))
+  parser.add_argument("--system", default="", help="System prompt")
   parser.add_argument("--hide-thinking", action="store_true")
   args = parser.parse_args()
-  main(args.base_url, args.model, args.api_key, args.hide_thinking)
+  main(args.base_url, args.model, args.api_key, args.hide_thinking, args.system)
