@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 # Copyright (C) 2025 Dory
 #
 # This program is free software: you can redistribute it and/or modify
@@ -188,3 +190,4 @@ if __name__ == "__main__":
   parser.add_argument("--hide-thinking", action="store_true")
   args = parser.parse_args()
   main(args.base_url, args.model, args.api_key, args.hide_thinking, args.system)
+
