@@ -29,6 +29,9 @@ from termcolor import colored, cprint
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.rule import Rule
+import itertools
+import threading
+import time
 
 
 def parse_image(user_input):
@@ -97,6 +100,17 @@ def print_response(console, response, hide_thinking):
   console.print(Markdown(answer_text))
 
 
+def animate(stop_event):
+    for c in itertools.cycle(['|', '/', '-', '\\']):
+        if stop_event.is_set():
+            break
+        sys.stdout.write(f'\r{colored(c, "green", attrs=["bold"])} ')
+        sys.stdout.flush()
+        time.sleep(0.1)
+    sys.stdout.write('\r')
+    sys.stdout.flush()
+
+
 def main(base_url, model, api_key, hide_thinking, system_prompt):
   model_name = get_model_name(base_url, model)
   if sys.stdin.isatty():
@@ -134,15 +148,25 @@ def main(base_url, model, api_key, hide_thinking, system_prompt):
       else:
         messages.append({"role": "user", "content": user_input})
 
-      response = requests.post(
-          f"{base_url}/chat/completions",
-          headers={
-              "Authorization": f"Bearer {api_key}",
-              "Content-Type": "application/json",
-          },
-          json={"model": model_name, "messages": messages},
-      )
-      response.raise_for_status()
+      if sys.stdin.isatty():
+        stop_event = threading.Event()
+        animation_thread = threading.Thread(target=animate, args=(stop_event,))
+        animation_thread.start()
+
+      try:
+        response = requests.post(
+            f"{base_url}/chat/completions",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            },
+            json={"model": model_name, "messages": messages},
+        )
+        response.raise_for_status()
+      finally:
+        if sys.stdin.isatty():
+          stop_event.set()
+          animation_thread.join()
 
       assistant_message = response.json()["choices"][0]["message"]
       messages.append(assistant_message)
