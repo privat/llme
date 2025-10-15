@@ -70,9 +70,9 @@ def get_model_name(base_url, model):
   if not model:
     return models["data"][0]["id"]
 
-  for model in models["data"]:
-    if model["id"] == model:
-      return model["id"]
+  for m in models["data"]:
+    if m["id"] == model:
+      return m["id"]
 
   raise ValueError(f"Error: Model '{model}' not found.")
 
