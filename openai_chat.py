@@ -74,7 +74,8 @@ def get_model_name(base_url, model):
     if m["id"] == model:
       return m["id"]
 
-  raise ValueError(f"Error: Model '{model}' not found.")
+  ids = [m["id"] for m in models["data"]]
+  raise ValueError(f"Error: Model '{model}' not found. Available: {', '.join(ids)}")
 
 
 def print_response(console, response, hide_thinking):
