@@ -47,33 +47,7 @@ class LLME:
         self.yolo = yolo
         self.prompts = prompts
         self.messages = [] # the sequence of messages with the LLM
-
-
-    def parse_image(user_input):
-        parts = user_input.split("@image:")
-        if len(parts) > 2 or not user_input.endswith(parts[1]):
-            raise ValueError("'@image:' tag must be at the end of the prompt.")
-
-        text_prompt = parts[0].strip()
-        image_path = parts[1].strip()
-
-        if image_path.startswith(("http://", "https://")):
-            image_url = image_path
-
-        else:
-            if not os.path.exists(image_path):
-                raise ValueError(f"Error: Image file not found at '{image_path}'")
-
-            mime_type, _ = mimetypes.guess_type(image_path)
-            if not mime_type or not mime_type.startswith('image/'):
-                raise ValueError(f"Error: Unsupported image type '{mime_type}'")
-
-            with open(image_path, "rb") as image_file:
-                encoded_image = base64.b64encode(image_file.read()).decode('utf-8')
-            image_url = f"data:{mime_type};base64,{encoded_image}"
-
-        return text_prompt, image_url
-
+        self.files = [] # the list of files to send to the LLM for the next prompt
 
     def get_model_name(self):
         response = requests.get(f"{self.base_url}/models")
@@ -133,6 +107,9 @@ class LLME:
     def next_prompt(self):
         if len(self.prompts) > 0:
             user_input = self.prompts.pop(0)
+            if os.path.exists(user_input):
+                self.files.append(Asset(user_input))
+                return None
             if sys.stdin.isatty():
                 print(colored("> ", "green", attrs=["bold"]), user_input)
         elif sys.stdin.isatty():
@@ -144,22 +121,17 @@ class LLME:
 
         if user_input == '':
             return None
-        if "@image:" in user_input:
-            try:
-                text_prompt, image_url = parse_image(user_input)
-            except ValueError as e:
-                cprint(e, "red")
-                return
-            self.messages.append({
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": text_prompt},
-                    {"type": "image_url", "image_url": {"url": image_url}},
-                ]
-            })
 
-        elif user_input != '':
-            self.messages.append({"role": "user", "content": user_input})
+        if len(self.files) > 0:
+            content = [{"type": "text", "text": user_input}]
+            for asset in self.files:
+                content.append(asset.content())
+            self.files = []
+            res = {"role": "user", "content": content}
+            return res
+        else:
+            return {"role": "user", "content": user_input}
+        return None
 
     def chat_completion(self):
         with AnimationManager():
@@ -211,10 +183,21 @@ class LLME:
             self.messages.append({"role": "system", "content": self.system_prompt})
             logger.debug(f"System prompt: {self.messages[-1]}")
 
+        if not sys.stdin.isatty():
+            if len(self.prompts) > 0:
+                # There is prompts, so use stdin as data for the first prompt
+                self.prompts.insert(0, "/dev/stdin")
+            else:
+                # No prompts, so use stdin as prompt
+                self.prompts = [sys.stdin.read()]
+
         while True:
             try:
-                self.next_prompt()
-                self.chat_completion()
+                prompt = self.next_prompt()
+                if prompt:
+                    self.messages.append(prompt)
+                    logger.debug(f"User prompt: {self.messages[-1]}")
+                    self.chat_completion()
             except requests.exceptions.RequestException as e:
                 print(response.content)
                 raise e
@@ -251,6 +234,28 @@ class AnimationManager:
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
         self.stop()
+
+class Asset:
+    "A loaded file"
+    def __init__(self, path):
+        self.path = path
+        import magic
+        with open(path, 'rb') as f:
+            self.raw_content = f.read()
+        self.mime_type = magic.from_buffer(self.raw_content, mime=True)
+        logger.info(f"File {path} is {self.mime_type}")
+
+    def content(self):
+        if self.mime_type.startswith("text/"):
+            data = self.raw_content.decode()
+            return {"type": "file", "file": {"filename": self.path, "file_data": data}}
+        elif self.mime_type.startswith("image/"):
+            data = base64.b64encode(self.raw_content).decode()
+            url = f"data:{self.mime_type};base64,{data}"
+            return {"type": "image_url", "image_url": {"url": url}}
+        else:
+            data = base64.b64encode(self.raw_content).decode()
+            return {"type": "file", "file": {"filename": self.path, "file_data": data}}
 
 def apply_config(args, config):
     """
