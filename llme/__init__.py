@@ -274,9 +274,7 @@ def apply_config(args, config):
         if variables[k] is None and k in config:
             setattr(args, k, config[k])
 
-
-if __name__ == "__main__":
-
+def main():
     config_path = os.path.join(os.environ.get( "HOME"), ".config", "llme", "config.toml")
     parser = argparse.ArgumentParser(description="OpenAI-compatible chat CLI")
     parser.add_argument("-u", "--base-url", help="API base URL")
@@ -306,3 +304,6 @@ if __name__ == "__main__":
 
     llme = LLME(**vars(args))
     llme.start()
+
+if __name__ == "__main__":
+    main()
