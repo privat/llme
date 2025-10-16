@@ -15,11 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-# Usage:
-#   python openai_chat.py \
-#        --base-url "http://localhost:8080/v1"
-#       [--model model] [--hide-thinking] [--system system-prompt]
-
 import os
 import sys
 import re
