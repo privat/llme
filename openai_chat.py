@@ -28,6 +28,7 @@ import requests
 import base64
 import mimetypes
 from termcolor import colored, cprint
+from rich.live import Live
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.rule import Rule
@@ -184,7 +185,9 @@ def main(base_url, model, api_key, hide_thinking, no_stream, system_prompt, prom
         messages.append(assistant_message)
         print_response(console, assistant_message, hide_thinking)
       else:
-        for event in SSEClient(response).events():
+        full_content = ''
+        with Live('', console=console, vertical_overflow='visible', auto_refresh=False) as live:
+         for event in SSEClient(response).events():
           if event.data == "[DONE]":
             break
           data = json.loads(event.data)
@@ -192,7 +195,10 @@ def main(base_url, model, api_key, hide_thinking, no_stream, system_prompt, prom
           if choice0['finish_reason'] == 'stop':
             break
           content = choice0['delta']['content']
-          print(content, end='', flush=True)
+          if content is None:
+            continue
+          full_content += content
+          live.update(Markdown(full_content), refresh=True)
 
     except requests.exceptions.RequestException as e:
       print(response.content)
