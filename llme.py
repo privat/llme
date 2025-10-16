@@ -270,14 +270,12 @@ def apply_config(args, config):
 
 if __name__ == "__main__":
 
-    config_path = os.path.join(os.environ.get(
-        "HOME"), ".config", "llme", "config.toml")
+    config_path = os.path.join(os.environ.get( "HOME"), ".config", "llme", "config.toml")
     parser = argparse.ArgumentParser(description="OpenAI-compatible chat CLI")
     parser.add_argument("-u", "--base-url", help="API base URL")
     parser.add_argument("-m", "--model", help="Model name")
     parser.add_argument("--api-key", default=os.environ.get("OPENAI_API_KEY"))
-    parser.add_argument(
-        "-s", "--system", dest="system_prompt", help="System prompt")
+    parser.add_argument( "-s", "--system", dest="system_prompt", help="System prompt")
     parser.add_argument("-c", "--config", help="Custom configuration file")
     parser.add_argument("-v", "--verbose", default=0, action="count", help="Increase verbosity level (can be used multiple times)")
     parser.add_argument("-Y", "--yolo", action="store_true", help="UNSAFE: Do not ask for confirmation before running tools")
@@ -301,5 +299,4 @@ if __name__ == "__main__":
         sys.exit(1)
 
     llme = LLME(**vars(args))
-    #llme.run("sh", "sleep 1;echo hello;sleep 1;echo world>&2;sleep 1;exit 4")
     llme.start()
