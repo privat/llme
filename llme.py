@@ -78,7 +78,7 @@ def run(tool, stdin):
     import subprocess
 
     x = input(colored("RUN [Yn]? ", "red", attrs=["bold"])).strip()
-    if not x in ['', 'y', 'Y']:
+    if x not in ['', 'y', 'Y']:
         return None
 
     resultat = subprocess.run(
