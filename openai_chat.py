@@ -22,6 +22,7 @@
 
 import os
 import sys
+import re
 import json
 import argparse
 import requests
@@ -100,6 +101,23 @@ def print_response(console, response, hide_thinking):
   if not hide_thinking and thinking_text:
     cprint(thinking_text + "\n", "magenta")
   console.print(answer_text)
+
+def run(tool, stdin):
+    import subprocess
+
+    x = input(colored("RUN [Yn]? ", "red", attrs=["bold"]))
+    if not x in ['', 'y', 'Y']:
+        raise
+
+    resultat = subprocess.run(
+        [tool],
+        input=stdin,
+        text=True,            # pour que `input` soit interprété comme une chaîne (et non bytes)
+        capture_output=True   # pour capturer stdout/stderr
+    )
+
+    print(repr(resultat))
+    return {"role":"system", "content":repr(resultat)}
 
 
 def animate(stop_event):
@@ -182,6 +200,7 @@ def main(base_url, model, api_key, hide_thinking, no_stream, system_prompt, prom
         print_response(console, assistant_message, hide_thinking)
       else:
         full_content = ''
+        cb=None
         for event in SSEClient(response).events():
           if event.data == "[DONE]":
             break
@@ -194,6 +213,14 @@ def main(base_url, model, api_key, hide_thinking, no_stream, system_prompt, prom
             continue
           full_content += content
           print(content, end='', flush=True)
+          cb = re.search(r"```run ([\w+-]*)\n(.*?)```", full_content, re.DOTALL)
+          if cb:
+            break
+        response.close()
+        messages.append({"role":"agent","content":full_content})
+        if cb:
+          r = run(cb[1], cb[2])
+          messages.append(r)
 
     except requests.exceptions.RequestException as e:
       print(response.content)
