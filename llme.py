@@ -29,6 +29,11 @@ import threading
 import time
 import tomllib
 from sseclient import SSEClient
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.WARNING)
+logger = logging.getLogger(__name__)
 
 class LLME:
     """The God class of the application."""
@@ -73,6 +78,8 @@ class LLME:
         response = requests.get(f"{self.base_url}/models")
         response.raise_for_status()
         models = response.json()
+        ids = [m["id"] for m in models["data"]]
+        logger.info(f"Available models from {self.base_url}: {', '.join(ids)}")
 
         if not self.model:
             self.model = models["data"][0]["id"]
@@ -82,7 +89,6 @@ class LLME:
             if m["id"] == self.model:
                 return
 
-        ids = [m["id"] for m in models["data"]]
         raise ValueError(f"Error: Model '{model}' not found. Available: {', '.join(ids)}")
 
 
@@ -189,18 +195,20 @@ class LLME:
         print(flush=True)
         response.close()
         self.messages.append({"role": "agent", "content": full_content})
+        logger.debug(f"Agent response: {self.messages[-1]}")
         if cb:
             r = self.run(cb[1], cb[2])
             if r:
                 self.messages.append(r)
+                logger.debug(f"Tool result: {self.messages[-1]}")
 
     def start(self):
         self.get_model_name()
-        if sys.stdin.isatty():
-            print(f"Using model: {self.model}")
+        logger.info(f"Use model {self.model} from {self.base_url}")
 
         if self.system_prompt:
             self.messages.append({"role": "system", "content": self.system_prompt})
+            logger.debug(f"System prompt: {self.messages[-1]}")
 
         while True:
             try:
@@ -236,9 +244,14 @@ if __name__ == "__main__":
         "-s", "--system", dest="system_prompt", help="System prompt")
     parser.add_argument("--hide-thinking", action="store_true")
     parser.add_argument("-c", "--config", help="Custom configuration file")
+    parser.add_argument("-v", "--verbose", default=0, action="count", help="Increase verbosity level (can be used multiple times)")
     parser.add_argument("prompts", nargs="*", help="Sequence of prompts")
 
     args = parser.parse_args()
+
+    logging_levels = [logging.WARNING, logging.INFO, logging.DEBUG]
+    logger.setLevel(logging_levels[min(args.verbose, len(logging_levels)-1)])
+    del(args.verbose)
 
     if args.config or os.path.exists(config_path):
         with open(args.config or config_path, "rb") as f:
