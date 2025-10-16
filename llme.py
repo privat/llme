@@ -83,23 +83,21 @@ class LLME:
                 return
 
         ids = [m["id"] for m in models["data"]]
-        raise ValueError(
-            f"Error: Model '{model}' not found. Available: {', '.join(ids)}")
+        raise ValueError(f"Error: Model '{model}' not found. Available: {', '.join(ids)}")
 
 
     def run(self, tool, stdin):
         import subprocess
 
-        x = input(colored("RUN [Yn]? ", "red", attrs=["bold"])).strip()
+        x = input(colored(f"RUN {tool} [Yn]? ", "red", attrs=["bold"])).strip()
         if x not in ['', 'y', 'Y']:
             return None
 
         resultat = subprocess.run(
             [tool],
             input=stdin,
-            # pour que `input` soit interprété comme une chaîne (et non bytes)
             text=True,
-            capture_output=True   # pour capturer stdout/stderr
+            capture_output=True
         )
 
         print(repr(resultat))
@@ -188,6 +186,7 @@ class LLME:
                 r"```run ([\w+-]*)\n(.*?)```", full_content, re.DOTALL)
             if cb:
                 break
+        print(flush=True)
         response.close()
         self.messages.append({"role": "agent", "content": full_content})
         if cb:
