@@ -38,11 +38,10 @@ logger = logging.getLogger(__name__)
 class LLME:
     """The God class of the application."""
 
-    def __init__(self, base_url, model, api_key, hide_thinking, system_prompt, prompts):
+    def __init__(self, base_url, model, api_key, system_prompt, prompts):
         self.base_url = base_url
         self.model = model
         self.api_key = api_key
-        self.hide_thinking = hide_thinking
         self.system_prompt = system_prompt
         self.prompts = prompts
         self.messages = [] # the sequence of messages with the LLM
@@ -242,7 +241,6 @@ if __name__ == "__main__":
     parser.add_argument("--api-key", default=os.environ.get("OPENAI_API_KEY"))
     parser.add_argument(
         "-s", "--system", dest="system_prompt", help="System prompt")
-    parser.add_argument("--hide-thinking", action="store_true")
     parser.add_argument("-c", "--config", help="Custom configuration file")
     parser.add_argument("-v", "--verbose", default=0, action="count", help="Increase verbosity level (can be used multiple times)")
     parser.add_argument("prompts", nargs="*", help="Sequence of prompts")
