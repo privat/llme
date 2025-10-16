@@ -148,6 +148,7 @@ class LLME:
                       "stream": True},
                 stream=True
             )
+            response.raise_for_status()
 
         full_content = ''
         cb = None
@@ -202,7 +203,7 @@ class LLME:
                     logger.debug(f"User prompt: {self.messages[-1]}")
                     self.chat_completion()
             except requests.exceptions.RequestException as e:
-                print(response.content)
+                logger.info(e.response.content)
                 raise e
             except KeyboardInterrupt:
                 logger.warning("Interrupted by user. Use ^D to exit.")
