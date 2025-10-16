@@ -90,7 +90,7 @@ class LLME:
             if m["id"] == self.model:
                 return
 
-        raise ValueError(f"Error: Model '{model}' not found. Available: {', '.join(ids)}")
+        raise ValueError(f"Error: Model '{self.model}' not found. Available: {', '.join(ids)}")
 
 
     def run_tool(self, tool, stdin):
@@ -132,8 +132,7 @@ class LLME:
 
     def next_prompt(self):
         if len(self.prompts) > 0:
-            user_input = self.prompts[0]
-            self.prompts = self.prompts[1:]
+            user_input = self.prompts.pop(0)
             if sys.stdin.isatty():
                 print(colored("> ", "green", attrs=["bold"]), user_input)
         elif sys.stdin.isatty():
@@ -143,6 +142,8 @@ class LLME:
         else:
             user_input = input()
 
+        if user_input == '':
+            return None
         if "@image:" in user_input:
             try:
                 text_prompt, image_url = parse_image(user_input)
