@@ -97,6 +97,8 @@ class LLME:
                 print(line,end='',flush=True)
                 content += line
         proc.wait()
+        if not content.endswith('\n'):
+            print()
 
         if proc.returncode != 0:
             print(colored(f"EXIT {proc.returncode}", "red", attrs=["bold"]))
@@ -111,13 +113,13 @@ class LLME:
                 self.files.append(Asset(user_input))
                 return None
             if sys.stdin.isatty():
-                print(colored("> ", "green", attrs=["bold"]), user_input)
+                print(colored(f"{len(self.messages)}> ", "green", attrs=["bold"]), user_input)
         elif sys.stdin.isatty():
-            print()
-            user_input = input(colored("> ", "green", attrs=["bold"]))
-            print()
+            user_input = input(colored(f"{len(self.messages)}> ", "green", attrs=["bold"]))
         else:
             user_input = input()
+        if not user_input.endswith('\n'):
+            print()
 
         if user_input == '':
             return None
@@ -165,7 +167,8 @@ class LLME:
                 r"```run ([\w+-]*)\n(.*?)```", full_content, re.DOTALL)
             if cb:
                 break
-        print(flush=True)
+        if not full_content.endswith('\n'):
+            print()
         response.close()
         self.messages.append({"role": "agent", "content": full_content})
         logger.debug(f"Agent response: {self.messages[-1]}")
