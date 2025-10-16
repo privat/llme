@@ -30,172 +30,183 @@ import time
 import tomllib
 from sseclient import SSEClient
 
+class LLME:
+    """The God class of the application."""
 
-def parse_image(user_input):
-    parts = user_input.split("@image:")
-    if len(parts) > 2 or not user_input.endswith(parts[1]):
-        raise ValueError("'@image:' tag must be at the end of the prompt.")
-
-    text_prompt = parts[0].strip()
-    image_path = parts[1].strip()
-
-    if image_path.startswith(("http://", "https://")):
-        image_url = image_path
-
-    else:
-        if not os.path.exists(image_path):
-            raise ValueError(f"Error: Image file not found at '{image_path}'")
-
-        mime_type, _ = mimetypes.guess_type(image_path)
-        if not mime_type or not mime_type.startswith('image/'):
-            raise ValueError(f"Error: Unsupported image type '{mime_type}'")
-
-        with open(image_path, "rb") as image_file:
-            encoded_image = base64.b64encode(image_file.read()).decode('utf-8')
-        image_url = f"data:{mime_type};base64,{encoded_image}"
-
-    return text_prompt, image_url
+    def __init__(self, base_url, model, api_key, hide_thinking, system_prompt, prompts):
+        self.base_url = base_url
+        self.model = model
+        self.api_key = api_key
+        self.hide_thinking = hide_thinking
+        self.system_prompt = system_prompt
+        self.prompts = prompts
 
 
-def get_model_name(base_url, model):
-    response = requests.get(f"{base_url}/models")
-    response.raise_for_status()
-    models = response.json()
+    def parse_image(user_input):
+        parts = user_input.split("@image:")
+        if len(parts) > 2 or not user_input.endswith(parts[1]):
+            raise ValueError("'@image:' tag must be at the end of the prompt.")
 
-    if not model:
-        return models["data"][0]["id"]
+        text_prompt = parts[0].strip()
+        image_path = parts[1].strip()
 
-    for m in models["data"]:
-        if m["id"] == model:
-            return m["id"]
+        if image_path.startswith(("http://", "https://")):
+            image_url = image_path
 
-    ids = [m["id"] for m in models["data"]]
-    raise ValueError(
-        f"Error: Model '{model}' not found. Available: {', '.join(ids)}")
+        else:
+            if not os.path.exists(image_path):
+                raise ValueError(f"Error: Image file not found at '{image_path}'")
 
+            mime_type, _ = mimetypes.guess_type(image_path)
+            if not mime_type or not mime_type.startswith('image/'):
+                raise ValueError(f"Error: Unsupported image type '{mime_type}'")
 
-def run(tool, stdin):
-    import subprocess
+            with open(image_path, "rb") as image_file:
+                encoded_image = base64.b64encode(image_file.read()).decode('utf-8')
+            image_url = f"data:{mime_type};base64,{encoded_image}"
 
-    x = input(colored("RUN [Yn]? ", "red", attrs=["bold"])).strip()
-    if x not in ['', 'y', 'Y']:
-        return None
-
-    resultat = subprocess.run(
-        [tool],
-        input=stdin,
-        # pour que `input` soit interprété comme une chaîne (et non bytes)
-        text=True,
-        capture_output=True   # pour capturer stdout/stderr
-    )
-
-    print(repr(resultat))
-    return {"role": "system", "content": repr(resultat)}
+        return text_prompt, image_url
 
 
-def animate(stop_event):
-    for c in itertools.cycle(['|', '/', '-', '\\']):
-        if stop_event.is_set():
-            break
-        sys.stdout.write(f'\r{colored(c, "green", attrs=["bold"])} ')
+    def get_model_name(self):
+        response = requests.get(f"{self.base_url}/models")
+        response.raise_for_status()
+        models = response.json()
+
+        if not self.model:
+            return models["data"][0]["id"]
+
+        for m in models["data"]:
+            if m["id"] == self.model:
+                return m["id"]
+
+        ids = [m["id"] for m in models["data"]]
+        raise ValueError(
+            f"Error: Model '{model}' not found. Available: {', '.join(ids)}")
+
+
+    def run(self, tool, stdin):
+        import subprocess
+
+        x = input(colored("RUN [Yn]? ", "red", attrs=["bold"])).strip()
+        if x not in ['', 'y', 'Y']:
+            return None
+
+        resultat = subprocess.run(
+            [tool],
+            input=stdin,
+            # pour que `input` soit interprété comme une chaîne (et non bytes)
+            text=True,
+            capture_output=True   # pour capturer stdout/stderr
+        )
+
+        print(repr(resultat))
+        return {"role": "system", "content": repr(resultat)}
+
+
+    def animate(self, stop_event):
+        for c in itertools.cycle(['|', '/', '-', '\\']):
+            if stop_event.is_set():
+                break
+            sys.stdout.write(f'\r{colored(c, "green", attrs=["bold"])} ')
+            sys.stdout.flush()
+            time.sleep(0.1)
+        sys.stdout.write('\r')
         sys.stdout.flush()
-        time.sleep(0.1)
-    sys.stdout.write('\r')
-    sys.stdout.flush()
 
 
-def main(base_url, model, api_key, hide_thinking, system_prompt, prompts):
-    model_name = get_model_name(base_url, model)
-    if sys.stdin.isatty():
-        print(f"Using model: {model_name}")
+    def start(self):
+        model_name = self.get_model_name()
+        if sys.stdin.isatty():
+            print(f"Using model: {model_name}")
 
-    messages = []
-    if system_prompt:
-        messages.append({"role": "system", "content": system_prompt})
+        messages = []
+        if self.system_prompt:
+            messages.append({"role": "system", "content": self.system_prompt})
 
-    while True:
-        try:
-            if len(prompts) > 0:
-                user_input = prompts[0]
-                prompts = prompts[1:]
-                if sys.stdin.isatty():
-                    print(colored("> ", "green", attrs=["bold"]), user_input)
-            elif sys.stdin.isatty():
-                print()
-                user_input = input(colored("> ", "green", attrs=["bold"]))
-                print()
-            else:
-                user_input = input()
-
-            if "@image:" in user_input:
-                try:
-                    text_prompt, image_url = parse_image(user_input)
-                except ValueError as e:
-                    cprint(e, "red")
-                    continue
-                messages.append({
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": text_prompt},
-                        {"type": "image_url", "image_url": {"url": image_url}},
-                    ]
-                })
-
-            elif user_input != '':
-                messages.append({"role": "user", "content": user_input})
-
-            if sys.stdin.isatty():
-                stop_event = threading.Event()
-                animation_thread = threading.Thread(
-                    target=animate, args=(stop_event,))
-                animation_thread.start()
-
+        while True:
             try:
-                response = requests.post(
-                    f"{base_url}/chat/completions",
-                    headers={
-                        "Authorization": f"Bearer {api_key}",
-                        "Content-Type": "application/json",
-                    },
-                    json={"model": model_name,
-                          "messages": messages, "stream": True},
-                    stream=True
-                )
-            finally:
+                if len(self.prompts) > 0:
+                    user_input = self.prompts[0]
+                    self.prompts = self.prompts[1:]
+                    if sys.stdin.isatty():
+                        print(colored("> ", "green", attrs=["bold"]), user_input)
+                elif sys.stdin.isatty():
+                    print()
+                    user_input = input(colored("> ", "green", attrs=["bold"]))
+                    print()
+                else:
+                    user_input = input()
+
+                if "@image:" in user_input:
+                    try:
+                        text_prompt, image_url = parse_image(user_input)
+                    except ValueError as e:
+                        cprint(e, "red")
+                        continue
+                    messages.append({
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": text_prompt},
+                            {"type": "image_url", "image_url": {"url": image_url}},
+                        ]
+                    })
+
+                elif user_input != '':
+                    messages.append({"role": "user", "content": user_input})
+
                 if sys.stdin.isatty():
-                    stop_event.set()
-                    animation_thread.join()
+                    stop_event = threading.Event()
+                    animation_thread = threading.Thread(
+                        target=self.animate, args=(stop_event,))
+                    animation_thread.start()
 
-            full_content = ''
-            cb = None
-            for event in SSEClient(response).events():
-                if event.data == "[DONE]":
-                    break
-                data = json.loads(event.data)
-                choice0 = data['choices'][0]
-                if choice0['finish_reason'] == 'stop':
-                    break
-                content = choice0['delta']['content']
-                if content is None:
-                    continue
-                full_content += content
-                print(content, end='', flush=True)
-                cb = re.search(
-                    r"```run ([\w+-]*)\n(.*?)```", full_content, re.DOTALL)
+                try:
+                    response = requests.post(
+                        f"{self.base_url}/chat/completions",
+                        headers={
+                            "Authorization": f"Bearer {self.api_key}",
+                            "Content-Type": "application/json",
+                        },
+                        json={"model": model_name,
+                              "messages": messages, "stream": True},
+                        stream=True
+                    )
+                finally:
+                    if sys.stdin.isatty():
+                        stop_event.set()
+                        animation_thread.join()
+
+                full_content = ''
+                cb = None
+                for event in SSEClient(response).events():
+                    if event.data == "[DONE]":
+                        break
+                    data = json.loads(event.data)
+                    choice0 = data['choices'][0]
+                    if choice0['finish_reason'] == 'stop':
+                        break
+                    content = choice0['delta']['content']
+                    if content is None:
+                        continue
+                    full_content += content
+                    print(content, end='', flush=True)
+                    cb = re.search(
+                        r"```run ([\w+-]*)\n(.*?)```", full_content, re.DOTALL)
+                    if cb:
+                        break
+                response.close()
+                messages.append({"role": "agent", "content": full_content})
                 if cb:
-                    break
-            response.close()
-            messages.append({"role": "agent", "content": full_content})
-            if cb:
-                r = run(cb[1], cb[2])
-                if r:
-                    messages.append(r)
+                    r = self.run(cb[1], cb[2])
+                    if r:
+                        messages.append(r)
 
-        except requests.exceptions.RequestException as e:
-            print(response.content)
-            raise e
-        except (KeyboardInterrupt, EOFError):
-            break
+            except requests.exceptions.RequestException as e:
+                print(response.content)
+                raise e
+            except (KeyboardInterrupt, EOFError):
+                break
 
 
 def apply_config(args, config):
@@ -236,4 +247,5 @@ if __name__ == "__main__":
             "Error: --base-url required and not definied the config file.", file=sys.stderr)
         sys.exit(1)
 
-    main(**vars(args))
+    llme = LLME(**vars(args))
+    llme.start()
