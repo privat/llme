@@ -35,7 +35,7 @@ import itertools
 import threading
 import time
 import tomllib
-
+from sseclient import SSEClient
 
 def parse_image(user_input):
   parts = user_input.split("@image:")
@@ -115,7 +115,7 @@ def animate(stop_event):
     sys.stdout.flush()
 
 
-def main(base_url, model, api_key, hide_thinking, system_prompt, prompts):
+def main(base_url, model, api_key, hide_thinking, no_stream, system_prompt, prompts):
   model_name = get_model_name(base_url, model)
   if sys.stdin.isatty():
     print(f"Using model: {model_name}")
@@ -169,17 +169,30 @@ def main(base_url, model, api_key, hide_thinking, system_prompt, prompts):
                 "Authorization": f"Bearer {api_key}",
                 "Content-Type": "application/json",
             },
-            json={"model": model_name, "messages": messages},
+            json={"model": model_name, "messages": messages, "stream": not no_stream},
+            stream=not no_stream
         )
-        response.raise_for_status()
+        if not no_stream:
+          response.raise_for_status()
       finally:
         if sys.stdin.isatty():
           stop_event.set()
           animation_thread.join()
 
-      assistant_message = response.json()["choices"][0]["message"]
-      messages.append(assistant_message)
-      print_response(console, assistant_message, hide_thinking)
+      if no_stream:
+        assistant_message = response.json()["choices"][0]["message"]
+        messages.append(assistant_message)
+        print_response(console, assistant_message, hide_thinking)
+      else:
+        for event in SSEClient(response).events():
+          if event.data == "[DONE]":
+            break
+          data = json.loads(event.data)
+          choice0 = data['choices'][0]
+          if choice0['finish_reason'] == 'stop':
+            break
+          content = choice0['delta']['content']
+          print(content, end='', flush=True)
 
     except requests.exceptions.RequestException as e:
       print(f"Error: {e}")
@@ -206,6 +219,7 @@ if __name__ == "__main__":
   parser.add_argument("--api-key", default=os.environ.get("OPENAI_API_KEY"))
   parser.add_argument("-s", "--system", dest="system_prompt", default="", help="System prompt")
   parser.add_argument("--hide-thinking", action="store_true")
+  parser.add_argument("--no-stream", action="store_true")
   parser.add_argument("-c", "--config", help="Custom configuration file")
   parser.add_argument("prompts", nargs="*", help="Sequence of prompts")
 
