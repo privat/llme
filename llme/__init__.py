@@ -70,9 +70,9 @@ class LLME:
 
     def run_tool(self, tool, stdin):
         if self.yolo:
-            print(colored(f"YOLO RUN {tool}", "red", attrs=["bold"]))
+            print(colored(f"{len(self.messages)} YOLO RUN {tool}", "red", attrs=["bold"]))
         else:
-            x = input(colored(f"RUN {tool} [Yn]? ", "red", attrs=["bold"])).strip()
+            x = input(colored(f"{len(self.messages)} RUN {tool} [Yn]? ", "red", attrs=["bold"])).strip()
             if x not in ['', 'y', 'Y']:
                 return None
 
@@ -92,7 +92,7 @@ class LLME:
         proc.stdin.close()
 
         content = ''
-        with AnimationManager() as am:
+        with AnimationManager("red") as am:
             while line := proc.stdout.read():
                 am.stop()
                 print(line,end='',flush=True)
@@ -119,8 +119,6 @@ class LLME:
             user_input = input(colored(f"{len(self.messages)}> ", "green", attrs=["bold"]))
         else:
             user_input = input()
-        if not user_input.endswith('\n'):
-            print()
 
         if user_input == '':
             return None
@@ -137,7 +135,7 @@ class LLME:
         return None
 
     def chat_completion(self):
-        with AnimationManager():
+        with AnimationManager("blue"):
             response = requests.post(
                 f"{self.base_url}/chat/completions",
                 headers={
@@ -204,8 +202,8 @@ class LLME:
                 if prompt:
                     self.messages.append(prompt)
                     logger.debug(f"User prompt: {self.messages[-1]}")
-                    while self.chat_completion():
-                        pass
+                while self.chat_completion():
+                    pass
             except requests.exceptions.RequestException as e:
                 logger.warning(e.response.content)
                 raise e
@@ -218,11 +216,13 @@ class LLME:
 
 class AnimationManager:
     """A simple context manager for a spinner animation."""
+    def __init__(self, color):
+        self.color = color
     def animate(self):
         for c in itertools.cycle(['|', '/', '-', '\\']):
             if self.stop_event.is_set():
                 break
-            sys.stdout.write(f'\r{colored(c, "green", attrs=["bold"])} ')
+            sys.stdout.write(f'\r{colored(c, self.color, attrs=["bold"])} ')
             sys.stdout.flush()
             time.sleep(0.1)
         sys.stdout.write('\r')
