@@ -93,7 +93,7 @@ class LLME:
         raise ValueError(f"Error: Model '{model}' not found. Available: {', '.join(ids)}")
 
 
-    def run(self, tool, stdin):
+    def run_tool(self, tool, stdin):
         if self.yolo:
             print(colored(f"YOLO RUN {tool}", "red", attrs=["bold"]))
         else:
@@ -197,7 +197,7 @@ class LLME:
         self.messages.append({"role": "agent", "content": full_content})
         logger.debug(f"Agent response: {self.messages[-1]}")
         if cb:
-            r = self.run(cb[1], cb[2])
+            r = self.run_tool(cb[1], cb[2])
             if r:
                 self.messages.append(r)
                 logger.debug(f"Tool result: {self.messages[-1]}")
