@@ -75,9 +75,9 @@ def get_model_name(base_url, model):
 def run(tool, stdin):
     import subprocess
 
-    x = input(colored("RUN [Yn]? ", "red", attrs=["bold"]))
+    x = input(colored("RUN [Yn]? ", "red", attrs=["bold"])).strip()
     if not x in ['', 'y', 'Y']:
-        raise
+        return None
 
     resultat = subprocess.run(
         [tool],
@@ -182,7 +182,8 @@ def main(base_url, model, api_key, hide_thinking, system_prompt, prompts):
       messages.append({"role":"agent","content":full_content})
       if cb:
         r = run(cb[1], cb[2])
-        messages.append(r)
+        if r:
+          messages.append(r)
 
     except requests.exceptions.RequestException as e:
       print(response.content)
