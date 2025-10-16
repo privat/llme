@@ -34,6 +34,7 @@ from rich.rule import Rule
 import itertools
 import threading
 import time
+import tomllib
 
 
 def parse_image(user_input):
@@ -186,14 +187,38 @@ def main(base_url, model, api_key, hide_thinking, system_prompt, prompts):
     except (KeyboardInterrupt, EOFError):
       break
 
+def apply_config(args, config):
+  """
+  Use default config value is absent from args.
+  The method is a little ugly but it works...
+  """
+  variables = vars(args)
+  for k in variables:
+    if variables[k] is None and k in config:
+      setattr(args, k, config[k])
 
 if __name__ == "__main__":
+
+  config_path = os.path.join(os.environ.get("HOME"), ".config", "llme", "config.toml")
   parser = argparse.ArgumentParser(description="OpenAI-compatible chat CLI")
-  parser.add_argument("-u", "--base-url", required=True, help="API base URL")
-  parser.add_argument("-m", "--model", default="", help="Model name")
+  parser.add_argument("-u", "--base-url", help="API base URL")
+  parser.add_argument("-m", "--model", help="Model name")
   parser.add_argument("--api-key", default=os.environ.get("OPENAI_API_KEY"))
   parser.add_argument("-s", "--system", dest="system_prompt", default="", help="System prompt")
   parser.add_argument("--hide-thinking", action="store_true")
+  parser.add_argument("-c", "--config", help="Custom configuration file")
   parser.add_argument("prompts", nargs="*", help="Sequence of prompts")
+
   args = parser.parse_args()
+
+  if args.config or os.path.exists(config_path):
+    with open(args.config or config_path, "rb") as f:
+      config = tomllib.load(f)
+    del(args.config)
+    apply_config(args, config)
+
+  if args.base_url is None:
+      print("Error: --base-url required and not definied the config file.", file=sys.stderr)
+      sys.exit(1)
+
   main(**vars(args))
