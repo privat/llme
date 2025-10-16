@@ -195,8 +195,8 @@ def main(base_url, model, api_key, hide_thinking, no_stream, system_prompt, prom
           print(content, end='', flush=True)
 
     except requests.exceptions.RequestException as e:
-      print(f"Error: {e}")
-      break
+      print(response.content)
+      raise e
     except (KeyboardInterrupt, EOFError):
       break
 
