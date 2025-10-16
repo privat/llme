@@ -1,4 +1,4 @@
 requests
 termcolor
-rich
 sseclient-py
+python-magic

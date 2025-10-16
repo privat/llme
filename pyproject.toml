@@ -19,15 +19,16 @@ classifiers = [
 ]
 dependencies = [
     "requests",
+    "termcolor",
+    "sseclient-py",
+    "python-magic",
 ]
 
 [project.urls]
-Homepage = "https://github.com/privat/llme"
 Repository = "https://github.com/privat/llme"
 
 [project.scripts]
 llme = "llme:main"
 
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["llme*"]
+include = ["llme"]

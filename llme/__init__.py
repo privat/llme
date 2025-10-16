@@ -31,6 +31,7 @@ import tomllib
 from sseclient import SSEClient
 import logging
 import subprocess
+import magic
 
 # Configure logging
 logging.basicConfig(level=logging.WARNING)
@@ -206,7 +207,7 @@ class LLME:
                     while self.chat_completion():
                         pass
             except requests.exceptions.RequestException as e:
-                logger.info(e.response.content)
+                logger.warning(e.response.content)
                 raise e
             except KeyboardInterrupt:
                 logger.warning("Interrupted by user. Use ^D to exit.")
@@ -246,7 +247,6 @@ class Asset:
     "A loaded file"
     def __init__(self, path):
         self.path = path
-        import magic
         with open(path, 'rb') as f:
             self.raw_content = f.read()
         self.mime_type = magic.from_buffer(self.raw_content, mime=True)

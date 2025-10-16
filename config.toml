@@ -1,4 +1,5 @@
-model = "qwen3-coder"
+base_url = "http://localhost:18181/v1"
+model = "NexaAI/qwen3vl-8B-Thinking-4bit-mlx"
 system_prompt = """
 You are an autonomous agent specialized in programming and system administration.
 You can execute python programs and shell code with code blocks with `run`.
