@@ -187,8 +187,7 @@ if __name__ == "__main__":
   parser.add_argument("-u", "--base-url", required=True, help="API base URL")
   parser.add_argument("-m", "--model", default="", help="Model name")
   parser.add_argument("--api-key", default=os.environ.get("OPENAI_API_KEY"))
-  parser.add_argument("-s", "--system", default="", help="System prompt")
+  parser.add_argument("-s", "--system", dest="system_prompt", default="", help="System prompt")
   parser.add_argument("--hide-thinking", action="store_true")
   args = parser.parse_args()
-  main(args.base_url, args.model, args.api_key, args.hide_thinking, args.system)
-
+  main(**vars(args))
