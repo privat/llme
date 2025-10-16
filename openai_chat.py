@@ -114,7 +114,7 @@ def animate(stop_event):
     sys.stdout.flush()
 
 
-def main(base_url, model, api_key, hide_thinking, system_prompt):
+def main(base_url, model, api_key, hide_thinking, system_prompt, prompts):
   model_name = get_model_name(base_url, model)
   if sys.stdin.isatty():
     print(f"Using model: {model_name}")
@@ -126,7 +126,12 @@ def main(base_url, model, api_key, hide_thinking, system_prompt):
 
   while True:
     try:
-      if sys.stdin.isatty():
+      if len(prompts) > 0:
+        user_input = prompts[0]
+        prompts = prompts[1:]
+        if sys.stdin.isatty():
+          print(colored("> ", "green", attrs=["bold"]), user_input)
+      elif sys.stdin.isatty():
         print()
         console.print(Rule())
         user_input = input(colored("> ", "green", attrs=["bold"]))
@@ -189,5 +194,6 @@ if __name__ == "__main__":
   parser.add_argument("--api-key", default=os.environ.get("OPENAI_API_KEY"))
   parser.add_argument("-s", "--system", dest="system_prompt", default="", help="System prompt")
   parser.add_argument("--hide-thinking", action="store_true")
+  parser.add_argument("prompts", nargs="*", help="sequence of prompts")
   args = parser.parse_args()
   main(**vars(args))
