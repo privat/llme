@@ -194,6 +194,6 @@ if __name__ == "__main__":
   parser.add_argument("--api-key", default=os.environ.get("OPENAI_API_KEY"))
   parser.add_argument("-s", "--system", dest="system_prompt", default="", help="System prompt")
   parser.add_argument("--hide-thinking", action="store_true")
-  parser.add_argument("prompts", nargs="*", help="sequence of prompts")
+  parser.add_argument("prompts", nargs="*", help="Sequence of prompts")
   args = parser.parse_args()
   main(**vars(args))
