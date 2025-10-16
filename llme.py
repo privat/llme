@@ -30,6 +30,7 @@ import time
 import tomllib
 from sseclient import SSEClient
 import logging
+import subprocess
 
 # Configure logging
 logging.basicConfig(level=logging.WARNING)
@@ -38,11 +39,12 @@ logger = logging.getLogger(__name__)
 class LLME:
     """The God class of the application."""
 
-    def __init__(self, base_url, model, api_key, system_prompt, prompts):
+    def __init__(self, base_url, model, api_key, system_prompt, yolo, prompts):
         self.base_url = base_url
         self.model = model
         self.api_key = api_key
         self.system_prompt = system_prompt
+        self.yolo = yolo
         self.prompts = prompts
         self.messages = [] # the sequence of messages with the LLM
 
@@ -92,11 +94,12 @@ class LLME:
 
 
     def run(self, tool, stdin):
-        import subprocess
-
-        x = input(colored(f"RUN {tool} [Yn]? ", "red", attrs=["bold"])).strip()
-        if x not in ['', 'y', 'Y']:
-            return None
+        if self.yolo:
+            print(colored(f"YOLO RUN {tool}", "red", attrs=["bold"]))
+        else:
+            x = input(colored(f"RUN {tool} [Yn]? ", "red", attrs=["bold"])).strip()
+            if x not in ['', 'y', 'Y']:
+                return None
 
         proc = subprocess.Popen(
                 [tool],
@@ -268,6 +271,7 @@ if __name__ == "__main__":
         "-s", "--system", dest="system_prompt", help="System prompt")
     parser.add_argument("-c", "--config", help="Custom configuration file")
     parser.add_argument("-v", "--verbose", default=0, action="count", help="Increase verbosity level (can be used multiple times)")
+    parser.add_argument("-Y", "--yolo", action="store_true", help="UNSAFE: Do not ask for confirmation before running tools")
     parser.add_argument("prompts", nargs="*", help="Sequence of prompts")
 
     args = parser.parse_args()
