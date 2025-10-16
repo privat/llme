@@ -178,6 +178,8 @@ class LLME:
             if r:
                 self.messages.append(r)
                 logger.debug(f"Tool result: {self.messages[-1]}")
+                return r
+        return None
 
     def start(self):
         self.get_model_name()
@@ -201,7 +203,8 @@ class LLME:
                 if prompt:
                     self.messages.append(prompt)
                     logger.debug(f"User prompt: {self.messages[-1]}")
-                    self.chat_completion()
+                    while self.chat_completion():
+                        pass
             except requests.exceptions.RequestException as e:
                 logger.info(e.response.content)
                 raise e
@@ -298,8 +301,7 @@ if __name__ == "__main__":
     del (args.config)
 
     if args.base_url is None:
-        print(
-            "Error: --base-url required and not definied the config file.", file=sys.stderr)
+        print("Error: --base-url required and not definied the config file.", file=sys.stderr)
         sys.exit(1)
 
     llme = LLME(**vars(args))
