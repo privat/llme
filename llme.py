@@ -98,16 +98,34 @@ class LLME:
         if x not in ['', 'y', 'Y']:
             return None
 
-        resultat = subprocess.run(
-            [tool],
-            input=stdin,
-            text=True,
-            capture_output=True
-        )
+        proc = subprocess.Popen(
+                [tool],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                bufsize=1  # line-buffered
+                )
 
-        print(repr(resultat))
-        return {"role": "system", "content": repr(resultat)}
+        # send data to stdin
+        # FIXME: avoid deadlock...
+        # It's weird there isn't a lib or something to do this properly...
+        proc.stdin.write(stdin)
+        proc.stdin.close()
 
+        content = ''
+        with AnimationManager() as am:
+            while line := proc.stdout.read():
+                am.stop()
+                print(line,end='',flush=True)
+                content += line
+        proc.wait()
+
+        if proc.returncode != 0:
+            print(colored(f"EXIT {proc.returncode}", "red", attrs=["bold"]))
+
+        content = f"```result {tool} exitcode={proc.returncode}\n{content}\n```\n"
+        return {"role": "system", "content": content}
 
     def next_prompt(self):
         if len(self.prompts) > 0:
@@ -270,4 +288,5 @@ if __name__ == "__main__":
         sys.exit(1)
 
     llme = LLME(**vars(args))
+    #llme.run("sh", "sleep 1;echo hello;sleep 1;echo world>&2;sleep 1;exit 4")
     llme.start()
