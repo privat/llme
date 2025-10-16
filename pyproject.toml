@@ -27,7 +27,7 @@ dependencies = [
 Repository = "https://github.com/privat/llme"
 
 [project.scripts]
-llme = "llme:main"
+llme = "llme.main:main"
 
 [tool.setuptools.packages.find]
 include = ["llme"]
