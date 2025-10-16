@@ -40,6 +40,7 @@ class LLME:
         self.hide_thinking = hide_thinking
         self.system_prompt = system_prompt
         self.prompts = prompts
+        self.messages = [] # the sequence of messages with the LLM
 
 
     def parse_image(user_input):
@@ -74,11 +75,12 @@ class LLME:
         models = response.json()
 
         if not self.model:
-            return models["data"][0]["id"]
+            self.model = models["data"][0]["id"]
+            return
 
         for m in models["data"]:
             if m["id"] == self.model:
-                return m["id"]
+                return
 
         ids = [m["id"] for m in models["data"]]
         raise ValueError(
@@ -114,94 +116,97 @@ class LLME:
         sys.stdout.write('\r')
         sys.stdout.flush()
 
+    def next_prompt(self):
+        if len(self.prompts) > 0:
+            user_input = self.prompts[0]
+            self.prompts = self.prompts[1:]
+            if sys.stdin.isatty():
+                print(colored("> ", "green", attrs=["bold"]), user_input)
+        elif sys.stdin.isatty():
+            print()
+            user_input = input(colored("> ", "green", attrs=["bold"]))
+            print()
+        else:
+            user_input = input()
+
+        if "@image:" in user_input:
+            try:
+                text_prompt, image_url = parse_image(user_input)
+            except ValueError as e:
+                cprint(e, "red")
+                return
+            self.messages.append({
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": text_prompt},
+                    {"type": "image_url", "image_url": {"url": image_url}},
+                ]
+            })
+
+        elif user_input != '':
+            self.messages.append({"role": "user", "content": user_input})
+
+    def chat_completion(self):
+        if sys.stdin.isatty():
+            stop_event = threading.Event()
+            animation_thread = threading.Thread(
+                target=self.animate, args=(stop_event,))
+            animation_thread.start()
+
+        try:
+            response = requests.post(
+                f"{self.base_url}/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json",
+                },
+                json={"model": self.model,
+                      "messages": self.messages,
+                      "stream": True},
+                stream=True
+            )
+        finally:
+            if sys.stdin.isatty():
+                stop_event.set()
+                animation_thread.join()
+
+        full_content = ''
+        cb = None
+        for event in SSEClient(response).events():
+            if event.data == "[DONE]":
+                break
+            data = json.loads(event.data)
+            choice0 = data['choices'][0]
+            if choice0['finish_reason'] == 'stop':
+                break
+            content = choice0['delta']['content']
+            if content is None:
+                continue
+            full_content += content
+            print(content, end='', flush=True)
+            cb = re.search(
+                r"```run ([\w+-]*)\n(.*?)```", full_content, re.DOTALL)
+            if cb:
+                break
+        response.close()
+        self.messages.append({"role": "agent", "content": full_content})
+        if cb:
+            r = self.run(cb[1], cb[2])
+            if r:
+                self.messages.append(r)
 
     def start(self):
-        model_name = self.get_model_name()
+        self.get_model_name()
         if sys.stdin.isatty():
-            print(f"Using model: {model_name}")
+            print(f"Using model: {self.model}")
 
-        messages = []
         if self.system_prompt:
-            messages.append({"role": "system", "content": self.system_prompt})
+            self.messages.append({"role": "system", "content": self.system_prompt})
 
         while True:
             try:
-                if len(self.prompts) > 0:
-                    user_input = self.prompts[0]
-                    self.prompts = self.prompts[1:]
-                    if sys.stdin.isatty():
-                        print(colored("> ", "green", attrs=["bold"]), user_input)
-                elif sys.stdin.isatty():
-                    print()
-                    user_input = input(colored("> ", "green", attrs=["bold"]))
-                    print()
-                else:
-                    user_input = input()
-
-                if "@image:" in user_input:
-                    try:
-                        text_prompt, image_url = parse_image(user_input)
-                    except ValueError as e:
-                        cprint(e, "red")
-                        continue
-                    messages.append({
-                        "role": "user",
-                        "content": [
-                            {"type": "text", "text": text_prompt},
-                            {"type": "image_url", "image_url": {"url": image_url}},
-                        ]
-                    })
-
-                elif user_input != '':
-                    messages.append({"role": "user", "content": user_input})
-
-                if sys.stdin.isatty():
-                    stop_event = threading.Event()
-                    animation_thread = threading.Thread(
-                        target=self.animate, args=(stop_event,))
-                    animation_thread.start()
-
-                try:
-                    response = requests.post(
-                        f"{self.base_url}/chat/completions",
-                        headers={
-                            "Authorization": f"Bearer {self.api_key}",
-                            "Content-Type": "application/json",
-                        },
-                        json={"model": model_name,
-                              "messages": messages, "stream": True},
-                        stream=True
-                    )
-                finally:
-                    if sys.stdin.isatty():
-                        stop_event.set()
-                        animation_thread.join()
-
-                full_content = ''
-                cb = None
-                for event in SSEClient(response).events():
-                    if event.data == "[DONE]":
-                        break
-                    data = json.loads(event.data)
-                    choice0 = data['choices'][0]
-                    if choice0['finish_reason'] == 'stop':
-                        break
-                    content = choice0['delta']['content']
-                    if content is None:
-                        continue
-                    full_content += content
-                    print(content, end='', flush=True)
-                    cb = re.search(
-                        r"```run ([\w+-]*)\n(.*?)```", full_content, re.DOTALL)
-                    if cb:
-                        break
-                response.close()
-                messages.append({"role": "agent", "content": full_content})
-                if cb:
-                    r = self.run(cb[1], cb[2])
-                    if r:
-                        messages.append(r)
-
+                self.next_prompt()
+                self.chat_completion()
             except requests.exceptions.RequestException as e:
                 print(response.content)
                 raise e
