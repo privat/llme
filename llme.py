@@ -217,7 +217,10 @@ class LLME:
             except requests.exceptions.RequestException as e:
                 print(response.content)
                 raise e
-            except (KeyboardInterrupt, EOFError):
+            except KeyboardInterrupt:
+                logger.warning("Interrupted by user. Use ^D to exit.")
+                continue
+            except EOFError:
                 break
 
 
