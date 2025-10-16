@@ -109,16 +109,6 @@ class LLME:
         return {"role": "system", "content": repr(resultat)}
 
 
-    def animate(self, stop_event):
-        for c in itertools.cycle(['|', '/', '-', '\\']):
-            if stop_event.is_set():
-                break
-            sys.stdout.write(f'\r{colored(c, "green", attrs=["bold"])} ')
-            sys.stdout.flush()
-            time.sleep(0.1)
-        sys.stdout.write('\r')
-        sys.stdout.flush()
-
     def next_prompt(self):
         if len(self.prompts) > 0:
             user_input = self.prompts[0]
@@ -150,13 +140,7 @@ class LLME:
             self.messages.append({"role": "user", "content": user_input})
 
     def chat_completion(self):
-        if sys.stdin.isatty():
-            stop_event = threading.Event()
-            animation_thread = threading.Thread(
-                target=self.animate, args=(stop_event,))
-            animation_thread.start()
-
-        try:
+        with AnimationManager():
             response = requests.post(
                 f"{self.base_url}/chat/completions",
                 headers={
@@ -168,10 +152,6 @@ class LLME:
                       "stream": True},
                 stream=True
             )
-        finally:
-            if sys.stdin.isatty():
-                stop_event.set()
-                animation_thread.join()
 
         full_content = ''
         cb = None
@@ -218,6 +198,32 @@ class LLME:
                 raise e
             except (KeyboardInterrupt, EOFError):
                 break
+
+
+class AnimationManager:
+    """A simple context manager for a spinner animation."""
+    def animate(self):
+        for c in itertools.cycle(['|', '/', '-', '\\']):
+            if self.stop_event.is_set():
+                break
+            sys.stdout.write(f'\r{colored(c, "green", attrs=["bold"])} ')
+            sys.stdout.flush()
+            time.sleep(0.1)
+        sys.stdout.write('\r')
+        sys.stdout.flush()
+
+    def __enter__(self):
+        if sys.stdin.isatty():
+            self.stop_event = threading.Event()
+            self.animation_thread = threading.Thread(target=self.animate)
+            self.animation_thread.start()
+        return self
+
+    def __exit__(self, exc_type, exc_value, exc_traceback):
+        if sys.stdin.isatty():
+            self.stop_event.set()
+            self.animation_thread.join()
+        return
 
 
 def apply_config(args, config):
