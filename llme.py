@@ -24,7 +24,6 @@ import requests
 import base64
 import mimetypes
 from termcolor import colored, cprint
-from rich.console import Console
 import itertools
 import threading
 import time
@@ -73,30 +72,6 @@ def get_model_name(base_url, model):
   raise ValueError(f"Error: Model '{model}' not found. Available: {', '.join(ids)}")
 
 
-def print_response(console, response, hide_thinking):
-  content = response["content"]
-  if "reasoning_content" in response and response["reasoning_content"]:
-    thinking_text = response["reasoning_content"]
-    answer_text = content
-  else:
-    answer_marker = None
-    if "<answer>" in content:
-      answer_marker = "<answer>"
-    elif "<|end|>" in content:
-      answer_marker = "<|end|>"
-
-    if not answer_marker:
-      thinking_text = ""
-      answer_text = content
-    else:
-      parts = content.split(answer_marker, 1)
-      thinking_text = parts[0].strip()
-      answer_text = parts[1].strip()
-
-  if not hide_thinking and thinking_text:
-    cprint(thinking_text + "\n", "magenta")
-  console.print(answer_text)
-
 def run(tool, stdin):
     import subprocess
 
@@ -126,7 +101,7 @@ def animate(stop_event):
     sys.stdout.flush()
 
 
-def main(base_url, model, api_key, hide_thinking, no_stream, system_prompt, prompts):
+def main(base_url, model, api_key, hide_thinking, system_prompt, prompts):
   model_name = get_model_name(base_url, model)
   if sys.stdin.isatty():
     print(f"Using model: {model_name}")
@@ -134,7 +109,6 @@ def main(base_url, model, api_key, hide_thinking, no_stream, system_prompt, prom
   messages = []
   if system_prompt:
     messages.append({"role": "system", "content": system_prompt})
-  console = Console()
 
   while True:
     try:
@@ -179,43 +153,36 @@ def main(base_url, model, api_key, hide_thinking, no_stream, system_prompt, prom
                 "Authorization": f"Bearer {api_key}",
                 "Content-Type": "application/json",
             },
-            json={"model": model_name, "messages": messages, "stream": not no_stream},
-            stream=not no_stream
+            json={"model": model_name, "messages": messages, "stream": True},
+            stream=True
         )
-        if not no_stream:
-          response.raise_for_status()
       finally:
         if sys.stdin.isatty():
           stop_event.set()
           animation_thread.join()
 
-      if no_stream:
-        assistant_message = response.json()["choices"][0]["message"]
-        messages.append(assistant_message)
-        print_response(console, assistant_message, hide_thinking)
-      else:
-        full_content = ''
-        cb=None
-        for event in SSEClient(response).events():
-          if event.data == "[DONE]":
-            break
-          data = json.loads(event.data)
-          choice0 = data['choices'][0]
-          if choice0['finish_reason'] == 'stop':
-            break
-          content = choice0['delta']['content']
-          if content is None:
-            continue
-          full_content += content
-          print(content, end='', flush=True)
-          cb = re.search(r"```run ([\w+-]*)\n(.*?)```", full_content, re.DOTALL)
-          if cb:
-            break
-        response.close()
-        messages.append({"role":"agent","content":full_content})
+      full_content = ''
+      cb=None
+      for event in SSEClient(response).events():
+        if event.data == "[DONE]":
+          break
+        data = json.loads(event.data)
+        choice0 = data['choices'][0]
+        if choice0['finish_reason'] == 'stop':
+          break
+        content = choice0['delta']['content']
+        if content is None:
+          continue
+        full_content += content
+        print(content, end='', flush=True)
+        cb = re.search(r"```run ([\w+-]*)\n(.*?)```", full_content, re.DOTALL)
         if cb:
-          r = run(cb[1], cb[2])
-          messages.append(r)
+          break
+      response.close()
+      messages.append({"role":"agent","content":full_content})
+      if cb:
+        r = run(cb[1], cb[2])
+        messages.append(r)
 
     except requests.exceptions.RequestException as e:
       print(response.content)
@@ -242,7 +209,6 @@ if __name__ == "__main__":
   parser.add_argument("--api-key", default=os.environ.get("OPENAI_API_KEY"))
   parser.add_argument("-s", "--system", dest="system_prompt", help="System prompt")
   parser.add_argument("--hide-thinking", action="store_true")
-  parser.add_argument("--no-stream", action="store_true")
   parser.add_argument("-c", "--config", help="Custom configuration file")
   parser.add_argument("prompts", nargs="*", help="Sequence of prompts")
 
