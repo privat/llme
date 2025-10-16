@@ -212,6 +212,11 @@ class AnimationManager:
         sys.stdout.write('\r')
         sys.stdout.flush()
 
+    def stop(self):
+        if sys.stdin.isatty() and not self.stop_event.is_set():
+            self.stop_event.set()
+            self.animation_thread.join()
+
     def __enter__(self):
         if sys.stdin.isatty():
             self.stop_event = threading.Event()
@@ -220,11 +225,7 @@ class AnimationManager:
         return self
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
-        if sys.stdin.isatty():
-            self.stop_event.set()
-            self.animation_thread.join()
-        return
-
+        self.stop()
 
 def apply_config(args, config):
     """
