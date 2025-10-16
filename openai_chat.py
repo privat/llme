@@ -151,7 +151,7 @@ def main(base_url, model, api_key, hide_thinking, no_stream, system_prompt, prom
             ]
         })
 
-      else:
+      elif user_input != '':
         messages.append({"role": "user", "content": user_input})
 
       if sys.stdin.isatty():
