@@ -251,8 +251,8 @@ if __name__ == "__main__":
   if args.config or os.path.exists(config_path):
     with open(args.config or config_path, "rb") as f:
       config = tomllib.load(f)
-    del(args.config)
     apply_config(args, config)
+  del(args.config)
 
   if args.base_url is None:
       print("Error: --base-url required and not definied the config file.", file=sys.stderr)
