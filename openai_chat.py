@@ -28,10 +28,7 @@ import requests
 import base64
 import mimetypes
 from termcolor import colored, cprint
-from rich.live import Live
 from rich.console import Console
-from rich.markdown import Markdown
-from rich.rule import Rule
 import itertools
 import threading
 import time
@@ -102,7 +99,7 @@ def print_response(console, response, hide_thinking):
 
   if not hide_thinking and thinking_text:
     cprint(thinking_text + "\n", "magenta")
-  console.print(Markdown(answer_text))
+  console.print(answer_text)
 
 
 def animate(stop_event):
@@ -135,7 +132,6 @@ def main(base_url, model, api_key, hide_thinking, no_stream, system_prompt, prom
           print(colored("> ", "green", attrs=["bold"]), user_input)
       elif sys.stdin.isatty():
         print()
-        console.print(Rule())
         user_input = input(colored("> ", "green", attrs=["bold"]))
         print()
       else:
@@ -186,8 +182,7 @@ def main(base_url, model, api_key, hide_thinking, no_stream, system_prompt, prom
         print_response(console, assistant_message, hide_thinking)
       else:
         full_content = ''
-        with Live('', console=console, vertical_overflow='visible', auto_refresh=False) as live:
-         for event in SSEClient(response).events():
+        for event in SSEClient(response).events():
           if event.data == "[DONE]":
             break
           data = json.loads(event.data)
@@ -198,7 +193,7 @@ def main(base_url, model, api_key, hide_thinking, no_stream, system_prompt, prom
           if content is None:
             continue
           full_content += content
-          live.update(Markdown(full_content), refresh=True)
+          print(content, end='', flush=True)
 
     except requests.exceptions.RequestException as e:
       print(response.content)
