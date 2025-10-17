@@ -343,7 +343,6 @@ def load_config_files(args):
 
 def main():
     """The main CLI entry point."""
-    config_path = os.path.join(os.environ.get( "HOME"), ".config", "llme", "config.toml")
     parser = argparse.ArgumentParser(description="OpenAI-compatible chat CLI.")
     parser.add_argument("-u", "--base-url", help="API base URL [base_url]")
     parser.add_argument("-m", "--model", help="Model name [model]")
