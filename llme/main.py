@@ -45,6 +45,12 @@ class LLME:
         self.prompts = config.prompts # Initial prompts to process
         self.messages = [] # the sequence of messages with the LLM
 
+
+    def add_message(self, message):
+        logger.debug(f"Add %s message: %s", message['role'], message)
+        self.messages.append(message)
+
+
     def get_model_name(self):
         """Get the model name from the server if not provided, or validate it."""
         url = f"{self.config.base_url}/models"
@@ -223,13 +229,11 @@ class LLME:
         if not full_content.endswith('\n'):
             print()
         response.close()
-        self.messages.append({"role": "agent", "content": full_content})
-        logger.debug(f"Agent response: {self.messages[-1]}")
+        self.add_message({"role": "agent", "content": full_content})
         if cb:
             r = self.run_tool(cb[1], cb[2])
             if r:
-                self.messages.append(r)
-                logger.debug(f"Tool result: {self.messages[-1]}")
+                self.add_message(r)
                 return r
         return None
 
@@ -245,8 +249,7 @@ class LLME:
                 self.messages = json.load(f)
             logger.info(f"Loaded %d messages", len(self.messages))
         elif self.config.system_prompt:
-            self.messages.append({"role": "system", "content": self.config.system_prompt})
-            logger.debug(f"System prompt: {self.messages[-1]}")
+            self.add_message({"role": "system", "content": self.config.system_prompt})
 
         if not sys.stdin.isatty():
             if len(self.prompts) > 0:
@@ -260,8 +263,7 @@ class LLME:
             try:
                 prompt = self.next_prompt()
                 if prompt:
-                    self.messages.append(prompt)
-                    logger.debug(f"User prompt: {self.messages[-1]}")
+                    self.add_message(prompt)
                 while self.chat_completion():
                     pass
             except requests.exceptions.RequestException as e:
