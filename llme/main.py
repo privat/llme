@@ -39,21 +39,18 @@ logger = logging.getLogger(__name__)
 class LLME:
     """The God class of the application."""
 
-    def __init__(self, base_url, model, api_key, quit, system_prompt, yolo, prompts):
-        self.base_url = base_url
-        self.model = model
-        self.api_key = api_key
-        self.quit = quit
-        self.system_prompt = system_prompt
-        self.yolo = yolo
-        self.prompts = prompts
+    def __init__(self, config):
+        self.config = config
+        self.model = config.model
+        self.prompts = config.prompts # Initial prompts to process
         self.messages = [] # the sequence of messages with the LLM
         self.files = [] # the list of files to send to the LLM for the next prompt
 
     def get_model_name(self):
         """Get the model name from the server if not provided, or validate it."""
-        logger.info(f"Get models from {self.base_url}")
-        response = requests.get(f"{self.base_url}/models")
+        url = f"{self.config.base_url}/models"
+        logger.info(f"Get models from %s", url)
+        response = requests.get(url)
         response.raise_for_status()
         models = response.json()
         ids = [m["id"] for m in models["data"]]
@@ -72,7 +69,7 @@ class LLME:
 
     def run_tool(self, tool, stdin):
         """Run a tool and return the result as a system message (or None if cancelled)"""
-        if self.yolo:
+        if self.config.yolo:
             print(colored(f"{len(self.messages)} YOLO RUN {tool}", "red", attrs=["bold"]))
         elif sys.stdin.isatty():
             x = input(colored(f"{len(self.messages)} RUN {tool} [Yn]? ", "red", attrs=["bold"])).strip()
@@ -145,7 +142,7 @@ class LLME:
             user_input = self.prompts.pop(0)
             if sys.stdin.isatty():
                 print(colored(f"{len(self.messages)}>", "green", attrs=["bold"]), user_input)
-        elif self.quit:
+        elif self.config.quit:
             raise EOFError("quit") # ugly
         else:
             try:
@@ -181,12 +178,13 @@ class LLME:
 
     def chat_completion(self):
         """Get a response from the LLM."""
-        logger.debug(f"Sending {len(self.messages)} messages to {self.base_url}")
+        url = f"{self.config.base_url}/chat/completions"
+        logger.debug(f"Sending %d messages to %s", len(self.messages), url)
         with AnimationManager("blue"):
             response = requests.post(
-                f"{self.base_url}/chat/completions",
+                url,
                 headers={
-                    "Authorization": f"Bearer {self.api_key}",
+                    "Authorization": f"Bearer {self.config.api_key}",
                     "Content-Type": "application/json",
                 },
                 json={"model": self.model,
@@ -232,10 +230,10 @@ class LLME:
         """Main loop."""
 
         self.get_model_name()
-        logger.info(f"Use model {self.model} from {self.base_url}")
+        logger.info(f"Use model %s from %s", self.model, self.config.base_url)
 
-        if self.system_prompt:
-            self.messages.append({"role": "system", "content": self.system_prompt})
+        if self.config.system_prompt:
+            self.messages.append({"role": "system", "content": self.config.system_prompt})
             logger.debug(f"System prompt: {self.messages[-1]}")
 
         if not sys.stdin.isatty():
@@ -407,7 +405,7 @@ def main():
         print("Error: --base-url required and not definied the config file.", file=sys.stderr)
         return 1
 
-    llme = LLME(**vars(args))
+    llme = LLME(args)
     llme.start()
 
 if __name__ == "__main__":
