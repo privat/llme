@@ -44,11 +44,30 @@ class LLME:
         self.model = config.model
         self.prompts = config.prompts # Initial prompts to process
         self.messages = [] # the sequence of messages with the LLM
+        self.raw_messages = [] # the sequence of messages really communicated with the LLM server to work-around their various API limitations
 
 
     def add_message(self, message):
         logger.debug(f"Add %s message: %s", message['role'], message)
         self.messages.append(message)
+
+        # Special filtering for some models/servers
+        # TODO make it configurable and modular
+        if type(message["content"]) is list:
+            text_content = []
+            # unpack file content parts
+            for part in message["content"]:
+                if part["type"] == "text":
+                    text_content.append(part["text"])
+                if part["type"] == "file":
+                    # replace the file content with its path.
+                    text_content.append(f"The file is {part['file']['filename']}. You can cat its content.")
+                if part["type"] == "image_url":
+                    self.raw_messages.append(message)
+            self.raw_messages.append({"role": message["role"], "content": "\n".join(text_content)})
+            return
+
+        self.raw_messages.append(message)
 
 
     def get_model_name(self):
@@ -185,7 +204,7 @@ class LLME:
     def chat_completion(self):
         """Get a response from the LLM."""
         url = f"{self.config.base_url}/chat/completions"
-        logger.debug(f"Sending %d messages to %s", len(self.messages), url)
+        logger.debug(f"Sending %d raw messages to %s", len(self.raw_messages), url)
         with AnimationManager("blue", self.config.plain):
             response = requests.post(
                 url,
@@ -194,7 +213,7 @@ class LLME:
                     "Content-Type": "application/json",
                 },
                 json={"model": self.model,
-                      "messages": self.messages,
+                      "messages": self.raw_messages,
                       "stream": True},
                 stream=True
             )
@@ -242,7 +261,8 @@ class LLME:
         if self.config.chat_input:
             logger.info(f"Loading conversation from %s", self.config.chat_input)
             with open(self.config.chat_input, "r") as f:
-                self.messages = json.load(f)
+                for message in json.load(f):
+                    self.add_message(message)
             logger.info(f"Loaded %d messages", len(self.messages))
         elif self.config.system_prompt:
             self.add_message({"role": "system", "content": self.config.system_prompt})
