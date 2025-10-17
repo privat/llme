@@ -252,8 +252,29 @@ class LLME:
                 return r
         return None
 
+
+    def loop(self):
+        """The main ping-pong loop between the user and the agent"""
+        while True:
+            try:
+                prompt = self.next_prompt()
+                if prompt:
+                    self.add_message(prompt)
+                while self.chat_completion():
+                    pass
+            except requests.exceptions.RequestException as e:
+                logger.warning(e.response.content)
+                raise e
+            except KeyboardInterrupt:
+                logger.warning("Interrupted by user.")
+                continue
+            except EOFError as e:
+                logger.info("Quiting: %s", str(e))
+                break
+
+
     def start(self):
-        """Main loop."""
+        """Start, work, and terminate"""
 
         self.get_model_name()
         logger.info(f"Use model %s from %s", self.model, self.config.base_url)
@@ -275,27 +296,13 @@ class LLME:
                 # No prompts, so use stdin as prompt
                 self.prompts = [sys.stdin.read()]
 
-        while True:
-            try:
-                prompt = self.next_prompt()
-                if prompt:
-                    self.add_message(prompt)
-                while self.chat_completion():
-                    pass
-            except requests.exceptions.RequestException as e:
-                logger.warning(e.response.content)
-                raise e
-            except KeyboardInterrupt:
-                logger.warning("Interrupted by user.")
-                continue
-            except EOFError as e:
-                logger.info("Quiting: %s", str(e))
-                break
-            finally:
-                if self.config.chat_output:
-                    logger.info(f"Dumping conversation to %s", self.config.chat_output)
-                    with open(self.config.chat_output, "w") as f:
-                        json.dump(self.messages, f, indent=2)
+        try:
+            self.loop()
+        finally:
+            if self.config.chat_output:
+                logger.info(f"Dumping conversation to %s", self.config.chat_output)
+                with open(self.config.chat_output, "w") as f:
+                    json.dump(self.messages, f, indent=2)
 
 
 class AnimationManager:
