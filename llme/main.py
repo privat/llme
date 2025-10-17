@@ -354,7 +354,6 @@ def apply_env(args):
     for k in variables:
         var = f"LLME_{k.upper()}"
         env = os.environ.get(var)
-        logger.debug(f"Env var {var}={env}")
         if variables[k] is None and env:
             # TODO type conversion
             setattr(args, k, env)
