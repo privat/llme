@@ -359,9 +359,10 @@ def resolve_config(args):
     """Compute config in order of precedence"""
     # 1. args have the highest precedence
 
-    # 2. then explcit --config file
-    if args.config:
-        config = load_config_file(args.config)
+    # 2. then explcit --config files in reverse order (last wins)
+    args.config.reverse()
+    for path in args.config:
+        config = load_config_file(path)
         apply_config(args, config)
     del(args.config)
 
@@ -388,7 +389,7 @@ def main():
     parser.add_argument("--api-key", help="The API key [api_key]")
     parser.add_argument("-q", "--quit", default=None, action="store_true", help="Quit after processed all arguments prompts [quit]")
     parser.add_argument("-s", "--system", dest="system_prompt", help="System prompt [system_prompt]")
-    parser.add_argument("-c", "--config", help="Custom configuration file")
+    parser.add_argument("-c", "--config", nargs="*", help="Custom configuration files")
     parser.add_argument("-v", "--verbose", default=0, action="count", help="Increase verbosity level (can be used multiple times)")
     parser.add_argument("-Y", "--yolo", default=None, action="store_true", help="UNSAFE: Do not ask for confirmation before running tools")
     parser.add_argument("prompts", nargs="*", help="Sequence of prompts")

@@ -136,7 +136,7 @@ sudo llme --yolo "Distupgrade the system. You are root! Do as you wish."`
 
 ```bash
 $ llme --help
-usage: llme [-h] [-u BASE_URL] [-m MODEL] [--api-key API_KEY] [-q] [-s SYSTEM_PROMPT] [-c CONFIG] [-v] [-Y] [prompts ...]
+usage: llme [-h] [-u BASE_URL] [-m MODEL] [--api-key API_KEY] [-q] [-s SYSTEM_PROMPT] [-c [CONFIG ...]] [-v] [-Y] [prompts ...]
 
 OpenAI-compatible chat CLI.
 
@@ -148,11 +148,12 @@ options:
   -u, --base-url BASE_URL
                         API base URL [base_url]
   -m, --model MODEL     Model name [model]
-  --api-key API_KEY     The API key, optionnal [api_key]
+  --api-key API_KEY     The API key [api_key]
   -q, --quit            Quit after processed all arguments prompts [quit]
   -s, --system SYSTEM_PROMPT
                         System prompt [system_prompt]
-  -c, --config CONFIG   Custom configuration file
+  -c, --config [CONFIG ...]
+                        Custom configuration files
   -v, --verbose         Increase verbosity level (can be used multiple times)
   -Y, --yolo            UNSAFE: Do not ask for confirmation before running tools
 ```
@@ -165,7 +166,7 @@ They can also be set by environment variables (`LLME_BASE_URL` for `--base-url`)
 For each option, the precedence order is the following:
 
 1. The explicit option in the command line (the higher precedence)
-2. The explicit config file (given by `--config`)
+2. The explicit config files (given by `--config`) in reverse order (last wins)
 3. The environment variables (`LLME_SOMETHING`)
 4. The user configuration file (`~/.config/llme/config.toml`)
 5. The system configuration file provided by the package (the lowest precedence)
