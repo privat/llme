@@ -232,7 +232,12 @@ class LLME:
         self.get_model_name()
         logger.info(f"Use model %s from %s", self.model, self.config.base_url)
 
-        if self.config.system_prompt:
+        if self.config.chat_input:
+            logger.info(f"Loading conversation from %s", self.config.chat_input)
+            with open(self.config.chat_input, "r") as f:
+                self.messages = json.load(f)
+            logger.info(f"Loaded %d messages", len(self.messages))
+        elif self.config.system_prompt:
             self.messages.append({"role": "system", "content": self.config.system_prompt})
             logger.debug(f"System prompt: {self.messages[-1]}")
 
@@ -261,6 +266,11 @@ class LLME:
             except EOFError as e:
                 logger.info("Quiting: %s", str(e))
                 break
+            finally:
+                if self.config.chat_output:
+                    logger.info(f"Dumping conversation to %s", self.config.chat_output)
+                    with open(self.config.chat_output, "w") as f:
+                        json.dump(self.messages, f, indent=2)
 
 
 class AnimationManager:
@@ -388,6 +398,8 @@ def main():
     parser.add_argument("-m", "--model", help="Model name [model]")
     parser.add_argument("--api-key", help="The API key [api_key]")
     parser.add_argument("-q", "--quit", default=None, action="store_true", help="Quit after processed all arguments prompts [quit]")
+    parser.add_argument("-o", "--chat-output", help="Export the full raw conversation in json")
+    parser.add_argument("-i", "--chat-input", help="Continue a previous (exported) conversation")
     parser.add_argument("-s", "--system", dest="system_prompt", help="System prompt [system_prompt]")
     parser.add_argument("-c", "--config", nargs="*", help="Custom configuration files")
     parser.add_argument("-v", "--verbose", default=0, action="count", help="Increase verbosity level (can be used multiple times)")
