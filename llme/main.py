@@ -95,7 +95,7 @@ class LLME:
         proc.stdin.close()
 
         content = ''
-        with AnimationManager("red") as am:
+        with AnimationManager("red", self.config.plain) as am:
             while line := proc.stdout.read():
                 am.stop()
                 print(line,end='',flush=True)
@@ -140,13 +140,13 @@ class LLME:
 
         if len(self.prompts) > 0:
             user_input = self.prompts.pop(0)
-            if sys.stdin.isatty():
+            if not self.config.plain:
                 print(colored(f"{len(self.messages)}>", "green", attrs=["bold"]), user_input)
         elif self.config.quit or self.config.batch:
             raise EOFError("quit") # ugly
         else:
             try:
-                if sys.stdin.isatty():
+                if not self.config.plain:
                     user_input = input(colored(f"{len(self.messages)}> ", "green", attrs=["bold"]))
                 else:
                     user_input = input()
@@ -180,7 +180,7 @@ class LLME:
         """Get a response from the LLM."""
         url = f"{self.config.base_url}/chat/completions"
         logger.debug(f"Sending %d messages to %s", len(self.messages), url)
-        with AnimationManager("blue"):
+        with AnimationManager("blue", self.config.plain):
             response = requests.post(
                 url,
                 headers={
@@ -275,8 +275,9 @@ class LLME:
 
 class AnimationManager:
     """A simple context manager for a spinner animation."""
-    def __init__(self, color):
+    def __init__(self, color, plain=False):
         self.color = color
+        self.plain = plain
 
     def _animate(self):
         """Animation loop, run in a thread."""
@@ -291,12 +292,14 @@ class AnimationManager:
 
     def stop(self):
         """Manually stop the animation."""
-        if sys.stdin.isatty() and not self.stop_event.is_set():
+        if self.plain:
+            return
+        if not self.stop_event.is_set():
             self.stop_event.set()
             self.animation_thread.join()
 
     def __enter__(self):
-        if sys.stdin.isatty():
+        if not self.plain:
             self.stop_event = threading.Event()
             self.animation_thread = threading.Thread(target=self._animate)
             self.animation_thread.start()
@@ -402,6 +405,7 @@ def main():
     parser.add_argument("--api-key", help="The API key [api_key]")
     parser.add_argument("-q", "--quit", default=None, action="store_true", help="Quit after processed all arguments prompts [quit]")
     parser.add_argument("-b", "--batch", default=None, action="store_true", help="Run non-interactively. Implies --quit. Implicit if stdin is not a tty [batch]")
+    parser.add_argument("-p", "--plain", default=None, action="store_true", help="No colors or tty fanciness. Implicit if stdout is not a tty [plain]")
     parser.add_argument("-o", "--chat-output", help="Export the full raw conversation in json")
     parser.add_argument("-i", "--chat-input", help="Continue a previous (exported) conversation")
     parser.add_argument("-s", "--system", dest="system_prompt", help="System prompt [system_prompt]")
@@ -426,6 +430,9 @@ def main():
 
     if args.batch is None and not sys.stdin.isatty():
         args.batch = True
+
+    if args.plain is None and not sys.stdout.isatty():
+        args.plain = True
 
     llme = LLME(args)
     llme.start()
