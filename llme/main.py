@@ -31,6 +31,7 @@ from sseclient import SSEClient
 import logging
 import subprocess
 import magic
+import tempfile
 
 # Configure logging
 logging.basicConfig(level=logging.WARNING)
@@ -288,10 +289,15 @@ class LLME:
         elif self.config.system_prompt:
             self.add_message({"role": "system", "content": self.config.system_prompt})
 
+        stdinfile = None
         if not sys.stdin.isatty():
             if len(self.prompts) > 0:
                 # There is prompts, so use stdin as data for the first prompt
-                self.prompts.insert(0, "/dev/stdin")
+                stdinfile = tempfile.NamedTemporaryFile(mode='w', delete=False)
+                with stdinfile as f:
+                    f.write(sys.stdin.read())
+
+                self.prompts.insert(0, stdinfile.name)
             else:
                 # No prompts, so use stdin as prompt
                 self.prompts = [sys.stdin.read()]
@@ -303,6 +309,8 @@ class LLME:
                 logger.info(f"Dumping conversation to %s", self.config.chat_output)
                 with open(self.config.chat_output, "w") as f:
                     json.dump(self.messages, f, indent=2)
+            if stdinfile:
+                os.unlink(stdinfile.name)
 
 
 class AnimationManager:
