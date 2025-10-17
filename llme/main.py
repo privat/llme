@@ -171,10 +171,6 @@ class LLME:
 
         content_parts = []
         for asset in files:
-            pre_message = asset.pre_message()
-            if pre_message:
-                self.messages.append(pre_message)
-                logger.debug(f"Pre-attached file: {self.messages[-1]}")
             content_part = asset.content_part()
             if content_part:
                 content_parts.append(content_part)
@@ -326,27 +322,15 @@ class Asset:
         self.mime_type = magic.from_buffer(self.raw_content, mime=True)
         logger.info(f"File {path} is {self.mime_type}")
 
-    def pre_message(self):
-        """Return a system message to pre-load the file content, or None"""
-        if self.mime_type.startswith("text/"):
-            data = self.raw_content.decode()
-            return {"role": "system", "content": f"The user is asking questions about {self.path} with this content:\n\n```\n{data}\n```\n"}
-        elif self.mime_type.startswith("image/"):
-            return None
-        else:
-            data = base64.b64encode(self.raw_content).decode()
-            return {"role": "system", "content": f"The user is asking questions about {self.path} ({self.mime_type}) with this base64 content:\n\n```\n{data}\n```\n"}
-
     def content_part(self):
-        """Return the content part for the user message, or None"""
-        if self.mime_type.startswith("text/"):
-            return None
-        elif self.mime_type.startswith("image/"):
+        """Return the content part for the user message"""
+        if self.mime_type.startswith("image/"):
             data = base64.b64encode(self.raw_content).decode()
             url = f"data:{self.mime_type};base64,{data}"
             return {"type": "image_url", "image_url": {"url": url}}
         else:
-            return None
+            data = base64.b64encode(self.raw_content).decode()
+            return {"type": "file", "file": { "file_data": data, "filename": self.path }}
 
 def apply_config(args, config):
     """Apply a config dict to an args namespace without overwriting existing values (precedence).
