@@ -360,10 +360,11 @@ def resolve_config(args):
     # 1. args have the highest precedence
 
     # 2. then explcit --config files in reverse order (last wins)
-    args.config.reverse()
-    for path in args.config:
-        config = load_config_file(path)
-        apply_config(args, config)
+    if args.config:
+        args.config.reverse()
+        for path in args.config:
+            config = load_config_file(path)
+            apply_config(args, config)
     del(args.config)
 
     # 3. Then environment variables
