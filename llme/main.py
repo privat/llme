@@ -51,11 +51,13 @@ class LLME:
         self.files = [] # the list of files to send to the LLM for the next prompt
 
     def get_model_name(self):
+        """Get the model name from the server if not provided, or validate it."""
+        logger.info(f"Get models from {self.base_url}")
         response = requests.get(f"{self.base_url}/models")
         response.raise_for_status()
         models = response.json()
         ids = [m["id"] for m in models["data"]]
-        logger.info(f"Available models from {self.base_url}: {', '.join(ids)}")
+        logger.info(f"Available models: {', '.join(ids)}")
 
         if not self.model:
             self.model = models["data"][0]["id"]
@@ -69,6 +71,7 @@ class LLME:
 
 
     def run_tool(self, tool, stdin):
+        """Run a tool and return the result as a system message (or None if cancelled)"""
         if self.yolo:
             print(colored(f"{len(self.messages)} YOLO RUN {tool}", "red", attrs=["bold"]))
         else:
@@ -108,6 +111,8 @@ class LLME:
         return {"role": "system", "content": content}
 
     def next_prompt(self):
+        """Get the next prompt from the user.
+        Returns None or a user message"""
         if len(self.prompts) > 0:
             user_input = self.prompts.pop(0)
             if os.path.exists(user_input):
@@ -135,6 +140,7 @@ class LLME:
         return None
 
     def chat_completion(self):
+        """Get a response from the LLM."""
         with AnimationManager("blue"):
             response = requests.post(
                 f"{self.base_url}/chat/completions",
@@ -163,9 +169,10 @@ class LLME:
                 continue
             full_content += content
             print(content, end='', flush=True)
-            cb = re.search(
-                r"```run ([\w+-]*)\n(.*?)```", full_content, re.DOTALL)
+            #FIXME: this is fragile and ugly.
+            cb = re.search(r"```run ([\w+-]*)\n(.*?)```", full_content, re.DOTALL)
             if cb:
+                # Force the LLM to stop once a tool call is found
                 break
         if not full_content.endswith('\n'):
             print()
@@ -181,6 +188,8 @@ class LLME:
         return None
 
     def start(self):
+        """Main loop."""
+
         self.get_model_name()
         logger.info(f"Use model {self.model} from {self.base_url}")
 
@@ -218,8 +227,10 @@ class AnimationManager:
     """A simple context manager for a spinner animation."""
     def __init__(self, color):
         self.color = color
-    def animate(self):
-        for c in itertools.cycle(['|', '/', '-', '\\']):
+
+    def _animate(self):
+        """Animation loop, run in a thread."""
+        for c in itertools.cycle("⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"):
             if self.stop_event.is_set():
                 break
             sys.stdout.write(f'\r{colored(c, self.color, attrs=["bold"])} ')
@@ -229,6 +240,7 @@ class AnimationManager:
         sys.stdout.flush()
 
     def stop(self):
+        """Manually stop the animation."""
         if sys.stdin.isatty() and not self.stop_event.is_set():
             self.stop_event.set()
             self.animation_thread.join()
@@ -236,7 +248,7 @@ class AnimationManager:
     def __enter__(self):
         if sys.stdin.isatty():
             self.stop_event = threading.Event()
-            self.animation_thread = threading.Thread(target=self.animate)
+            self.animation_thread = threading.Thread(target=self._animate)
             self.animation_thread.start()
         return self
 
@@ -282,7 +294,7 @@ def load_config_file(path):
         return tomllib.load(f)
 
 def load_config_files(args):
-    """Load config files in order of priority."""
+    """Load config files in order of priority, and apply them to args."""
     config_dirs = [
         os.path.expanduser("~/.config/llme"),
         os.path.dirname(os.path.abspath(__file__)),
@@ -300,6 +312,7 @@ def load_config_files(args):
 
 
 def main():
+    """The main CLI entry point."""
     config_path = os.path.join(os.environ.get( "HOME"), ".config", "llme", "config.toml")
     parser = argparse.ArgumentParser(description="OpenAI-compatible chat CLI.")
     parser.add_argument("-u", "--base-url", help="API base URL [base_url]")
