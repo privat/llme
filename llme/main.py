@@ -44,7 +44,6 @@ class LLME:
         self.model = config.model
         self.prompts = config.prompts # Initial prompts to process
         self.messages = [] # the sequence of messages with the LLM
-        self.files = [] # the list of files to send to the LLM for the next prompt
 
     def get_model_name(self):
         """Get the model name from the server if not provided, or validate it."""
@@ -139,8 +138,9 @@ class LLME:
         Returns None or a user message"""
         logger.debug(f"Get the next prompt. Prompts queue: {len(self.prompts)}")
 
+        files = [] # the list of files to send to the LLM for the next prompt
         while file := self.next_asset():
-            self.files.append(file)
+            files.append(file)
 
         if len(self.prompts) > 0:
             user_input = self.prompts.pop(0)
@@ -161,10 +161,10 @@ class LLME:
             return None
 
         while file := self.next_asset():
-            self.files.append(file)
+            files.append(file)
 
         content_parts = []
-        for asset in self.files:
+        for asset in files:
             pre_message = asset.pre_message()
             if pre_message:
                 self.messages.append(pre_message)
