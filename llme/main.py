@@ -40,10 +40,11 @@ logger = logging.getLogger(__name__)
 class LLME:
     """The God class of the application."""
 
-    def __init__(self, base_url, model, api_key, system_prompt, yolo, prompts):
+    def __init__(self, base_url, model, api_key, quit, system_prompt, yolo, prompts):
         self.base_url = base_url
         self.model = model
         self.api_key = api_key
+        self.quit = quit
         self.system_prompt = system_prompt
         self.yolo = yolo
         self.prompts = prompts
@@ -74,10 +75,12 @@ class LLME:
         """Run a tool and return the result as a system message (or None if cancelled)"""
         if self.yolo:
             print(colored(f"{len(self.messages)} YOLO RUN {tool}", "red", attrs=["bold"]))
-        else:
+        elif sys.stdin.isatty():
             x = input(colored(f"{len(self.messages)} RUN {tool} [Yn]? ", "red", attrs=["bold"])).strip()
             if x not in ['', 'y', 'Y']:
                 return None
+        else:
+            raise EOFError("Non interactive mode") # ugly
 
         proc = subprocess.Popen(
                 [tool],
@@ -120,6 +123,8 @@ class LLME:
                 return None
             if sys.stdin.isatty():
                 print(colored(f"{len(self.messages)}> ", "green", attrs=["bold"]), user_input)
+        elif self.quit:
+            raise EOFError("quit") # ugly
         elif sys.stdin.isatty():
             user_input = input(colored(f"{len(self.messages)}> ", "green", attrs=["bold"]))
         else:
@@ -319,6 +324,7 @@ def main():
     parser.add_argument("-u", "--base-url", help="API base URL [base_url]")
     parser.add_argument("-m", "--model", help="Model name [model]")
     parser.add_argument("--api-key", default=os.environ.get("OPENAI_API_KEY"), help="The API key, optionnal [api_key]")
+    parser.add_argument( "-q", "--quit", action="store_true", help="Quit after processed all arguments prompts [quit]")
     parser.add_argument( "-s", "--system", dest="system_prompt", help="System prompt [system_prompt]")
     parser.add_argument("-c", "--config", help="Custom configuration file")
     parser.add_argument("-v", "--verbose", default=0, action="count", help="Increase verbosity level (can be used multiple times)")
