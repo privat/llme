@@ -130,10 +130,14 @@ class LLME:
                 print(colored(f"{len(self.messages)}> ", "green", attrs=["bold"]), user_input)
         elif self.quit:
             raise EOFError("quit") # ugly
-        elif sys.stdin.isatty():
-            user_input = input(colored(f"{len(self.messages)}> ", "green", attrs=["bold"]))
         else:
-            user_input = input()
+            try:
+                if sys.stdin.isatty():
+                    user_input = input(colored(f"{len(self.messages)}> ", "green", attrs=["bold"]))
+                else:
+                    user_input = input()
+            except KeyboardInterrupt:
+                raise EOFError("interrupted") # ugly
 
         if user_input == '':
             return None
@@ -233,7 +237,7 @@ class LLME:
                 logger.warning(e.response.content)
                 raise e
             except KeyboardInterrupt:
-                logger.warning("Interrupted by user. Use ^D to exit.")
+                logger.warning("Interrupted by user.")
                 continue
             except EOFError:
                 break
