@@ -258,7 +258,8 @@ class LLME:
             except KeyboardInterrupt:
                 logger.warning("Interrupted by user.")
                 continue
-            except EOFError:
+            except EOFError as e:
+                logger.info("Quiting: %s", str(e))
                 break
 
 
