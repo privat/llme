@@ -295,6 +295,11 @@ def load_config_file(path):
 
 def load_config_files(args):
     """Load config files in order of priority, and apply them to args."""
+    if args.config:
+        config = load_config_file(args.config)
+        apply_config(args, config)
+    del(args.config)
+
     config_dirs = [
         os.path.expanduser("~/.config/llme"),
         os.path.dirname(os.path.abspath(__file__)),
@@ -305,10 +310,6 @@ def load_config_files(args):
             logger.info(f"Loading config from {path}")
             config = load_config_file(path)
             apply_config(args, config)
-    if args.config:
-        config = load_config_file(args.config)
-        apply_config(args, config)
-    del(args.config)
 
 
 def main():
