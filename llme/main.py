@@ -360,6 +360,7 @@ def apply_env(args):
 
 def load_config_file(path):
     """Load a TOML config file."""
+    logger.debug(f"Loading config from %s", path)
     with open(path, "rb") as f:
         return tomllib.load(f)
 
@@ -392,7 +393,10 @@ def resolve_config(args):
 
 def main():
     """The main CLI entry point."""
-    parser = argparse.ArgumentParser(description="OpenAI-compatible chat CLI.")
+    parser = argparse.ArgumentParser(
+            usage='%(prog)s [options...] [prompts...]',
+            description="OpenAI-compatible chat CLI.",
+            )
     parser.add_argument("-u", "--base-url", help="API base URL [base_url]")
     parser.add_argument("-m", "--model", help="Model name [model]")
     parser.add_argument("--api-key", help="The API key [api_key]")
@@ -400,15 +404,17 @@ def main():
     parser.add_argument("-o", "--chat-output", help="Export the full raw conversation in json")
     parser.add_argument("-i", "--chat-input", help="Continue a previous (exported) conversation")
     parser.add_argument("-s", "--system", dest="system_prompt", help="System prompt [system_prompt]")
-    parser.add_argument("-c", "--config", nargs="*", help="Custom configuration files")
+    parser.add_argument("-c", "--config", action="append", help="Custom configuration files")
     parser.add_argument("-v", "--verbose", default=0, action="count", help="Increase verbosity level (can be used multiple times)")
     parser.add_argument("-Y", "--yolo", default=None, action="store_true", help="UNSAFE: Do not ask for confirmation before running tools")
-    parser.add_argument("prompts", nargs="*", help="Sequence of prompts")
 
-    args = parser.parse_args()
+    args, prompts = parser.parse_known_args()
+    args.prompts = prompts
 
     logging_levels = [logging.WARNING, logging.INFO, logging.DEBUG]
     logger.setLevel(logging_levels[min(args.verbose, len(logging_levels)-1)])
+    logger.info("Log level set to %s", logging.getLevelName(logger.level))
+    logger.debug("Given arguments %s", vars(args))
     del(args.verbose)
 
     resolve_config(args)
