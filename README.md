@@ -27,7 +27,7 @@ pipx install llme-cli
 
   Edit `~/.config/llme/config.toml`
   So avoid typing the base-urli and things every time.
-  Look at [config.toml](config.toml) for an example.
+  Look at [config.toml](llme/config.toml) for an example.
 
 * Run one-shots queries:
 

@@ -29,5 +29,5 @@ Repository = "https://github.com/privat/llme"
 [project.scripts]
 llme = "llme.main:main"
 
-[tool.setuptools.packages.find]
-include = ["llme"]
+[tool.setuptools.package-data]
+llme = ["config.toml"]
