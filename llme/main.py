@@ -423,6 +423,7 @@ def main():
     parser.add_argument("-i", "--chat-input", help="Continue a previous (exported) conversation")
     parser.add_argument("-s", "--system", dest="system_prompt", help="System prompt [system_prompt]")
     parser.add_argument("-c", "--config", action="append", help="Custom configuration files")
+    parser.add_argument(      "--dump-config", action="store_true", help="Print the effective config and quit")
     parser.add_argument("-v", "--verbose", default=0, action="count", help="Increase verbosity level (can be used multiple times)")
     parser.add_argument("-Y", "--yolo", default=None, action="store_true", help="UNSAFE: Do not ask for confirmation before running tools. Combine with --batch to reach the singularity.")
 
@@ -436,6 +437,11 @@ def main():
     del(args.verbose)
 
     resolve_config(args)
+
+    if args.dump_config:
+        json.dump(vars(args), sys.stdout, indent=2)
+        return
+    del(args.dump_config)
 
     if args.base_url is None:
         print("Error: --base-url required and not definied the config file.", file=sys.stderr)
