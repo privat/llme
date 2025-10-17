@@ -198,6 +198,9 @@ class LLME:
             )
             response.raise_for_status()
 
+        if not self.config.plain:
+            print(colored(f"{len(self.messages)}< ", "blue", attrs=["bold"]), end='', flush=True)
+
         full_content = ''
         cb = None
         for event in SSEClient(response).events():
