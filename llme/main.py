@@ -78,8 +78,12 @@ class LLME:
             if x not in ['', 'y', 'Y']:
                 return None
 
+        # hack for unbuffered python
+        if tool == "python":
+            tool = ["python", "-u"]
+
         proc = subprocess.Popen(
-                [tool],
+                tool,
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
@@ -96,7 +100,7 @@ class LLME:
 
         content = ''
         with AnimationManager("red", self.config.plain) as am:
-            while line := proc.stdout.read():
+            while line := proc.stdout.readline():
                 am.stop()
                 print(line,end='',flush=True)
                 content += line
