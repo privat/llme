@@ -157,11 +157,18 @@ options:
   -Y, --yolo            UNSAFE: Do not ask for confirmation before running tools
 ```
 
-All options can be set in the config file (with the name in brackets, e.g. `base_url` for `--base-url`).
-An option in the command line overrides the one in the `--config` file, that overrides the one in the user configuration file (`~/.config/llme/config.toml`), that overrides the one in the system config file (in the package).
-
-
 Note: Run a fresh `--help` in case I forgot to update this README.
+
+All options with names in brackets can be set in the config file (`base_url` for `--base-url`).
+They can also be set by environment variables (`LLME_BASE_URL` for `--base-url`).
+
+For each option, the precedence order is the following:
+
+1. The explicit option in the command line (the higher precedence)
+2. The explicit config file (given by `--config`)
+3. The environment variables (`LLME_SOMETHING`)
+4. The user configuration file (`~/.config/llme/config.toml`)
+5. The system configuration file provided by the package (the lowest precedence)
 
 
 ## Development

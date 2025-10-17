@@ -339,18 +339,36 @@ def apply_config(args, config):
         if k not in variables:
             logger.warning(f"Unknown config key {k}")
 
+def apply_env(args):
+    """Apply environment variables to an args namespace without overwriting existing values (precedence)."""
+    variables = vars(args)
+    for k in variables:
+        var = f"LLME_{k.upper()}"
+        env = os.environ.get(var)
+        logger.debug(f"Env var {var}={env}")
+        if variables[k] is None and env:
+            # TODO type conversion
+            setattr(args, k, env)
+
 def load_config_file(path):
     """Load a TOML config file."""
     with open(path, "rb") as f:
         return tomllib.load(f)
 
-def load_config_files(args):
-    """Load config files in order of priority, and apply them to args."""
+def resolve_config(args):
+    """Compute config in order of precedence"""
+    # 1. args have the highest precedence
+
+    # 2. then explcit --config file
     if args.config:
         config = load_config_file(args.config)
         apply_config(args, config)
     del(args.config)
 
+    # 3. Then environment variables
+    apply_env(args)
+
+    # 4. The default config files: user, then system
     config_dirs = [
         os.path.expanduser("~/.config/llme"),
         os.path.dirname(os.path.abspath(__file__)),
@@ -358,10 +376,9 @@ def load_config_files(args):
     for dir in config_dirs:
         path = os.path.join(dir, "config.toml")
         if os.path.exists(path):
-            logger.info(f"Loading config from {path}")
             config = load_config_file(path)
             apply_config(args, config)
-
+    logger.debug(f"Final config: %s", vars(args))
 
 def main():
     """The main CLI entry point."""
@@ -382,7 +399,7 @@ def main():
     logger.setLevel(logging_levels[min(args.verbose, len(logging_levels)-1)])
     del(args.verbose)
 
-    load_config_files(args)
+    resolve_config(args)
 
     if args.base_url is None:
         print("Error: --base-url required and not definied the config file.", file=sys.stderr)
