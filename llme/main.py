@@ -71,12 +71,12 @@ class LLME:
         """Run a tool and return the result as a system message (or None if cancelled)"""
         if self.config.yolo:
             print(colored(f"{len(self.messages)} YOLO RUN {tool}", "red", attrs=["bold"]))
-        elif sys.stdin.isatty():
+        elif self.config.batch:
+            raise EOFError("No tool confirmation in batch mode") # ugly
+        else:
             x = input(colored(f"{len(self.messages)} RUN {tool} [Yn]? ", "red", attrs=["bold"])).strip()
             if x not in ['', 'y', 'Y']:
                 return None
-        else:
-            raise EOFError("Non interactive mode") # ugly
 
         proc = subprocess.Popen(
                 [tool],
@@ -142,7 +142,7 @@ class LLME:
             user_input = self.prompts.pop(0)
             if sys.stdin.isatty():
                 print(colored(f"{len(self.messages)}>", "green", attrs=["bold"]), user_input)
-        elif self.config.quit:
+        elif self.config.quit or self.config.batch:
             raise EOFError("quit") # ugly
         else:
             try:
@@ -401,12 +401,13 @@ def main():
     parser.add_argument("-m", "--model", help="Model name [model]")
     parser.add_argument("--api-key", help="The API key [api_key]")
     parser.add_argument("-q", "--quit", default=None, action="store_true", help="Quit after processed all arguments prompts [quit]")
+    parser.add_argument("-b", "--batch", default=None, action="store_true", help="Run non-interactively. Implies --quit. Implicit if stdin is not a tty [batch]")
     parser.add_argument("-o", "--chat-output", help="Export the full raw conversation in json")
     parser.add_argument("-i", "--chat-input", help="Continue a previous (exported) conversation")
     parser.add_argument("-s", "--system", dest="system_prompt", help="System prompt [system_prompt]")
     parser.add_argument("-c", "--config", action="append", help="Custom configuration files")
     parser.add_argument("-v", "--verbose", default=0, action="count", help="Increase verbosity level (can be used multiple times)")
-    parser.add_argument("-Y", "--yolo", default=None, action="store_true", help="UNSAFE: Do not ask for confirmation before running tools")
+    parser.add_argument("-Y", "--yolo", default=None, action="store_true", help="UNSAFE: Do not ask for confirmation before running tools. Combine with --batch to reach the singularity.")
 
     args, prompts = parser.parse_known_args()
     args.prompts = prompts
@@ -422,6 +423,9 @@ def main():
     if args.base_url is None:
         print("Error: --base-url required and not definied the config file.", file=sys.stderr)
         return 1
+
+    if args.batch is None and not sys.stdin.isatty():
+        args.batch = True
 
     llme = LLME(args)
     llme.start()
