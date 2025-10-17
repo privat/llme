@@ -138,16 +138,21 @@ class LLME:
         if user_input == '':
             return None
 
-        if len(self.files) > 0:
-            content = [{"type": "text", "text": user_input}]
-            for asset in self.files:
-                content.append(asset.content())
-            self.files = []
-            res = {"role": "user", "content": content}
+        content_parts = []
+        for asset in self.files:
+            pre_message = asset.pre_message()
+            if pre_message:
+                self.messages.append(pre_message)
+                logger.debug(f"Pre-attached file: {self.messages[-1]}")
+            content_part = asset.content_part()
+            if content_part:
+                content_parts.append(content_part)
+        if len(content_parts) > 0:
+            content_parts.insert(0, {"type": "text", "text": user_input})
+            res = {"role": "user", "content": content_parts}
             return res
         else:
             return {"role": "user", "content": user_input}
-        return None
 
     def chat_completion(self):
         """Get a response from the LLM."""
@@ -275,17 +280,27 @@ class Asset:
         self.mime_type = magic.from_buffer(self.raw_content, mime=True)
         logger.info(f"File {path} is {self.mime_type}")
 
-    def content(self):
+    def pre_message(self):
+        """Return a system message to pre-load the file content, or None"""
         if self.mime_type.startswith("text/"):
             data = self.raw_content.decode()
-            return {"type": "file", "file": {"filename": self.path, "file_data": data}}
+            return {"role": "system", "content": f"The user is asking questions about this content:\n```{self.path}\n{data}\n```\n"}
+        elif self.mime_type.startswith("image/"):
+            return None
+        else:
+            data = base64.b64encode(self.raw_content).decode()
+            return {"role": "system", "content": f"The user is asking questions about this content:\n```{self.path} content-type:base64:{self.mime_type}\n{data}\n```\n"}
+
+    def content_part(self):
+        """Return the content part for the user message, or None"""
+        if self.mime_type.startswith("text/"):
+            return None
         elif self.mime_type.startswith("image/"):
             data = base64.b64encode(self.raw_content).decode()
             url = f"data:{self.mime_type};base64,{data}"
             return {"type": "image_url", "image_url": {"url": url}}
         else:
-            data = base64.b64encode(self.raw_content).decode()
-            return {"type": "file", "file": {"filename": self.path, "file_data": data}}
+            return None
 
 def apply_config(args, config):
     """Apply a config dict to an args namespace without overwriting existing values (precedence).
