@@ -90,6 +90,7 @@ class LLME:
                 text=True,
                 bufsize=1  # line-buffered
                 )
+        logger.debug(f"Starting sub-process {tool}")
 
         # send data to stdin
         # FIXME: avoid deadlock...
@@ -116,6 +117,7 @@ class LLME:
     def next_prompt(self):
         """Get the next prompt from the user.
         Returns None or a user message"""
+        logger.debug(f"Get the next prompt. Prompts queue: {len(self.prompts)}")
         if len(self.prompts) > 0:
             user_input = self.prompts.pop(0)
             if os.path.exists(user_input):
@@ -146,6 +148,7 @@ class LLME:
 
     def chat_completion(self):
         """Get a response from the LLM."""
+        logger.debug(f"Sending {len(self.messages)} messages to {self.base_url}")
         with AnimationManager("blue"):
             response = requests.post(
                 f"{self.base_url}/chat/completions",
