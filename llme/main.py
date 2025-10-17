@@ -364,10 +364,10 @@ def main():
 
     if args.base_url is None:
         print("Error: --base-url required and not definied the config file.", file=sys.stderr)
-        sys.exit(1)
+        return 1
 
     llme = LLME(**vars(args))
     llme.start()
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
