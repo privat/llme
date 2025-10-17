@@ -22,7 +22,6 @@ import json
 import argparse
 import requests
 import base64
-import mimetypes
 from termcolor import colored, cprint
 import itertools
 import threading
