@@ -84,10 +84,10 @@ Proposal to also improve the default system prompt is welcome.
 ps aux | llme "Which process consumes the most memory?"
 ```
 
-you can also use a file path as query, but put them **before** the prompt:
+you can also use file paths as assets to a prompt:
 
 ```bash
-llme /etc/passwd /etc/groups "how many regular users and regular groups are there in these files?"
+llme "how many regular users and regular groups are there in these files?" /etc/passwd /etc/group
 ```
 
 Note: the file content and the path will be given to the LLM.
@@ -101,10 +101,10 @@ Same as for files, but with images — duh, images are files!
 llme "What is in this image?" < image.png
 ```
 
-you can also use a file path as query, but put them **before** the prompt:
+you can still use paths:
 
 ```bash
-llme image.png "What is in this image?"
+llme "What is in this image?" image.png
 ```
 
 

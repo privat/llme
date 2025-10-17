@@ -113,20 +113,38 @@ class LLME:
         content = f"```result {tool} exitcode={proc.returncode}\n{content}\n```\n"
         return {"role": "system", "content": content}
 
+
+    def next_asset(self):
+        """Get the next asset from the user. or None"""
+        if len(self.prompts) == 0:
+            return None
+
+        # peek a the next "prompt" to see if it's a file
+        user_input = self.prompts[0]
+        if not os.path.exists(user_input):
+            return None
+
+        # it's a file, so remove it from prompts and add it to files
+        self.prompts.pop(0)
+        file = Asset(user_input)
+        # Test to handle input redirection from /dev/null
+        if len(file.raw_content) > 0:
+            return file
+        return None
+
+
     def next_prompt(self):
         """Get the next prompt from the user.
         Returns None or a user message"""
         logger.debug(f"Get the next prompt. Prompts queue: {len(self.prompts)}")
+
+        while file := self.next_asset():
+            self.files.append(file)
+
         if len(self.prompts) > 0:
             user_input = self.prompts.pop(0)
-            if os.path.exists(user_input):
-                file = Asset(user_input)
-                # Test to handle input redirection from /dev/null
-                if len(file.raw_content) > 0:
-                    self.files.append(file)
-                return self.next_prompt() # Hum...
             if sys.stdin.isatty():
-                print(colored(f"{len(self.messages)}> ", "green", attrs=["bold"]), user_input)
+                print(colored(f"{len(self.messages)}>", "green", attrs=["bold"]), user_input)
         elif self.quit:
             raise EOFError("quit") # ugly
         else:
@@ -140,6 +158,9 @@ class LLME:
 
         if user_input == '':
             return None
+
+        while file := self.next_asset():
+            self.files.append(file)
 
         content_parts = []
         for asset in self.files:
@@ -156,6 +177,7 @@ class LLME:
             return res
         else:
             return {"role": "user", "content": user_input}
+
 
     def chat_completion(self):
         """Get a response from the LLM."""
@@ -287,12 +309,12 @@ class Asset:
         """Return a system message to pre-load the file content, or None"""
         if self.mime_type.startswith("text/"):
             data = self.raw_content.decode()
-            return {"role": "system", "content": f"The user is asking questions about this content:\n```{self.path}\n{data}\n```\n"}
+            return {"role": "system", "content": f"The user is asking questions about {self.path} with this content:\n\n```\n{data}\n```\n"}
         elif self.mime_type.startswith("image/"):
             return None
         else:
             data = base64.b64encode(self.raw_content).decode()
-            return {"role": "system", "content": f"The user is asking questions about this content:\n```{self.path} content-type:base64:{self.mime_type}\n{data}\n```\n"}
+            return {"role": "system", "content": f"The user is asking questions about {self.path} ({self.mime_type}) with this base64 content:\n\n```\n{data}\n```\n"}
 
     def content_part(self):
         """Return the content part for the user message, or None"""
