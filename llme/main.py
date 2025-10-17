@@ -121,8 +121,11 @@ class LLME:
         if len(self.prompts) > 0:
             user_input = self.prompts.pop(0)
             if os.path.exists(user_input):
-                self.files.append(Asset(user_input))
-                return None
+                file = Asset(user_input)
+                # Test to handle input redirection from /dev/null
+                if len(file.raw_content) > 0:
+                    self.files.append(file)
+                return self.next_prompt() # Hum...
             if sys.stdin.isatty():
                 print(colored(f"{len(self.messages)}> ", "green", attrs=["bold"]), user_input)
         elif self.quit:
