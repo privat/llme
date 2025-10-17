@@ -265,22 +265,47 @@ class Asset:
             return {"type": "file", "file": {"filename": self.path, "file_data": data}}
 
 def apply_config(args, config):
-    """
-    Use default config value is absent from args.
-    The method is a little ugly but it works...
-    """
+    """Apply a config dict to an args namespace without overwriting existing values (precedence).
+    The method is a little ugly but it works... """
+    #TODO check types
     variables = vars(args)
     for k in variables:
         if variables[k] is None and k in config:
             setattr(args, k, config[k])
+    for k in config:
+        if k not in variables:
+            logger.warning(f"Unknown config key {k}")
+
+def load_config_file(path):
+    """Load a TOML config file."""
+    with open(path, "rb") as f:
+        return tomllib.load(f)
+
+def load_config_files(args):
+    """Load config files in order of priority."""
+    config_dirs = [
+        os.path.expanduser("~/.config/llme"),
+        os.path.dirname(os.path.abspath(__file__)),
+        ]
+    for dir in config_dirs:
+        path = os.path.join(dir, "config.toml")
+        if os.path.exists(path):
+            logger.info(f"Loading config from {path}")
+            config = load_config_file(path)
+            apply_config(args, config)
+    if args.config:
+        config = load_config_file(args.config)
+        apply_config(args, config)
+    del(args.config)
+
 
 def main():
     config_path = os.path.join(os.environ.get( "HOME"), ".config", "llme", "config.toml")
-    parser = argparse.ArgumentParser(description="OpenAI-compatible chat CLI")
-    parser.add_argument("-u", "--base-url", help="API base URL")
-    parser.add_argument("-m", "--model", help="Model name")
-    parser.add_argument("--api-key", default=os.environ.get("OPENAI_API_KEY"))
-    parser.add_argument( "-s", "--system", dest="system_prompt", help="System prompt")
+    parser = argparse.ArgumentParser(description="OpenAI-compatible chat CLI.")
+    parser.add_argument("-u", "--base-url", help="API base URL [base_url]")
+    parser.add_argument("-m", "--model", help="Model name [model]")
+    parser.add_argument("--api-key", default=os.environ.get("OPENAI_API_KEY"), help="The API key, optionnal [api_key]")
+    parser.add_argument( "-s", "--system", dest="system_prompt", help="System prompt [system_prompt]")
     parser.add_argument("-c", "--config", help="Custom configuration file")
     parser.add_argument("-v", "--verbose", default=0, action="count", help="Increase verbosity level (can be used multiple times)")
     parser.add_argument("-Y", "--yolo", action="store_true", help="UNSAFE: Do not ask for confirmation before running tools")
@@ -292,11 +317,7 @@ def main():
     logger.setLevel(logging_levels[min(args.verbose, len(logging_levels)-1)])
     del(args.verbose)
 
-    if args.config or os.path.exists(config_path):
-        with open(args.config or config_path, "rb") as f:
-            config = tomllib.load(f)
-        apply_config(args, config)
-    del (args.config)
+    load_config_files(args)
 
     if args.base_url is None:
         print("Error: --base-url required and not definied the config file.", file=sys.stderr)
