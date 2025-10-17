@@ -136,7 +136,7 @@ class LLME:
             print(colored(f"EXIT {proc.returncode}", "red", attrs=["bold"]))
 
         content = f"```result {tool} exitcode={proc.returncode}\n{content}\n```\n"
-        return {"role": "system", "content": content}
+        return {"role": "tool", "content": content}
 
 
     def next_asset(self):
