@@ -410,7 +410,6 @@ def resolve_config(args):
         for path in args.config:
             config = load_config_file(path)
             apply_config(args, config)
-    del(args.config)
 
     # 3. Then environment variables
     apply_env(args)
@@ -454,14 +453,12 @@ def main():
     logger.setLevel(logging_levels[min(args.verbose, len(logging_levels)-1)])
     logger.info("Log level set to %s", logging.getLevelName(logger.level))
     logger.debug("Given arguments %s", vars(args))
-    del(args.verbose)
 
     resolve_config(args)
 
     if args.dump_config:
         json.dump(vars(args), sys.stdout, indent=2)
         return
-    del(args.dump_config)
 
     if args.base_url is None:
         print("Error: --base-url required and not definied the config file.", file=sys.stderr)
