@@ -49,7 +49,7 @@ class LLME:
 
 
     def add_message(self, message):
-        logger.debug(f"Add %s message: %s", message['role'], message)
+        logger.debug("Add %s message: %s", message['role'], message)
         self.messages.append(message)
 
         # Special filtering for some models/servers
@@ -74,12 +74,12 @@ class LLME:
     def get_model_name(self):
         """Get the model name from the server if not provided, or validate it."""
         url = f"{self.config.base_url}/models"
-        logger.info(f"Get models from %s", url)
+        logger.info("Get models from %s", url)
         response = requests.get(url)
         response.raise_for_status()
         models = response.json()
         ids = [m["id"] for m in models["data"]]
-        logger.info(f"Available models: {', '.join(ids)}")
+        logger.info("Available models: %s", ids)
 
         if not self.model:
             self.model = models["data"][0]["id"]
@@ -115,7 +115,7 @@ class LLME:
                 text=True,
                 bufsize=1  # line-buffered
                 )
-        logger.debug(f"Starting sub-process {tool}")
+        logger.debug("Starting sub-process %s", tool)
 
         # send data to stdin
         # FIXME: avoid deadlock...
@@ -162,7 +162,7 @@ class LLME:
     def next_prompt(self):
         """Get the next prompt from the user.
         Returns None or a user message"""
-        logger.debug(f"Get the next prompt. Prompts queue: {len(self.prompts)}")
+        logger.debug("Get the next prompt. Prompts queue: %d", len(self.prompts))
 
         files = [] # the list of files to send to the LLM for the next prompt
         while file := self.next_asset():
@@ -205,7 +205,7 @@ class LLME:
     def chat_completion(self):
         """Get a response from the LLM."""
         url = f"{self.config.base_url}/chat/completions"
-        logger.debug(f"Sending %d raw messages to %s", len(self.raw_messages), url)
+        logger.debug("Sending %d raw messages to %s", len(self.raw_messages), url)
         with AnimationManager("blue", self.config.plain):
             response = requests.post(
                 url,
@@ -283,14 +283,14 @@ class LLME:
         """Start, work, and terminate"""
 
         self.get_model_name()
-        logger.info(f"Use model %s from %s", self.model, self.config.base_url)
+        logger.info("Use model %s from %s", self.model, self.config.base_url)
 
         if self.config.chat_input:
-            logger.info(f"Loading conversation from %s", self.config.chat_input)
+            logger.info("Loading conversation from %s", self.config.chat_input)
             with open(self.config.chat_input, "r") as f:
                 for message in json.load(f):
                     self.add_message(message)
-            logger.info(f"Loaded %d messages", len(self.messages))
+            logger.info("Loaded %d messages", len(self.messages))
         elif self.config.system_prompt:
             self.add_message({"role": "system", "content": self.config.system_prompt})
 
@@ -311,7 +311,7 @@ class LLME:
             self.loop()
         finally:
             if self.config.chat_output:
-                logger.info(f"Dumping conversation to %s", self.config.chat_output)
+                logger.info("Dumping conversation to %s", self.config.chat_output)
                 with open(self.config.chat_output, "w") as f:
                     json.dump(self.messages, f, indent=2)
             if stdinfile:
@@ -382,7 +382,7 @@ def apply_config(args, config, path):
             setattr(args, k, config[k])
     for k in config:
         if k not in variables:
-            logger.warning(f"%s: Unknown config key %s", path, k)
+            logger.warning("%s: Unknown config key %s", path, k)
 
 def apply_env(args):
     """Apply environment variables to an args namespace without overwriting existing values (precedence)."""
@@ -396,11 +396,11 @@ def apply_env(args):
     for k in os.environ:
         m = re.match(r'LLME_(.*)', k)
         if m and m[1].lower() not in variables:
-            logger.warning(f"Unknown environment variable %s", k)
+            logger.warning("Unknown environment variable %s", k)
 
 def load_config_file(path):
     """Load a TOML config file."""
-    logger.debug(f"Loading config from %s", path)
+    logger.debug("Loading config from %s", path)
     with open(path, "rb") as f:
         return tomllib.load(f)
 
@@ -427,7 +427,7 @@ def resolve_config(args):
         if os.path.exists(path):
             config = load_config_file(path)
             apply_config(args, config, path)
-    logger.debug(f"Final config: %s", vars(args))
+    logger.debug("Final config: %s", vars(args))
 
 def main():
     """The main CLI entry point."""
