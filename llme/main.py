@@ -242,7 +242,7 @@ class LLME:
             full_content += content
             print(content, end='', flush=True)
             #FIXME: this is fragile and ugly.
-            cb = re.search(r"```run ([\w+-]*)\n(.*?)```", full_content, re.DOTALL)
+            cb = re.search(r"^```run ([\w+-]*)\n(.*?)^```$", full_content, re.DOTALL | re.MULTILINE)
             if cb:
                 # Force the LLM to stop once a tool call is found
                 break
