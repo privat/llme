@@ -406,8 +406,7 @@ def resolve_config(args):
 
     # 2. then explcit --config files in reverse order (last wins)
     if args.config:
-        args.config.reverse()
-        for path in args.config:
+        for path in reversed(args.config):
             config = load_config_file(path)
             apply_config(args, config, path)
 
