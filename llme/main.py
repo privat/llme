@@ -32,6 +32,7 @@ import logging
 import subprocess
 import magic
 import tempfile
+import readline
 
 # Configure logging
 logging.basicConfig(level=logging.WARNING)
