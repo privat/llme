@@ -232,7 +232,11 @@ class LLME:
             choice0 = data['choices'][0]
             if choice0['finish_reason'] == 'stop':
                 break
-            content = choice0['delta']['content']
+            if 'reasoning_content' in choice0['delta']:
+                # Some thinking models like qwen3 have a reasoning_content field
+                content = choice0['delta']['reasoning_content']
+            else:
+                content = choice0['delta']['content']
             if content is None:
                 continue
             full_content += content
