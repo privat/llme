@@ -34,8 +34,7 @@ import magic
 import tempfile
 import readline
 
-# Configure logging
-logging.basicConfig(level=logging.WARNING)
+# The global logger of the module
 logger = logging.getLogger(__name__)
 
 class LLME:
