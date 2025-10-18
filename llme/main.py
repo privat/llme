@@ -393,6 +393,10 @@ def apply_env(args):
         if variables[k] is None and env:
             # TODO type conversion
             setattr(args, k, env)
+    for k in os.environ:
+        m = re.match(r'LLME_(.*)', k)
+        if m and m[1].lower() not in variables:
+            logger.warning(f"Unknown environment variable %s", k)
 
 def load_config_file(path):
     """Load a TOML config file."""
