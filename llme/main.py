@@ -264,7 +264,8 @@ class LLME:
                 while self.chat_completion():
                     pass
             except requests.exceptions.RequestException as e:
-                logger.warning(e.response.content)
+                logger.error(vars(e.response))
+                logger.error(e.response.content)
                 raise e
             except KeyboardInterrupt:
                 logger.warning("Interrupted by user.")
