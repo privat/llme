@@ -372,7 +372,7 @@ class Asset:
             data = base64.b64encode(self.raw_content).decode()
             return {"type": "file", "file": { "file_data": data, "filename": self.path }}
 
-def apply_config(args, config):
+def apply_config(args, config, path):
     """Apply a config dict to an args namespace without overwriting existing values (precedence).
     The method is a little ugly but it works... """
     #TODO check types
@@ -382,7 +382,7 @@ def apply_config(args, config):
             setattr(args, k, config[k])
     for k in config:
         if k not in variables:
-            logger.warning(f"Unknown config key {k}")
+            logger.warning(f"%s: Unknown config key %s", path, k)
 
 def apply_env(args):
     """Apply environment variables to an args namespace without overwriting existing values (precedence)."""
@@ -409,7 +409,7 @@ def resolve_config(args):
         args.config.reverse()
         for path in args.config:
             config = load_config_file(path)
-            apply_config(args, config)
+            apply_config(args, config, path)
 
     # 3. Then environment variables
     apply_env(args)
@@ -423,7 +423,7 @@ def resolve_config(args):
         path = os.path.join(dir, "config.toml")
         if os.path.exists(path):
             config = load_config_file(path)
-            apply_config(args, config)
+            apply_config(args, config, path)
     logger.debug(f"Final config: %s", vars(args))
 
 def main():
