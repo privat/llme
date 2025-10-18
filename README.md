@@ -12,26 +12,49 @@ A simple, single-file command-line chat client compatible with the OpenAI API.
 - **Command-line interface:** Run it from the terminal.
 - **Tools included:** Ask it to act on your file system and edit files (yolo).
 
+The basic idea is that LLMs are trained on code and OS configuration and already (machine) learnt to select the probable tools to use and actions to take.
+Therefore, there is no need to teach them to use made-up function and tools with bad json schemas.
+Just give them a shell, a python interpreter, and let you (only) live (once).
 
-## Installation
+Use it as a helping (dummy assistant) to inspect configuration, source code, run commands, and edit files.
+
+
+## Quickstart a local LLM server if you don't have one already
+
+```bash
+# Example with llama.cpp
+brew install llama.cpp  # if you use homebrew. look at https://github.com/ggerganov/llama.cpp for other options
+llama-server -hf unsloth/Qwen3-Coder-30B-A3B-Instruct-GGUF --ctx-size 0 --jinja # or whatever model you like. This one is ok.
+```
+
+
+## Installation of llme
 
 Chose your preferred installation or execution method:
 
 ```bash
-# Might be old (I should automatise the upload)
+# Install from PyPI (possibily an old version)
 pipx install llme-cli
 llme --help
 ```
 
 ```bash
-git clone https://github.com/privat/llme.git
-pipx install -e llme
-llme
+# Install from GitHub directly (latest dev version)
+pipx install -f git+https://github.com/privat/llme.git
+llme --help
 ```
 
 ```bash
-# Just run it directly from the source directory
+# Clone then install in development mode
 git clone https://github.com/privat/llme.git
+pipx install -e llme
+llme --help
+```
+
+```bash
+# Clone and run from source (no installation)
+git clone https://github.com/privat/llme.git
+pip install -r llme/requirements.txt
 ./llme/llme/main.py --help
 ```
 
@@ -81,7 +104,7 @@ echo "What is the capital of France?" | llme
 ### Tools included
 
 The LLM has direct access to your shell (and files) and a python interpreter.
-The user is asked for confirmation before executing any command.
+The user is **asked for confirmation** before executing any command.
 Beware, some LLMs might be very **persistent** and **persuasive** in running **dangerous** commands. Do **not trust** the LLM blindly!
 
 If you chose to not execute a command, it will be skipped, and you can provide an explanation to the LLM or asks for a better command.
@@ -121,6 +144,7 @@ llme "What is in this image?" image.png
 ```
 
 
+
 ### Run yolo
 
 Note: no warranty, yada yada, etc.
@@ -128,7 +152,7 @@ llme can just **kill** your **OS** and **cats**.
 Do not run the following command without understanding what it does.
 
 ```bash
-sudo llme --yolo "Distupgrade the system. You are root! Do as you wish."`
+sudo llme --batch --yolo "Distupgrade the system. You are root! Do as you wish."`
 ```
 
 
@@ -136,12 +160,9 @@ sudo llme --yolo "Distupgrade the system. You are root! Do as you wish."`
 
 ```bash
 $ llme --help
-usage: llme [-h] [-u BASE_URL] [-m MODEL] [--api-key API_KEY] [-q] [-s SYSTEM_PROMPT] [-c [CONFIG ...]] [-v] [-Y] [prompts ...]
+usage: llme [options...] [prompts...]
 
 OpenAI-compatible chat CLI.
-
-positional arguments:
-  prompts               Sequence of prompts
 
 options:
   -h, --help            show this help message and exit
@@ -150,12 +171,21 @@ options:
   -m, --model MODEL     Model name [model]
   --api-key API_KEY     The API key [api_key]
   -q, --quit            Quit after processed all arguments prompts [quit]
+  -b, --batch           Run non-interactively. Implies --quit. Implicit if
+                        stdin is not a tty [batch]
+  -p, --plain           No colors or tty fanciness. Implicit if stdout is not
+                        a tty [plain]
+  -o, --chat-output CHAT_OUTPUT
+                        Export the full raw conversation in json
+  -i, --chat-input CHAT_INPUT
+                        Continue a previous (exported) conversation
   -s, --system SYSTEM_PROMPT
                         System prompt [system_prompt]
-  -c, --config [CONFIG ...]
-                        Custom configuration files
+  -c, --config CONFIG   Custom configuration files
+  --dump-config         Print the effective config and quit
   -v, --verbose         Increase verbosity level (can be used multiple times)
-  -Y, --yolo            UNSAFE: Do not ask for confirmation before running tools
+  -Y, --yolo            UNSAFE: Do not ask for confirmation before running
+                        tools. Combine with --batch to reach the singularity.
 ```
 
 Note: Run a fresh `--help` in case I forgot to update this README.
@@ -193,4 +223,3 @@ PR are welcome!
 * [gptme](https://github.com/gptme/gptme) for another inspiration, but also too complex and targets too much non-local LLMs.
 * [openai-cli](https://github.com/doryiii/openai-cli) for a simpler approach I built on top of.
 * [llama.cpp](https://github.com/ggerganov/llama.cpp), [nexa-sdk](https://github.com/NexaAI/nexa-sdk/) and others for your great work.
-
