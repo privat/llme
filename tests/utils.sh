@@ -33,7 +33,7 @@ tllme() {
 	shift
 
 	# Tests results are stored in logs/$id/ where id is a unique identifier
-	id=$SUITE-$task-$(uuidgen)
+	id=$SUITE-$task-$(date +%s)
 	echo "$id" >&2
 	mkdir -p "logs/$id"
 	env | grep "^LLME_" > "logs/$id/env.txt"
