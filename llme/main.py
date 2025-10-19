@@ -172,8 +172,8 @@ class LLME:
             user_input = self.prompts.pop(0)
             if not self.config.plain:
                 print(colored(f"{len(self.messages)}>", "green", attrs=["bold"]), user_input)
-        elif self.config.quit or self.config.batch:
-            raise EOFError("quit") # ugly
+        elif self.config.batch:
+            raise EOFError("end of batch") # ugly
         else:
             try:
                 if not self.config.plain:
@@ -438,8 +438,7 @@ def main():
     parser.add_argument("-u", "--base-url", help="API base URL [base_url]")
     parser.add_argument("-m", "--model", help="Model name [model]")
     parser.add_argument("--api-key", help="The API key [api_key]")
-    parser.add_argument("-q", "--quit", default=None, action="store_true", help="Quit after processed all arguments prompts [quit]")
-    parser.add_argument("-b", "--batch", default=None, action="store_true", help="Run non-interactively. Implies --quit. Implicit if stdin is not a tty [batch]")
+    parser.add_argument("-b", "--batch", default=None, action="store_true", help="Run non-interactively. Implicit if stdin is not a tty [batch]")
     parser.add_argument("-p", "--plain", default=None, action="store_true", help="No colors or tty fanciness. Implicit if stdout is not a tty [plain]")
     parser.add_argument("-o", "--chat-output", help="Export the full raw conversation in json")
     parser.add_argument("-i", "--chat-input", help="Continue a previous (exported) conversation")
