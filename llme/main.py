@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+"""A command-line assistant for local LLMs"""
+
 import argparse
 import base64
 import itertools
@@ -50,12 +52,17 @@ class LLME:
 
 
     def add_message(self, message):
+        """
+        Append a new message.
+        Add it as is in message but transform it in raw_messages.
+        """
+
         logger.debug("Add %s message: %s", message['role'], message)
         self.messages.append(message)
 
         # Special filtering for some models/servers
         # TODO make it configurable and modular
-        if type(message["content"]) is list:
+        if isinstance(message["content"], list):
             text_content = []
             # unpack file content parts
             for part in message["content"]:
@@ -76,7 +83,7 @@ class LLME:
         """Get the model name from the server if not provided, or validate it."""
         url = f"{self.config.base_url}/models"
         logger.info("Get models from %s", url)
-        response = requests.get(url)
+        response = requests.get(url, timeout=10)
         response.raise_for_status()
         models = response.json()
         ids = [m["id"] for m in models["data"]]
@@ -109,13 +116,13 @@ class LLME:
             tool = ["python", "-u"]
 
         proc = subprocess.Popen(
-                tool,
-                stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True,
-                bufsize=1  # line-buffered
-                )
+            tool,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1  # line-buffered
+        )
         logger.debug("Starting sub-process %s", tool)
 
         # send data to stdin
@@ -128,7 +135,7 @@ class LLME:
         with AnimationManager("red", self.config.plain) as am:
             while line := proc.stdout.readline():
                 am.stop()
-                print(line,end='',flush=True)
+                print(line, end='', flush=True)
                 content += line
         proc.wait()
         if not content.endswith('\n'):
@@ -197,8 +204,7 @@ class LLME:
                 content_parts.append(content_part)
         if len(content_parts) > 0:
             content_parts.insert(0, {"type": "text", "text": user_input})
-            res = {"role": "user", "content": content_parts}
-            return res
+            return {"role": "user", "content": content_parts}
         else:
             return {"role": "user", "content": user_input}
 
@@ -217,7 +223,8 @@ class LLME:
                 json={"model": self.model,
                       "messages": self.raw_messages,
                       "stream": True},
-                stream=True
+                stream=True,
+                timeout=600,  # high enough
             )
             response.raise_for_status()
 
@@ -276,8 +283,6 @@ class LLME:
                 logger.warning("Interrupted by user.")
                 if self.config.batch:
                     break
-                else:
-                    continue
             except EOFError as e:
                 logger.info("Quiting: %s", str(e))
                 break
@@ -327,6 +332,8 @@ class AnimationManager:
     def __init__(self, color, plain=False):
         self.color = color
         self.plain = plain
+        self.stop_event = None
+        self.animation_thread = None
 
     def _animate(self):
         """Animation loop, run in a thread."""
@@ -364,7 +371,7 @@ class Asset:
         with open(path, 'rb') as f:
             self.raw_content = f.read()
         self.mime_type = magic.from_buffer(self.raw_content, mime=True)
-        logger.info(f"File {path} is {self.mime_type}")
+        logger.info("File %s is %s", path, self.mime_type)
 
     def content_part(self):
         """Return the content part for the user message"""
@@ -374,7 +381,7 @@ class Asset:
             return {"type": "image_url", "image_url": {"url": url}}
         else:
             data = base64.b64encode(self.raw_content).decode()
-            return {"type": "file", "file": { "file_data": data, "filename": self.path }}
+            return {"type": "file", "file": {"file_data": data, "filename": self.path}}
 
 def apply_config(args, config, path):
     """Apply a config dict to an args namespace without overwriting existing values (precedence).
@@ -425,9 +432,9 @@ def resolve_config(args):
     config_dirs = [
         os.path.expanduser("~/.config/llme"),
         os.path.dirname(os.path.abspath(__file__)),
-        ]
-    for dir in config_dirs:
-        path = os.path.join(dir, "config.toml")
+    ]
+    for directory in config_dirs:
+        path = os.path.join(directory, "config.toml")
         if os.path.exists(path):
             config = load_config_file(path)
             apply_config(args, config, path)
@@ -436,9 +443,9 @@ def resolve_config(args):
 def main():
     """The main CLI entry point."""
     parser = argparse.ArgumentParser(
-            usage='%(prog)s [options...] [prompts...]',
-            description="OpenAI-compatible chat CLI.",
-            )
+        usage='%(prog)s [options...] [prompts...]',
+        description="OpenAI-compatible chat CLI.",
+    )
     parser.add_argument("-u", "--base-url", help="API base URL [base_url]")
     parser.add_argument("-m", "--model", help="Model name [model]")
     parser.add_argument("--api-key", help="The API key [api_key]")
@@ -456,7 +463,7 @@ def main():
     args.prompts = prompts
 
     logging_levels = [logging.WARNING, logging.INFO, logging.DEBUG]
-    logger.setLevel(logging_levels[min(args.verbose, len(logging_levels)-1)])
+    logger.setLevel(logging_levels[min(args.verbose, len(logging_levels) - 1)])
     logger.info("Log level set to %s", logging.getLevelName(logger.level))
     logger.debug("Given arguments %s", vars(args))
 
@@ -464,7 +471,7 @@ def main():
 
     if args.dump_config:
         json.dump(vars(args), sys.stdout, indent=2)
-        return
+        return 0
 
     if args.base_url is None:
         print("Error: --base-url required and not definied the config file.", file=sys.stderr)
@@ -478,6 +485,8 @@ def main():
 
     llme = LLME(args)
     llme.start()
+    return 0
+
 
 if __name__ == "__main__":
     sys.exit(main())
