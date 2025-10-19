@@ -440,8 +440,8 @@ def resolve_config(args):
             apply_config(args, config, path)
     logger.debug("Final config: %s", vars(args))
 
-def main():
-    """The main CLI entry point."""
+def process_args():
+    """Handle command line arguments and envs."""
     parser = argparse.ArgumentParser(
         usage='%(prog)s [options...] [prompts...]',
         description="OpenAI-compatible chat CLI.",
@@ -471,19 +471,24 @@ def main():
 
     if args.dump_config:
         json.dump(vars(args), sys.stdout, indent=2)
-        return 0
+        sys.exit(0)
 
     if args.base_url is None:
         print("Error: --base-url required and not definied the config file.", file=sys.stderr)
-        return 1
+        sys.exit(1)
 
     if args.batch is None and not sys.stdin.isatty():
         args.batch = True
-
     if args.plain is None and not sys.stdout.isatty():
         args.plain = True
 
-    llme = LLME(args)
+    return args
+
+
+def main():
+    """The main CLI entry point."""
+    config = process_args()
+    llme = LLME(config)
     llme.start()
     return 0
 
