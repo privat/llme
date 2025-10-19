@@ -37,7 +37,7 @@ tllme 05python "Look at the README.md file and change 'CLI' in the title to 'com
 validate
 
 validate() {
-	validate_file tests/data/pyproject.toml
+	validate_file pyproject.toml
 }
 
 tllme 10free "swap the order of 'dependencies' and 'classifiers' settings in the file tests/data/pyproject.toml. Do not do any other changes." "$@" && 
