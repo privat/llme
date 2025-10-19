@@ -37,7 +37,7 @@ result() {
 	case $1 in
 		ERROR*|FAIL*|TIMEOUT*)
 			color=91;;
-		PASS*|LIVED*)
+		PASS*)
 			color=92;;
 		*)
 			color=93;;
