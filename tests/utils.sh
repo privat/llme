@@ -2,8 +2,9 @@
 
 # Common setup and useful functions for test scripts
 
-SUITE=$(basename "$0" .sh)
-TESTDIR=$(dirname "$0")
+export SUITE=$(basename "$0" .sh)
+export TESTDIR=$(dirname "$0")
+export ORIGDIR=`pwd`
 
 # The llme tool to check
 LLME="llme"
@@ -31,9 +32,9 @@ copy() {
 
 # Register a test result
 result() {
-	url=`jq -r .base_url "logs/$id/config.json"`
-	model=`jq -r .model "logs/$id/config.json"`
-	echo "$SUITE, $task, $url, $model, $1" >> "logs/$id/result.csv"
+	url=`jq -r .base_url "$LOGDIR/config.json"`
+	model=`jq -r .model "$LOGDIR/config.json"`
+	echo "$SUITE, $task, $url, $model, $1" >> "$LOGDIR/result.csv"
 	case $1 in
 		ERROR*|FAIL*|TIMEOUT*)
 			color=91;;
@@ -42,14 +43,14 @@ result() {
 		*)
 			color=93;;
 	esac
-	echo -e "\e[${color}m$1\e[0m logs/$id/"
+	echo -e "\e[${color}m$1\e[0m $LOGDIR/"
 }
 
 # Check that the llm result matches the pattern $1 on the last line.
 answer() {
-	if tail -n1 "logs/$id/log.txt" | grep -x "$1"; then
+	if tail -n1 "$LOGDIR/log.txt" | grep -x "$1"; then
 		result "PASS"
-	elif grep -i "$1" "logs/$id/log.txt"; then
+	elif grep -i "$1" "$LOGDIR/log.txt"; then
 		result "ALMOST"
 	else
 		result "FAIL"
@@ -58,7 +59,7 @@ answer() {
 
 # Check that the llm result talk about a pattern
 smoke() {
-	if grep -i "$1" "logs/$id/log.txt"; then
+	if grep -i "$1" "$LOGDIR/log.txt"; then
 		result "PASS"
 	else
 		result "FAIL"
@@ -85,17 +86,17 @@ tllme() {
 	# Tests results are stored in logs/$id/ where id is a unique identifier
 	id=$SUITE-$task-$(date +%s)
 	echo "$id" >&2
-	mkdir -p "logs/$id"
-	env | grep "^LLME_" > "logs/$id/env.txt"
+	export LOGDIR="logs/$id"
+	mkdir -p "$LOGDIR"
+	env | grep "^LLME_" > "$LOGDIR/env.txt"
 
-	export ORIG_DIR=`pwd`
-	export LLME_CHAT_OUTPUT=$ORIG_DIR/logs/$id/chat.json
+	export LLME_CHAT_OUTPUT=$ORIGDIR/$LOGDIR/chat.json
 	export LLME_BATCH=true
 	export LLME_YOLO=true
 
 	# create a tmp workdir
 	WORKDIR=`mktemp --tmpdir -d llme-XXXXX`
-	ln -s "$WORKDIR" "logs/$id/workdir"
+	ln -s "$WORKDIR" "$LOGDIR/workdir"
 
 	setup
 
@@ -105,8 +106,8 @@ tllme() {
 		out=/dev/stdout
 	fi
 
-	"$LLME" "$@" --dump-config > "logs/$id/config.json"
-	runllme "$@" 2>&1 > >(tee "logs/$id/log.txt" > "$out")
+	"$LLME" "$@" --dump-config > "$LOGDIR/config.json"
+	runllme "$@" 2>&1 > >(tee "$LOGDIR/log.txt" > "$out")
 	err=$?
 
 	teardown
@@ -115,7 +116,7 @@ tllme() {
 		result "TIMEOUT"
 		return 124
 	elif [ "$err" -ne 0 ]; then
-		grep --color -i error "logs/$id/log.txt"
+		grep --color -i error "$LOGDIR/log.txt"
 		result "ERROR"
 		return $err
 	fi
