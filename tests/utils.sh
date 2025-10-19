@@ -79,9 +79,16 @@ runllme() {
 
 # Run a test with the llme tool
 # Usage: tllme taskname [llme args...] (use "$@" for args)
+#
+# define '$V' for verbose
+# define '$F' to filter tests
 tllme() {
 	task=$1
 	shift
+
+	if [ -n "$F" ] && ! echo "$task" | grep "$F"; then
+		return 1
+	fi
 
 	# Tests results are stored in logs/$id/ where id is a unique identifier
 	id=$SUITE-$task-$(date +%s)
@@ -100,7 +107,7 @@ tllme() {
 
 	setup
 
-	if [ -n "$R" ]; then
+	if [ -z "$V" ]; then
 		out=/dev/null
 	else
 		out=/dev/stdout
