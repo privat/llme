@@ -31,7 +31,8 @@ tllme "13" "Summarize the file in one sentence" "$@" README.md &&
 tllme "31" bonjour "exécute la commande uptime" "calcule la factorielle de 10" "résume en 10 (dix) mots le fichier" README.md "$@" &&
 	smoke llm
 
-tllme "32" -o "`pwd`/tmp.json" "Tell me a joke about LLMs" "$@" &&
+tllme "32" "Tell me a joke about LLMs" "$@" &&
 	smoke 'llm\|ai\|gpt'
-tllme "33" -i "`pwd`/tmp.json" "What is the joke about?" "$@" &&
+lastchat=$ORIGDIR/$LOGDIR/chat.json
+tllme "33" -i "$lastchat" "What is the joke about?" "$@" &&
 	smoke 'llm\|ai\|gpt'
