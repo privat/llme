@@ -2,20 +2,33 @@
 
 # Common setup and useful functions for test scripts
 
-if [ ! -f venv ]; then
-    python3 -m venv venv
-fi
-
-source venv/bin/activate
-pip install -r requirements.txt > /dev/null
+set -e
 SUITE=$(basename "$0" .sh)
+TESTDIR=$(dirname "$0")
 
 # The llme tool to check
-LLME="$(dirname $0)/../llme/main.py"
-
-if [ ! -f "$LLME" ]; then
+LLME="llme"
+if ! command -v "$LLME"; then
 	echo "llme not found: $LLME" >&2
 fi
+
+# run before each test. override if needed
+setup() {
+	true
+}
+
+# run after each test. override if needed
+teardown() {
+	true
+}
+
+# copy files from data to the workdir
+copy() {
+	for f in "$@"; do
+		cp -r "$TESTDIR/data/$f" "$WORKDIR/"
+	done
+}
+
 
 # Register a test result
 result() {
@@ -37,15 +50,22 @@ result() {
 answer() {
 	if tail -n1 "logs/$id/log.txt" | grep -x "$1"; then
 		result "PASS"
-		return 0
 	elif grep -i "$1" "logs/$id/log.txt"; then
 		result "ALMOST"
-		return 1
 	else
-		echo -e "\e[91mFAIL\e[0m logs/$id/"
 		result "FAIL"
-		return 1
 	fi
+}
+
+# Run llme in its workdir with a fresh python environment
+runllme() {
+	(
+	set -e
+	cd "$WORKDIR"
+	python -m venv venv
+	. venv/bin/activate
+	timeout 60 "$LLME" "$@"
+)
 }
 
 # Run a test with the llme tool
@@ -60,9 +80,16 @@ tllme() {
 	mkdir -p "logs/$id"
 	env | grep "^LLME_" > "logs/$id/env.txt"
 
-	export LLME_CHAT_OUTPUT="logs/$id/chat.json"
+	export ORIG_DIR=`pwd`
+	export LLME_CHAT_OUTPUT=$ORIG_DIR/logs/$id/chat.json
 	export LLME_BATCH=true
 	export LLME_YOLO=true
+
+	# create a tmp workdir
+	WORKDIR=`mktemp --tmpdir -d llme-XXXXX`
+	ln -s "$WORKDIR" "logs/$id/workdir"
+
+	setup
 
 	if [ -n "$R" ]; then
 		out=/dev/null
@@ -71,8 +98,10 @@ tllme() {
 	fi
 
 	"$LLME" "$@" --dump-config > "logs/$id/config.json"
-	timeout 60 "$LLME" "$@" 2>&1 > >(tee "logs/$id/log.txt" > "$out")
+	runllme "$@" 2>&1 > >(tee "logs/$id/log.txt" > "$out")
 	err=$?
+
+	teardown
 
 	if [ "$err" -eq 124 ]; then
 		result "TIMEOUT"

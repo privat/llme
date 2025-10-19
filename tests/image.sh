@@ -2,7 +2,11 @@
 
 . "$(dirname "$0")/utils.sh"
 
-tllme "0" "What is in this image?" "$@" < image.jpg &&
+setup() {
+	copy image.jpg
+}
+
+tllme "0" "What is in this image?" "$@" < "$TESTDIR/data/image.jpg" &&
 	result "LIVED"
 tllme "1" image.jpg "What is in this image?" "$@" &&
 	result "LIVED"

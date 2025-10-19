@@ -2,17 +2,18 @@
 
 . "$(dirname "$0")/utils.sh" &&
 
+setup() {
+	copy README.md pyproject.toml
+}
+
 validate_file() {
-if diff -u "$1.expected" "$1"; then
+if diff -u "$TESTDIR/data/$1.expected" "$WORKDIR/$1"; then
 	result PASS
 else
 	result FAIL
 fi
-cp "$1.orig" "$1"
 }
 
-cp README.md README.md.orig
-sed 's/CLI a/command line a/' README.md > README.md.expected
 validate() {
 	validate_file README.md
 }
