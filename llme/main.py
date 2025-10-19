@@ -462,6 +462,7 @@ def process_args():
     args, prompts = parser.parse_known_args()
     args.prompts = prompts
 
+    logging.basicConfig()
     logging_levels = [logging.WARNING, logging.INFO, logging.DEBUG]
     logger.setLevel(logging_levels[min(args.verbose, len(logging_levels) - 1)])
     logger.info("Log level set to %s", logging.getLevelName(logger.level))
