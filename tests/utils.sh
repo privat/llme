@@ -33,10 +33,23 @@ result() {
 	echo -e "\e[${color}m$1\e[0m logs/$id/"
 }
 
+# Check that the llm result matches the pattern $1 on the last line.
+answer() {
+	if tail -n1 "logs/$id/log.txt" | grep -x "$1"; then
+		result "PASS"
+		return 0
+	elif grep -i "$1" "logs/$id/log.txt"; then
+		result "ALMOST"
+		return 1
+	else
+		echo -e "\e[91mFAIL\e[0m logs/$id/"
+		result "FAIL"
+		return 1
+	fi
+}
+
 # Run a test with the llme tool
 # Usage: tllme taskname [llme args...] (use "$@" for args)
-#
-# If $R is set, the llm result is expected to match the pattern $R on the last line.
 tllme() {
 	task=$1
 	shift
@@ -68,21 +81,6 @@ tllme() {
 		grep --color -i error "logs/$id/log.txt"
 		result "ERROR"
 		return $err
-	fi
-
-	if [ -n "$R" ]; then
-		if tail -n1 "logs/$id/log.txt" | grep -x "$R"; then
-			result "PASS"
-			return 0
-		elif grep -i "$R" "logs/$id/log.txt"; then
-			result "ALMOST"
-			return 1
-		else
-			echo -e "\e[91mFAIL\e[0m logs/$id/"
-			result "FAIL"
-			return 1
-		fi
-		return
 	fi
 
 	return 0
