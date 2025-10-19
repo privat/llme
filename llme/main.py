@@ -307,9 +307,9 @@ class LLME:
         if not sys.stdin.isatty():
             if len(self.prompts) > 0:
                 # There is prompts, so use stdin as data for the first prompt
-                stdinfile = tempfile.NamedTemporaryFile(mode='w', delete=False)
+                stdinfile = tempfile.NamedTemporaryFile(mode='wb', delete=False)
                 with stdinfile as f:
-                    f.write(sys.stdin.read())
+                    f.write(sys.stdin.buffer.read())
 
                 self.prompts.insert(0, stdinfile.name)
             else:
