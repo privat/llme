@@ -57,6 +57,15 @@ answer() {
 	fi
 }
 
+# Check that the llm result talk about a pattern
+smoke() {
+	if grep -i "$1" "logs/$id/log.txt"; then
+		result "PASS"
+	else
+		result "FAIL"
+	fi
+}
+
 # Run llme in its workdir with a fresh python environment
 runllme() {
 	(

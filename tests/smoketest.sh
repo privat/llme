@@ -7,31 +7,31 @@ setup() {
 }
 
 tllme "01" "What is the capital of France?" "$@" &&
-	result LIVED
+	smoke paris
 tllme "02" "What is the capital of France?" "What about Canada?" "And Vatican?" "And Mordor?" "And my axe?" "$@" &&
-	result LIVED
+	smoke 'tolkien\|middle\|sauror'
 tllme "03" "What the content on the current directory?" "$@" &&
-	result LIVED
+	smoke 'ls\|ll\|README'
 tllme "04" "What is the current operating system?" "$@" &&
-	result LIVED
+	smoke 'uname\|linux'
 tllme "05" "What is the factorial of 153?" "$@" &&
-	result LIVED
+	smoke 'factorial\|153'
 tllme "06" <<<"What is the capital of France?" "$@" &&
-	result LIVED
+	smoke paris
 
 tllme "10" "Summarize the file README.md in one sentence" "$@" &&
-	result LIVED
+	smoke llm
 tllme "11" "Summarize the file in one sentence" "$@" < "$TESTDIR/data/README.md" &&
-	result LIVED
+	smoke llm
 tllme "12" README.md "Summarize the file in one sentence" "$@" &&
-	result LIVED
+	smoke llm
 tllme "13" "Summarize the file in one sentence" "$@" README.md &&
-	result LIVED
+	smoke llm
 
 tllme "31" bonjour "exécute la commande uptime" "calcule la factorielle de 10" "résume en 10 (dix) mots le fichier" README.md "$@" &&
-	result LIVED
+	smoke llm
 
 tllme "32" -o "`pwd`/tmp.json" "Tell me a joke about LLMs" "$@" &&
-	result LIVED
+	smoke 'llm\|ai\|gpt'
 tllme "33" -i "`pwd`/tmp.json" "What is the joke about?" "$@" &&
-	result LIVED
+	smoke 'llm\|ai\|gpt'

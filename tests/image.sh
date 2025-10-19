@@ -7,13 +7,13 @@ setup() {
 }
 
 tllme "0" "What is in this image?" "$@" < "$TESTDIR/data/image.jpg" &&
-	result "LIVED"
+	smoke 'building\|window\|winter\|snow'
 tllme "1" image.jpg "What is in this image?" "$@" &&
-	result "LIVED"
+	smoke 'building\|window\|winter\|snow'
 tllme "2" "What is in this image?" image.jpg "$@" &&
-	result "LIVED"
+	smoke 'building\|window\|winter\|snow'
 tllme "3" "What is in this image? image.jpg" "$@" &&
-	result "LIVED"
+	smoke 'building\|window\|winter\|snow'
 
 tllme "4" "What is in this image?" image.jpg "Is this image similar to the previous one?" image.jpg "$@" &&
-	result "LIVED"
+	smoke 'similar\|duplicate\|related\|same'
