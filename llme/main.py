@@ -273,7 +273,10 @@ class LLME:
                 raise e
             except KeyboardInterrupt:
                 logger.warning("Interrupted by user.")
-                continue
+                if self.config.batch:
+                    break
+                else:
+                    continue
             except EOFError as e:
                 logger.info("Quiting: %s", str(e))
                 break
