@@ -2,7 +2,6 @@
 
 # Common setup and useful functions for test scripts
 
-set -e
 SUITE=$(basename "$0" .sh)
 TESTDIR=$(dirname "$0")
 
