@@ -15,24 +15,25 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import os
-import sys
-import re
-import json
 import argparse
-import requests
 import base64
-from termcolor import colored, cprint
 import itertools
+import json
+import logging
+import os
+import re
+import readline
+import subprocess
+import sys
+import tempfile
 import threading
 import time
 import tomllib
-from sseclient import SSEClient
-import logging
-import subprocess
+
 import magic
-import tempfile
-import readline
+import requests
+from sseclient import SSEClient
+from termcolor import colored, cprint
 
 # The global logger of the module
 logger = logging.getLogger(__name__)
