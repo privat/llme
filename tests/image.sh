@@ -2,9 +2,14 @@
 
 . "$(dirname "$0")/utils.sh"
 
-tllme "20" "What is in this image?" "$@" < image.png
-tllme "21" image.png "What is in this image?" "$@"
-tllme "22" "What is in this image?" image.png "$@"
-tllme "23" "What is in this image? image.png" "$@"
+tllme "0" "What is in this image?" "$@" < image.jpg &&
+	result "LIVED"
+tllme "1" image.jpg "What is in this image?" "$@" &&
+	result "LIVED"
+tllme "2" "What is in this image?" image.jpg "$@" &&
+	result "LIVED"
+tllme "3" "What is in this image? image.jpg" "$@" &&
+	result "LIVED"
 
-tllme "31" bonjour "exécute la commande uptime" "calcule la factorielle de 10" "résume en 10 (dix) mots le fichier" README.md "décrit en 10 (dix) mot l'image" image.png "hello" "$@"
+tllme "4" "What is in this image?" image.jpg "Is this image similar to the previous one?" image.jpg "$@" &&
+	result "LIVED"
