@@ -32,9 +32,14 @@ copy() {
 
 # Register a test result
 result() {
-	url=`jq -r .base_url "$LOGDIR/config.json"`
-	model=`jq -r .model "$LOGDIR/config.json"`
-	echo "$SUITE, $task, $url, $model, $1" >> "$LOGDIR/result.csv"
+	config="$ORIGDIR/$LOGDIR/config.json"
+	url=`jq -r .base_url "$config"`
+	model=`jq -r .model "$config"`
+	chat="$ORIGDIR/$LOGDIR/chat.json"
+	msgs=`jq '.|length' "$chat"`
+	words=`wc -w < "$chat"`
+
+	echo "$SUITE, $task, $url, $model, $1, $2, $msgs, $words" >> "$ORIGDIR/$LOGDIR/result.csv"
 	case $1 in
 		ERROR*|FAIL*|TIMEOUT*)
 			color=91;;
@@ -43,7 +48,7 @@ result() {
 		*)
 			color=93;;
 	esac
-	echo -e "\e[${color}m$1\e[0m $LOGDIR/"
+	echo -e "\e[${color}m$1\e[0m $2 $LOGDIR/ model=$model msgs=$msgs words=$words"
 }
 
 # Check that the llm result matches the pattern $1 on the last line.
