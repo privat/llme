@@ -255,7 +255,8 @@ class LLME:
             data = json.loads(data.decode())
             choice0 = data['choices'][0]
             if choice0['finish_reason'] == 'stop':
-                timings = data["timings"]
+                if "timings" in data:
+                    timings = data["timings"]
                 break
             if 'reasoning_content' in choice0['delta']:
                 # Some thinking models like qwen3 have a reasoning_content field
@@ -350,7 +351,8 @@ class LLME:
             if stdinfile:
                 os.unlink(stdinfile.name)
 
-        print(colored(f"Total: prompt: %dt %.2ft/s predicted: %dt %.2ft/s" % (self.total_prompt_n, 1000.0*self.total_prompt_n/self.total_prompt_ms, self.total_predicted_n, 1000.0*self.total_predicted_n/self.total_predicted_ms), "grey", attrs=["bold"]))
+        if self.total_prompt_n > 0:
+            print(colored(f"Total: prompt: %dt %.2ft/s predicted: %dt %.2ft/s" % (self.total_prompt_n, 1000.0*self.total_prompt_n/self.total_prompt_ms, self.total_predicted_n, 1000.0*self.total_predicted_n/self.total_predicted_ms), "grey", attrs=["bold"]))
 
 class AnimationManager:
     """A simple context manager for a spinner animation."""
