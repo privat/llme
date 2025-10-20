@@ -34,7 +34,6 @@ import tomllib
 
 import magic
 import requests
-from sseclient import SSEClient
 from termcolor import colored, cprint
 
 # The global logger of the module
@@ -236,10 +235,17 @@ class LLME:
 
         full_content = ''
         cb = None
-        for event in SSEClient(response).events():
-            if event.data == "[DONE]":
+        for line in response.iter_lines():
+            # The communication is loosly based on Server-Sent Events (SSE)
+            if line == b'':
+                continue
+            event, data = line.split(b': ', 1)
+            if event != b'data':
+                raise Error("Unexpected event type: {line}")
+            if data == b"[DONE]":
+                logget.warn("Got [DONE] event, we shoud have stopped before")
                 break
-            data = json.loads(event.data)
+            data = json.loads(data.decode())
             choice0 = data['choices'][0]
             if choice0['finish_reason'] == 'stop':
                 break
