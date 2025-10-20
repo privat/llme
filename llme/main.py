@@ -246,9 +246,12 @@ class LLME:
             # The communication is loosly based on Server-Sent Events (SSE)
             if line == b'':
                 continue
-            event, data = line.split(b': ', 1)
+            data = line.split(b':', 1)
+            if len(data) != 2:
+                raise ValueError(f"Unexpected chunk: {line}")
+            event, data = data
             if event != b'data':
-                raise Error("Unexpected event type: {line}")
+                raise ValueError(f"Unexpected event type: {line}")
             if data == b"[DONE]":
                 logger.warn("Got [DONE] event, we shoud have stopped before")
                 break
