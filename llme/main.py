@@ -215,13 +215,14 @@ class LLME:
         """Get a response from the LLM."""
         url = f"{self.config.base_url}/chat/completions"
         logger.debug("Sending %d raw messages to %s", len(self.raw_messages), url)
+
+        headers=[]
+        if self.config.api_key:
+            headers["Authorization"] = f"Bearer {self.config.api_key}"
         with AnimationManager("blue", self.config.plain):
             response = requests.post(
                 url,
-                headers={
-                    "Authorization": f"Bearer {self.config.api_key}",
-                    "Content-Type": "application/json",
-                },
+                headers=headers,
                 json={"model": self.model,
                       "messages": self.raw_messages,
                       "stream": True},
