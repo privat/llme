@@ -285,7 +285,7 @@ class LLME:
             self.total_prompt_ms += timings["prompt_ms"]
             self.total_predicted_ms += timings["predicted_ms"]
         response.close()
-        self.add_message({"role": "agent", "content": full_content})
+        self.add_message({"role": "assistant", "content": full_content})
         if cb:
             r = self.run_tool(cb[1], cb[2])
             if r:
@@ -295,7 +295,7 @@ class LLME:
 
 
     def loop(self):
-        """The main ping-pong loop between the user and the agent"""
+        """The main ping-pong loop between the user and the assistant"""
         while True:
             try:
                 prompt = self.next_prompt()
