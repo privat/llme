@@ -254,7 +254,7 @@ class LLME:
                 raise ValueError(f"Unexpected event type: {line}")
             if data == b"[DONE]":
                 logger.warn("Got [DONE] event, we shoud have stopped before")
-                break
+                continue
             data = json.loads(data.decode())
             choice0 = data['choices'][0]
             if choice0['finish_reason'] == 'stop':
