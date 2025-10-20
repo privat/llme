@@ -250,11 +250,12 @@ class LLME:
             if event != b'data':
                 raise Error("Unexpected event type: {line}")
             if data == b"[DONE]":
-                logget.warn("Got [DONE] event, we shoud have stopped before")
+                logger.warn("Got [DONE] event, we shoud have stopped before")
                 break
             data = json.loads(data.decode())
             choice0 = data['choices'][0]
             if choice0['finish_reason'] == 'stop':
+                logger.debug("last chunk %s", data)
                 if "timings" in data:
                     timings = data["timings"]
                 break
