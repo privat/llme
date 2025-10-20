@@ -107,9 +107,12 @@ class LLME:
         elif self.config.batch:
             raise EOFError("No tool confirmation in batch mode") # ugly
         else:
-            x = input(colored(f"{len(self.messages)} RUN {tool} [Yn]? ", "red", attrs=["bold"])).strip()
-            if x not in ['', 'y', 'Y']:
-                return None
+            try:
+                x = input(colored(f"{len(self.messages)} RUN {tool} [Yn]? ", "red", attrs=["bold"])).strip()
+                if x not in ['', 'y', 'Y']:
+                    return None
+            except KeyboardInterrupt:
+                raise EOFError("Confirmation interrupted") # ugly
 
         # hack for unbuffered python
         if tool == "python":
