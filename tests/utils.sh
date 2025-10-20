@@ -39,7 +39,7 @@ result() {
 	msgs=`jq '.|length' "$chat"`
 	words=`wc -w < "$chat"`
 
-	echo "$SUITE, $task, $url, $model, $1, $2, $msgs, $words" >> "$ORIGDIR/$LOGDIR/result.csv"
+	echo "$SUITE,$task,$url,$model,$1,$2,$msgs,$words" >> "$ORIGDIR/$LOGDIR/result.csv"
 	case $1 in
 		ERROR*|FAIL*|TIMEOUT*)
 			color=91;;
