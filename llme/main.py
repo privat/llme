@@ -257,7 +257,7 @@ class LLME:
                 continue
             data = json.loads(data.decode())
             choice0 = data['choices'][0]
-            if choice0['finish_reason'] == 'stop':
+            if choice0['finish_reason'] is not None:
                 logger.debug("last chunk %s", data)
                 if "timings" in data:
                     timings = data["timings"]
