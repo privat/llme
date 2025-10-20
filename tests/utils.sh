@@ -87,6 +87,7 @@ runllme() {
 #
 # define '$V' for verbose
 # define '$F' to filter tests
+# define '$KEEPWORKDIR' to reuse the workdir in subsequent tests
 tllme() {
 	task=$1
 	shift
@@ -94,6 +95,8 @@ tllme() {
 	if [ -n "$F" ] && ! echo "$task" | grep "$F"; then
 		return 1
 	fi
+
+	cd "$ORIGDIR"
 
 	# Tests results are stored in logs/$id/ where id is a unique identifier
 	id=$SUITE-$task-$(date +%s)
@@ -107,7 +110,9 @@ tllme() {
 	export LLME_YOLO=true
 
 	# create a tmp workdir
-	WORKDIR=`mktemp --tmpdir -d llme-XXXXX`
+	if [ -z "$WORKDIR" ] || [ -z "$KEEPWORKDIR" ]; then
+		WORKDIR=`mktemp --tmpdir -d llme-XXXXX`
+	fi
 	ln -s "$WORKDIR" "$LOGDIR/workdir"
 
 	setup
