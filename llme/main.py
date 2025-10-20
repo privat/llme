@@ -80,7 +80,7 @@ class LLME:
 
 
     def get_model_name(self):
-        """Get the model name from the server if not provided, or validate it."""
+        """Get the model name from the server if not provided."""
         url = f"{self.config.base_url}/models"
         logger.info("Get models from %s", url)
         response = requests.get(url, timeout=10)
@@ -291,7 +291,8 @@ class LLME:
     def start(self):
         """Start, work, and terminate"""
 
-        self.get_model_name()
+        if not self.model:
+            self.get_model_name()
         logger.info("Use model %s from %s", self.model, self.config.base_url)
 
         if self.config.chat_input:
