@@ -246,6 +246,14 @@ class LLME:
             # The communication is loosly based on Server-Sent Events (SSE)
             if line == b'':
                 continue
+            if line[0] == 0x7b: # '{'
+                # special case of no streamimg
+                data = json.loads(line.decode())
+                message = data['choices'][0]['message']
+                self.add_message(message)
+                print(message['content'])
+                return None
+
             data = line.split(b':', 1)
             if len(data) != 2:
                 raise ValueError(f"Unexpected chunk: {line}")
