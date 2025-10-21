@@ -82,9 +82,8 @@ class LLME:
 
         self.raw_messages.append(message)
 
-
-    def get_model_name(self):
-        """Get the model name from the server if not provided."""
+    def get_models(self):
+        """List the available models"""
         url = f"{self.config.base_url}/models"
         logger.info("Get models from %s", url)
         response = requests.get(url, timeout=10)
@@ -92,16 +91,7 @@ class LLME:
         models = response.json()
         ids = [m["id"] for m in models["data"]]
         logger.info("Available models: %s", ids)
-
-        if not self.model:
-            self.model = models["data"][0]["id"]
-            return
-
-        for m in models["data"]:
-            if m["id"] == self.model:
-                return
-
-        raise ValueError(f"Error: Model '{self.model}' not found. Available: {', '.join(ids)}")
+        return ids
 
 
     def run_tool(self, tool, stdin):
@@ -327,8 +317,14 @@ class LLME:
     def start(self):
         """Start, work, and terminate"""
 
+        if self.config.list_models:
+            models = self.get_models()
+            print(f"Models of {self.config.base_url}:")
+            for m in models:
+                print(f"* {m}")
+            return
         if not self.model:
-            self.get_model_name()
+            self.model = self.get_models()[0]
         logger.info("Use model %s from %s", self.model, self.config.base_url)
 
         if self.config.chat_input:
@@ -487,6 +483,7 @@ def process_args():
     )
     parser.add_argument("-u", "--base-url", help="API base URL [base_url]")
     parser.add_argument("-m", "--model", help="Model name [model]")
+    parser.add_argument("--list-models", action="store_true", help="List available models then exit")
     parser.add_argument("--api-key", help="The API key [api_key]")
     parser.add_argument("-b", "--batch", default=None, action="store_true", help="Run non-interactively. Implicit if stdin is not a tty [batch]")
     parser.add_argument("-p", "--plain", default=None, action="store_true", help="No colors or tty fanciness. Implicit if stdout is not a tty [plain]")
