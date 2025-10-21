@@ -231,6 +231,8 @@ class LLME:
             "messages": self.raw_messages,
             "stream": True,
         }
+        if self.config.temperature is not None:
+            data["temperature"] = self.config.temperature
         logger.debug("Sending %d raw messages to %s", len(self.raw_messages), url)
 
         with AnimationManager("blue", self.config.plain):
@@ -571,6 +573,7 @@ def process_args():
     parser.add_argument("-o", "--chat-output", help="Export the full raw conversation in json")
     parser.add_argument("-i", "--chat-input", help="Continue a previous (exported) conversation")
     parser.add_argument("-s", "--system", dest="system_prompt", help="System prompt [system_prompt]")
+    parser.add_argument(      "--temperature", default=None, type=int, help="Temperature of predictions [temperature]")
     parser.add_argument("-c", "--config", action="append", help="Custom configuration files")
     parser.add_argument(      "--dump-config", action="store_true", help="Print the effective config and quit")
     parser.add_argument("-v", "--verbose", default=0, action="count", help="Increase verbosity level (can be used multiple times)")
