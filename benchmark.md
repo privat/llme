@@ -1,18 +1,18 @@
-# Model Results
+# Model Benchmarking
 
 This is a preliminary benchmark of some local models.
-The [testsuites](tests) tries to highlight the usage and features of llme.
-The ranking should not be considered fair or rigorous since many uncontrolled variables (still) impact it.
+The [test suites](tests) try to highlight the usage and features of llme.
+The ranking should not be considered fair or rigorous, since many uncontrolled variables (still) impact it.
 
-Moreover, the experiments are done with more or less recent versions of llme, the testsuites, the models or the server.
+Moreover, the experiments are done with more or less recent versions of llme, the test suites, the models, or the server.
 This explains some discrepancies with the numbers.
 
 The benchmark is also used to check the API compatibility with local LLM servers.
 
-Most models come from the huggingface.
-GUFF models are served by llama.cpp (and llama-swap).
-MLX models are served by nexa.
-The others models come from the ollama repository and are served by the ollama server.
+Most models come from the [huggingface](https://huggingface.co/).
+GUFF models are served by [llama.cpp](https://github.com/ggml-org/llama.cpp) (and [llama-swap](https://github.com/mostlygeek/llama-swap)).
+MLX models are served by [nexa](https://github.com/NexaAI/nexa-sdk).
+The others models come from the [ollama](https://ollama.com/) repository and are served by the ollama server.
 
 <!-- the contents bellow this line are generated -->
 
