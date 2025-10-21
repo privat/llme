@@ -8,7 +8,7 @@ A simple, single-file command-line chat client compatible with the OpenAI API.
 ## Features
 
 - **OpenAI API Compatible:** Works with any self-hosted LLM platform that supports OpenAI chat completions API.
-- **Extremely simple:** Single file, no installation required.
+- **Extremely simple:** Single file, no installation required (but installation is still available).
 - **Command-line interface:** Run it from the terminal.
 - **Tools included:** Ask it to act on your file system and edit files (yolo).
 
@@ -19,41 +19,48 @@ Just give them a shell, a python interpreter, and let you (only) live (once).
 Use it as a helping (dummy assistant) to inspect configuration, source code, run commands, and edit files.
 
 
-## Quickstart a local LLM server if you don't have one already
+## Quick-start a local LLM server if you don't have one already
+
+Example with llama.cpp if you use homebrew. Look at https://github.com/ggerganov/llama.cpp for other options
 
 ```bash
-# Example with llama.cpp
-brew install llama.cpp  # if you use homebrew. look at https://github.com/ggerganov/llama.cpp for other options
-llama-server -hf unsloth/Qwen3-Coder-30B-A3B-Instruct-GGUF --ctx-size 0 --jinja # or whatever model you like. This one is ok.
+brew install llama.cpp
+llama-server -hf unsloth/Qwen3-Coder-30B-A3B-Instruct-GGUF --ctx-size 0 --jinja
 ```
 
+Qwen3-Coder-30b is a nice model.
+Smaller models can can also works.
 See the [benchmark](benchmark.md) for a comparison.
 
 ## Installation of llme
 
-Chose your preferred installation or execution method:
+Chose your preferred installation or execution method.
+
+Install from PyPI (possibily an old version)
 
 ```bash
-# Install from PyPI (possibily an old version)
 pipx install llme-cli
 llme --help
 ```
 
+Install from GitHub directly (latest dev version)
+
 ```bash
-# Install from GitHub directly (latest dev version)
 pipx install -f git+https://github.com/privat/llme.git
 llme --help
 ```
 
+Clone then install in development mode
+
 ```bash
-# Clone then install in development mode
 git clone https://github.com/privat/llme.git
 pipx install -e llme
 llme --help
 ```
 
+Clone and run from source (no installation)
+
 ```bash
-# Clone and run from source (no installation)
 git clone https://github.com/privat/llme.git
 pip install -r llme/requirements.txt
 ./llme/llme/main.py --help
@@ -72,13 +79,13 @@ or if you want to a specific model
 
 
 ```bash
-llme --base-url "http://localhost:8080/v1" --model "NexaAI/qwen3vl-8B-Thinking-4bit-mlx"
+llme --base-url "http://localhost:8080/v1" --model "unsloth/Mistral-Small-3.2-24B-Instruct-2506-GGUF"
 ```
 
-* Ctrl-C to interrupt a response (or exit).
+Ctrl-C to interrupt a response (or exit).
 
 
-### Setup a config (optional, but recommended):
+### Set up a config (optional, but recommended):
 
 Edit `~/.config/llme/config.toml`
 Look at [config.toml](llme/config.toml) for an example.
@@ -92,7 +99,11 @@ I assume, from now, that there is a config file...
 Each prompt is run in order in the same chat session.
 
 ```bash
-llme "What is the capital of France?" "What the content of the current directory?" "What is the current operating system?" "What is the factorial of 153?" "What is the weather at Tokyo right now?"
+llme "What is the capital of France?" \
+  "What the content of the current directory?" \
+  "What is the current operating system?" "\
+  "What is the factorial of 153?" \
+  "What is the weather at Tokyo right now?"
 ```
 
 You can also pipe the query:
@@ -100,6 +111,9 @@ You can also pipe the query:
 ```bash
 echo "What is the capital of France?" | llme
 ```
+
+Note that interactive sessions are often better because, if needed, the model is loaded at the start of the command, so is loading while you type.
+Also no issues with escaping `"` or `'`
 
 
 ### Tools included
@@ -145,7 +159,6 @@ llme "What is in this image?" image.png
 ```
 
 
-
 ### Run yolo
 
 Note: no warranty, yada yada, etc.
@@ -159,7 +172,7 @@ sudo llme --batch --yolo "Distupgrade the system. You are root! Do as you wish."
 
 ### Options (and config)
 
-```bash
+```console
 $ llme --help
 usage: llme [options...] [prompts...]
 
@@ -210,13 +223,22 @@ My goal is to keep this simple and minimal: it should fit into a single file and
 
 PR are welcome!
 
+## OpenAI API
+
+The two HTML routes used by llme are:
+
+* `$base_url/models` (<https://platform.openai.com/docs/api-reference/models>) for `--list-models` (and to get a default model when `--model` is empty)
+* `$base_url/chat/completions` (<https://platform.openai.com/docs/api-reference/chat>) for the main job. Streaming (<https://platform.openai.com/docs/api-reference/chat-streaming>) is used (and cannot be disabled to make the code simpler).
+
+Images are uploaded as content parts, for multimodal models.
+
+Tools are integrated with a custom approach and do not use the official *tools* API (yet).
 
 ## Issues
 
-* The various openai compatible servers implement different subsets. Compatibility is thus not yet perfect, thus causing random 4xx or 5xx responses.
+* The various OpenAI compatible servers and models implement different subsets. Compatibility is worked on and there is less random 4xx or 5xx responses. Major local LLM servers and servers were tested. See <benchmark.md>
 * Models are really sensitive to prompts and system prompts, but you can create a custom config file for each.
-* Models are really sensitive to how the messages are structured, unfortunately that is currently hardcoded in the program.
-
+* Models are really sensitive to how the messages are structured, unfortunately that is currently hardcoded in the program. I do not want to hard-code many tweaks and workarounds. :(
 
 ## Thanks
 
