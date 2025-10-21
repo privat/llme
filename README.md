@@ -27,6 +27,7 @@ brew install llama.cpp  # if you use homebrew. look at https://github.com/ggerga
 llama-server -hf unsloth/Qwen3-Coder-30B-A3B-Instruct-GGUF --ctx-size 0 --jinja # or whatever model you like. This one is ok.
 ```
 
+See the [benchmark](benchmark.md) for a comparison.
 
 ## Installation of llme
 
