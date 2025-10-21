@@ -4,6 +4,9 @@ This is a preliminary benchmark of some local models.
 The [testsuites](tests) tries to highlight the usage and features of llme.
 The ranking should not be considered fair or rigorous since many uncontrolled variables (still) impact it.
 
+Moreover, the experiments are done with more or less recent versions of llme, the testsuites, the models or the server.
+This explains some discrepancies with the numbers.
+
 The benchmark is also used to check the API compatibility with local LLM servers.
 
 Most models come from the huggingface.
