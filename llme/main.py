@@ -497,9 +497,9 @@ def process_args():
     parser.add_argument(      "--dump-config", action="store_true", help="Print the effective config and quit")
     parser.add_argument("-v", "--verbose", default=0, action="count", help="Increase verbosity level (can be used multiple times)")
     parser.add_argument("-Y", "--yolo", default=None, action="store_true", help="UNSAFE: Do not ask for confirmation before running tools. Combine with --batch to reach the singularity.")
+    parser.add_argument("prompts", nargs='*', help="An initial list of prompts")
 
-    args, prompts = parser.parse_known_args()
-    args.prompts = prompts
+    args = parser.parse_intermixed_args()
 
     logging.basicConfig()
     logging_levels = [logging.WARNING, logging.INFO, logging.DEBUG]
