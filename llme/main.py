@@ -293,13 +293,8 @@ class LLME:
                 # Force the LLM to stop once a tool call is found
                 break
         printn(full_content)
-        if timings:
-            print(colored(f"cache: %dt prompt: %dt %.2ft/s predicted: %dt %.2ft/s" % (timings["cache_n"], timings["prompt_n"], timings["prompt_per_second"], timings["predicted_n"], timings["predicted_per_second"]), "grey", attrs=["bold"]))
-            self.total_prompt_n += timings["prompt_n"]
-            self.total_predicted_n += timings["predicted_n"]
-            self.total_prompt_ms += timings["prompt_ms"]
-            self.total_predicted_ms += timings["predicted_ms"]
         response.close()
+        self.update_timing(timings)
         self.add_message({"role": "assistant", "content": full_content})
         if cb:
             r = self.run_tool(cb[1], cb[2])
@@ -307,6 +302,16 @@ class LLME:
                 self.add_message(r)
                 return r
         return None
+
+
+    def update_timing(self, timings):
+        """Display timing information, and update the global timing information"""
+        if timings:
+            print(colored(f"cache: %dt prompt: %dt %.2ft/s predicted: %dt %.2ft/s" % (timings["cache_n"], timings["prompt_n"], timings["prompt_per_second"], timings["predicted_n"], timings["predicted_per_second"]), "grey", attrs=["bold"]))
+            self.total_prompt_n += timings["prompt_n"]
+            self.total_predicted_n += timings["predicted_n"]
+            self.total_prompt_ms += timings["prompt_ms"]
+            self.total_predicted_ms += timings["predicted_ms"]
 
 
     def loop(self):
