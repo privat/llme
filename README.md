@@ -101,7 +101,7 @@ Each prompt is run in order in the same chat session.
 ```bash
 llme "What is the capital of France?" \
   "What the content of the current directory?" \
-  "What is the current operating system?" "\
+  "What is the current operating system?" \
   "What is the factorial of 153?" \
   "What is the weather at Tokyo right now?"
 ```
