@@ -372,7 +372,7 @@ class AnimationManager:
 
     def _animate(self):
         """Animation loop, run in a thread."""
-        for c in itertools.cycle("⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"):
+        for c in itertools.cycle("⠋⠙⠹⠽⠼⠴⠦⠧⠇⠏"):
             if self.stop_event.is_set():
                 break
             sys.stdout.write(f'\r{colored(c, self.color, attrs=["bold"])} ')
