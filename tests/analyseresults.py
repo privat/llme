@@ -127,9 +127,9 @@ def print_model_suites(f):
             t = get(total_model_suites, rowid, colid)
             p = 100.0 * n / t
             if n == 0:
-                tablerow.append(f"{color(0)} 0")
+                tablerow.append(f"{color(0)} 0/{t}")
             else:
-                tablerow.append("%s %d (%.2f%%)" % (color(p), n, p))
+                tablerow.append("%s %d/%d (%.2f%%)" % (color(p), n, t, p))
     titles = [linksuite(s) for s in suites]
     titles.insert(0, "Models")
     f.write(tabulate(table, headers=(titles), tablefmt="pipe"))
