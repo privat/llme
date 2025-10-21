@@ -275,39 +275,44 @@ class LLME:
                 continue
             data = json.loads(data.decode())
             choice0 = data['choices'][0]
-            if choice0['finish_reason'] is not None:
-                logger.debug("last chunk %s", data)
-                if "timings" in data:
-                    timings = data["timings"]
-                break
-            if 'reasoning_content' in choice0['delta']:
+                delta = choice0['delta']
+            reasoning_content = delta.get("reasoning_content")
+            if reasoning_content:
                 # Some reasoning models like qwen3 of gpt-oss have a reasoning_content field
-                content = choice0['delta']['reasoning_content']
                 if mode and mode != full_reasoning_content:
                     printn(mode)
-                full_reasoning_content += content
+                full_reasoning_content += reasoning_content
                 mode = full_reasoning_content
-                print(colored(content, "grey", attrs=["bold"]), end='', flush=True)
-            elif 'content' in choice0['delta']:
-                content = choice0['delta']['content']
-                if content is not None:
-                    if mode and mode != full_content:
-                        printn(mode)
-                    full_content += content
-                    mode = full_content
-                    print(content, end='', flush=True)
-            else:
+                print(colored(reasoning_content, "grey", attrs=["bold"]), end='', flush=True)
+
+            content = delta.get("content")
+            if content:
+                if mode and mode != full_content:
+                    printn(mode)
+                full_content += content
+                mode = full_content
+                print(content, end='', flush=True)
+
+            if choice0['finish_reason'] is not None:
+                logger.debug("last chunk %s", data)
+                if mode:
+                    printn(mode)
+                mode = None
+                self.update_timing(data.get("timings"))
+                break
+            elif not content and not reasoning_content:
                 logger.info("Unexpected content in chunk %s", data)
                 continue
+
             #FIXME: this is fragile and ugly.
             cb = re.search(r"^```run ([\w+-]*)\n(.*?)^```$", full_content, re.DOTALL | re.MULTILINE)
             if cb:
                 # Force the LLM to stop once a tool call is found
                 break
+
         if mode:
             printn(mode)
         response.close()
-        self.update_timing(timings)
         message = {"role": "assistant", "content": full_content}
         if full_reasoning_content:
             message["reasoning_content"] = full_reasoning_content
