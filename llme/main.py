@@ -90,8 +90,12 @@ class LLME:
         """List the available models"""
         url = f"{self.config.base_url}/models"
         logger.info("Get models from %s", url)
-        response = requests.get(url, headers=self.api_headers, timeout=10)
-        response.raise_for_status()
+        try:
+            response = requests.get(url, headers=self.api_headers, timeout=10)
+            response.raise_for_status()
+        except requests.exceptions.RequestException as e:
+            logger.error(extract_requests_error(e))
+            sys.exit(1)
         models = response.json()
         ids = [m["id"] for m in models["data"]]
         logger.info("Available models: %s", ids)
@@ -303,9 +307,8 @@ class LLME:
                 while self.chat_completion():
                     pass
             except requests.exceptions.RequestException as e:
-                logger.error(vars(e.response))
-                logger.error(e.response.content)
-                raise e
+                logger.error(extract_requests_error(e))
+                break
             except KeyboardInterrupt:
                 logger.warning("Interrupted by user.")
                 if self.config.batch:
@@ -418,6 +421,33 @@ class Asset:
         else:
             data = base64.b64encode(self.raw_content).decode()
             return {"type": "file", "file": {"file_data": data, "filename": self.path}}
+
+
+def extract_requests_error(e):
+    """Common handling of requests error"""
+    logger.debug("request error: %s", e)
+    if e.request is None:
+        return str(e)
+    if e.response is None:
+        return f"{e} ({e.request.url})"
+
+    """Server may format their error in plain text or json"""
+    text = e.response.text
+    if text[0] == '{':
+        logger.debug("full error response: %s", text)
+        try:
+            data = json.loads(text)
+        except:
+            data = {}
+        if "error" in data:
+            data = data["error"]
+            text = data
+        if "message" in data:
+            text = data["message"]
+
+    message = f"{text} ({e.response.status_code} {e.response.request.url})"
+    return message
+
 
 def apply_config(args, config, path):
     """Apply a config dict to an args namespace without overwriting existing values (precedence).
