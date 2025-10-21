@@ -14,15 +14,22 @@ def inccell(rowid, colid, mat):
 
 links = []
 linksmap = {}
+linkstag = {}
 def getlink(what, url):
     if url in linksmap:
-        n = linksmap[url]["n"]
+        tag = linksmap[url]["tag"]
     else:
-        n = len(links)
-        link = {"n": n, "what": what, "url": url}
+        tag = url.split('/')[-1][0:2]
+        if tag in linkstag:
+            n = linkstag[tag] + 1
+            linkstag[tag] = n
+        else:
+            n = linkstag[tag] = 1
+        tag = tag + str(n)
+        link = {"tag": tag, "what": what, "url": url}
         links.append(link)
         linksmap[url] = link
-    return f"[{what}][{n}]"
+    return f"[{what}][{tag}]"
 
 def linkmodel(model):
     base = model.split(":")[0]
@@ -141,7 +148,7 @@ def main():
 
     print()
     for link in links:
-        print(f"  [{link["n"]}]: {link["url"]}")
+        print(f"  [{link["tag"]}]: {link["url"]}")
 
 if __name__ == "__main__":
     main()
