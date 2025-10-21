@@ -63,15 +63,19 @@ def get(mat, rowid, colid):
 
 
 def color(rate):
-    colors = "🔴🟠🟡🟢"
+    colors = "💀🔴🟠🟡🟢👑"
     if rate == 0:
         return colors[0]
-    if rate < 50:
+    if rate < 15:
         return colors[1]
-    if rate < 100:
+    if rate < 50:
         return colors[2]
-    else:
+    if rate < 85:
         return colors[3]
+    if rate < 100:
+        return colors[4]
+    else:
+        return colors[5]
 
 
 def print_mat(mat, f):
@@ -122,8 +126,10 @@ def print_model_suites(f):
             n = get(model_suites, rowid, colid)
             t = get(total_model_suites, rowid, colid)
             p = 100.0 * n / t
-
-            tablerow.append("%s %d (%.2f%%)" % (color(p), n, p))
+            if n == 0:
+                tablerow.append(f"{color(0)} 0")
+            else:
+                tablerow.append("%s %d (%.2f%%)" % (color(p), n, p))
     titles = [linksuite(s) for s in suites]
     titles.insert(0, "Models")
     f.write(tabulate(table, headers=(titles), tablefmt="pipe"))
