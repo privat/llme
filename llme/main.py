@@ -248,7 +248,9 @@ class LLME:
             print(colored(f"{len(self.messages)}< ", "blue", attrs=["bold"]), end='', flush=True)
 
         full_content = ''
+        full_reasoning_content = ''
         cb = None
+        mode = None # reasoning, content or none
         timings=None
         for line in response.iter_lines():
             # The communication is loosly based on Server-Sent Events (SSE)
@@ -279,23 +281,37 @@ class LLME:
                     timings = data["timings"]
                 break
             if 'reasoning_content' in choice0['delta']:
-                # Some thinking models like qwen3 have a reasoning_content field
+                # Some reasoning models like qwen3 of gpt-oss have a reasoning_content field
                 content = choice0['delta']['reasoning_content']
-            else:
+                if mode and mode != full_reasoning_content:
+                    printn(mode)
+                full_reasoning_content += content
+                mode = full_reasoning_content
+                print(colored(content, "grey", attrs=["bold"]), end='', flush=True)
+            elif 'content' in choice0['delta']:
                 content = choice0['delta']['content']
-            if content is None:
+                if content is not None:
+                    if mode and mode != full_content:
+                        printn(mode)
+                    full_content += content
+                    mode = full_content
+                    print(content, end='', flush=True)
+            else:
+                logger.info("Unexpected content in chunk %s", data)
                 continue
-            full_content += content
-            print(content, end='', flush=True)
             #FIXME: this is fragile and ugly.
             cb = re.search(r"^```run ([\w+-]*)\n(.*?)^```$", full_content, re.DOTALL | re.MULTILINE)
             if cb:
                 # Force the LLM to stop once a tool call is found
                 break
-        printn(full_content)
+        if mode:
+            printn(mode)
         response.close()
         self.update_timing(timings)
-        self.add_message({"role": "assistant", "content": full_content})
+        message = {"role": "assistant", "content": full_content}
+        if full_reasoning_content:
+            message["reasoning_content"] = full_reasoning_content
+        self.add_message(message)
         if cb:
             r = self.run_tool(cb[1], cb[2])
             if r:
