@@ -28,34 +28,34 @@ The benchmark is also used to check some local LLM servers. The slashless are ru
 | [gemma3:latest][12]                                               |     14 |        0 |     19 |       1 |         6 |
 | [unsloth/Qwen3-4B-Thinking-2507-GGUF:Q4_K_M][13]                  |     13 |        3 |     12 |       4 |         8 |
 | [llava-phi3:latest][14]                                           |     13 |        2 |     25 |       0 |         0 |
-| [granite3-dense:latest][15]                                       |     12 |        3 |     24 |       0 |         1 |
-| [llama3:latest][16]                                               |     12 |        2 |     24 |       0 |         2 |
-| [llama3.2:latest][17]                                             |     12 |        1 |     25 |       1 |         1 |
+| [unsloth/granite-4.0-h-small-GGUF:Q4_K_M][15]                     |     12 |        5 |     11 |       4 |         8 |
+| [granite3-dense:latest][16]                                       |     12 |        3 |     24 |       0 |         1 |
+| [llama3:latest][17]                                               |     12 |        2 |     24 |       0 |         2 |
+| [llama3.2:latest][18]                                             |     12 |        1 |     25 |       1 |         1 |
 | [qwen3:4b][5]                                                     |     12 |        0 |     12 |       0 |        16 |
-| [unsloth/Qwen3-30B-A3B-GGUF:Q4_K_M][18]                           |     11 |        4 |     13 |       4 |         8 |
-| [ggml-org/Qwen2.5-Coder-7B-Q8_0-GGUF:Q8_0][19]                    |     11 |        3 |     17 |       4 |         4 |
-| [llama2:7b][20]                                                   |     11 |        0 |     29 |       0 |         0 |
-| [LiquidAI/LFM2-8B-A1B-GGUF:Q4_K_M][21]                            |     11 |        0 |     25 |       4 |         0 |
-| [unsloth/granite-4.0-h-tiny-GGUF:Q4_K_M][22]                      |     10 |        4 |      8 |       6 |        12 |
-| [ibm-granite/granite-4.0-h-micro-GGUF:Q4_K_M][23]                 |     10 |        2 |     24 |       4 |         0 |
-| [mistral:latest][24]                                              |     10 |        1 |     25 |       1 |         1 |
-| [llava-llama3:latest][25]                                         |     10 |        0 |     30 |       0 |         0 |
-| [llava:latest][26]                                                |     10 |        0 |     30 |       0 |         0 |
-| [unsloth/gpt-oss-120b-GGUF:Q4_K_M][27]                            |      9 |        3 |     24 |       4 |         0 |
-| [minicpm-v:latest][28]                                            |      9 |        1 |     29 |       0 |         1 |
-| [unsloth/gpt-oss-120b-GGUF][27]                                   |      9 |        1 |     26 |       4 |         0 |
-| [llama2:latest][20]                                               |      9 |        0 |     31 |       0 |         0 |
-| [bakllava:latest][29]                                             |      8 |        1 |     31 |       0 |         0 |
-| [unsloth/gpt-oss-20b-GGUF:Q4_K_M][30]                             |      8 |        1 |     24 |       4 |         1 |
-| [deepseek-r1:14b][31]                                             |      8 |        0 |      6 |       0 |        26 |
-| [gpt-oss:latest][32]                                              |      5 |        0 |     35 |       0 |         0 |
-| [ggml-org/gemma-3-1b-it-GGUF:Q4_K_M][33]                          |      3 |        2 |     14 |       5 |        16 |
-| [deepseek-r1:latest][31]                                          |      2 |        1 |      4 |       0 |        31 |
-| [NexaAI/Qwen3-4B-4bit-MLX][34]                                    |      1 |        0 |     21 |       0 |        16 |
-| [NexaAI/qwen3vl-8B-Thinking-4bit-mlx][35]                         |      1 |        0 |     36 |       1 |         0 |
-| [NexaAI/qwen3vl-8B-Instruct-4bit-mlx][36]                         |      1 |        0 |     36 |       1 |         0 |
-| [NexaAI/gpt-oss-20b-MLX-4bit][37]                                 |      1 |        0 |     32 |       5 |         0 |
-| [unsloth/granite-4.0-h-small-GGUF:Q4_K_M][38]                     |      1 |        0 |      0 |      39 |         0 |
+| [unsloth/Qwen3-30B-A3B-GGUF:Q4_K_M][19]                           |     11 |        4 |     13 |       4 |         8 |
+| [ggml-org/Qwen2.5-Coder-7B-Q8_0-GGUF:Q8_0][20]                    |     11 |        3 |     17 |       4 |         4 |
+| [llama2:7b][21]                                                   |     11 |        0 |     29 |       0 |         0 |
+| [LiquidAI/LFM2-8B-A1B-GGUF:Q4_K_M][22]                            |     11 |        0 |     25 |       4 |         0 |
+| [unsloth/granite-4.0-h-tiny-GGUF:Q4_K_M][23]                      |     10 |        4 |      8 |       6 |        12 |
+| [ibm-granite/granite-4.0-h-micro-GGUF:Q4_K_M][24]                 |     10 |        2 |     24 |       4 |         0 |
+| [mistral:latest][25]                                              |     10 |        1 |     25 |       1 |         1 |
+| [llava-llama3:latest][26]                                         |     10 |        0 |     30 |       0 |         0 |
+| [llava:latest][27]                                                |     10 |        0 |     30 |       0 |         0 |
+| [unsloth/gpt-oss-120b-GGUF:Q4_K_M][28]                            |      9 |        3 |     24 |       4 |         0 |
+| [minicpm-v:latest][29]                                            |      9 |        1 |     29 |       0 |         1 |
+| [unsloth/gpt-oss-120b-GGUF][28]                                   |      9 |        1 |     26 |       4 |         0 |
+| [llama2:latest][21]                                               |      9 |        0 |     31 |       0 |         0 |
+| [bakllava:latest][30]                                             |      8 |        1 |     31 |       0 |         0 |
+| [unsloth/gpt-oss-20b-GGUF:Q4_K_M][31]                             |      8 |        1 |     24 |       4 |         1 |
+| [deepseek-r1:14b][32]                                             |      8 |        0 |      6 |       0 |        26 |
+| [gpt-oss:latest][33]                                              |      5 |        0 |     35 |       0 |         0 |
+| [ggml-org/gemma-3-1b-it-GGUF:Q4_K_M][34]                          |      3 |        2 |     14 |       5 |        16 |
+| [deepseek-r1:latest][32]                                          |      2 |        1 |      4 |       0 |        31 |
+| [NexaAI/Qwen3-4B-4bit-MLX][35]                                    |      1 |        0 |     21 |       0 |        16 |
+| [NexaAI/qwen3vl-8B-Thinking-4bit-mlx][36]                         |      1 |        0 |     36 |       1 |         0 |
+| [NexaAI/qwen3vl-8B-Instruct-4bit-mlx][37]                         |      1 |        0 |     36 |       1 |         0 |
+| [NexaAI/gpt-oss-20b-MLX-4bit][38]                                 |      1 |        0 |     32 |       5 |         0 |
 
 ## Passed tests by models
 
@@ -76,90 +76,90 @@ The benchmark is also used to check some local LLM servers. The slashless are ru
 | [gemma3:latest][12]                                               |                 7 |                  1 |                   3 |                     2 |             1 |                  0 |
 | [unsloth/Qwen3-4B-Thinking-2507-GGUF:Q4_K_M][13]                  |                11 |                  1 |                   0 |                     1 |             0 |                  0 |
 | [llava-phi3:latest][14]                                           |                 9 |                  1 |                   3 |                     0 |             0 |                  0 |
-| [granite3-dense:latest][15]                                       |                10 |                  1 |                   0 |                     1 |             0 |                  0 |
-| [llama3:latest][16]                                               |                10 |                  1 |                   0 |                     1 |             0 |                  0 |
-| [llama3.2:latest][17]                                             |                10 |                  1 |                   0 |                     1 |             0 |                  0 |
+| [unsloth/granite-4.0-h-small-GGUF:Q4_K_M][15]                     |                 9 |                  1 |                   0 |                     0 |             2 |                  0 |
+| [granite3-dense:latest][16]                                       |                10 |                  1 |                   0 |                     1 |             0 |                  0 |
+| [llama3:latest][17]                                               |                10 |                  1 |                   0 |                     1 |             0 |                  0 |
+| [llama3.2:latest][18]                                             |                10 |                  1 |                   0 |                     1 |             0 |                  0 |
 | [qwen3:4b][5]                                                     |                 9 |                  1 |                   0 |                     2 |             0 |                  0 |
-| [unsloth/Qwen3-30B-A3B-GGUF:Q4_K_M][18]                           |                 7 |                  1 |                   0 |                     1 |             1 |                  1 |
-| [ggml-org/Qwen2.5-Coder-7B-Q8_0-GGUF:Q8_0][19]                    |                 9 |                  1 |                   0 |                     0 |             1 |                  0 |
-| [llama2:7b][20]                                                   |                 8 |                  1 |                   2 |                     0 |             0 |                  0 |
-| [LiquidAI/LFM2-8B-A1B-GGUF:Q4_K_M][21]                            |                 8 |                  1 |                   0 |                     2 |             0 |                  0 |
-| [unsloth/granite-4.0-h-tiny-GGUF:Q4_K_M][22]                      |                 9 |                  1 |                   0 |                     0 |             0 |                  0 |
-| [ibm-granite/granite-4.0-h-micro-GGUF:Q4_K_M][23]                 |                 9 |                  1 |                   0 |                     0 |             0 |                  0 |
-| [mistral:latest][24]                                              |                 8 |                  1 |                   1 |                     0 |             0 |                  0 |
-| [llava-llama3:latest][25]                                         |                 5 |                  1 |                   3 |                     1 |             0 |                  0 |
-| [llava:latest][26]                                                |                 5 |                  1 |                   4 |                     0 |             0 |                  0 |
-| [unsloth/gpt-oss-120b-GGUF:Q4_K_M][27]                            |                 8 |                  1 |                   0 |                     0 |             0 |                  0 |
-| [minicpm-v:latest][28]                                            |                 4 |                  1 |                   3 |                     1 |             0 |                  0 |
-| [unsloth/gpt-oss-120b-GGUF][27]                                   |                 8 |                  1 |                   0 |                     0 |             0 |                  0 |
-| [llama2:latest][20]                                               |                 6 |                  1 |                   1 |                     1 |             0 |                  0 |
-| [bakllava:latest][29]                                             |                 3 |                  1 |                   4 |                     0 |             0 |                  0 |
-| [unsloth/gpt-oss-20b-GGUF:Q4_K_M][30]                             |                 7 |                  1 |                   0 |                     0 |             0 |                  0 |
-| [deepseek-r1:14b][31]                                             |                 6 |                  1 |                   0 |                     1 |             0 |                  0 |
-| [gpt-oss:latest][32]                                              |                 3 |                  1 |                   0 |                     1 |             0 |                  0 |
-| [ggml-org/gemma-3-1b-it-GGUF:Q4_K_M][33]                          |                 2 |                  1 |                   0 |                     0 |             0 |                  0 |
-| [deepseek-r1:latest][31]                                          |                 0 |                  1 |                   1 |                     0 |             0 |                  0 |
-| [NexaAI/Qwen3-4B-4bit-MLX][34]                                    |                 0 |                  1 |                   0 |                     0 |             0 |                  0 |
-| [NexaAI/qwen3vl-8B-Thinking-4bit-mlx][35]                         |                 0 |                  1 |                   0 |                     0 |             0 |                  0 |
-| [NexaAI/qwen3vl-8B-Instruct-4bit-mlx][36]                         |                 0 |                  1 |                   0 |                     0 |             0 |                  0 |
-| [NexaAI/gpt-oss-20b-MLX-4bit][37]                                 |                 0 |                  1 |                   0 |                     0 |             0 |                  0 |
-| [unsloth/granite-4.0-h-small-GGUF:Q4_K_M][38]                     |                 0 |                  1 |                   0 |                     0 |             0 |                  0 |
+| [unsloth/Qwen3-30B-A3B-GGUF:Q4_K_M][19]                           |                 7 |                  1 |                   0 |                     1 |             1 |                  1 |
+| [ggml-org/Qwen2.5-Coder-7B-Q8_0-GGUF:Q8_0][20]                    |                 9 |                  1 |                   0 |                     0 |             1 |                  0 |
+| [llama2:7b][21]                                                   |                 8 |                  1 |                   2 |                     0 |             0 |                  0 |
+| [LiquidAI/LFM2-8B-A1B-GGUF:Q4_K_M][22]                            |                 8 |                  1 |                   0 |                     2 |             0 |                  0 |
+| [unsloth/granite-4.0-h-tiny-GGUF:Q4_K_M][23]                      |                 9 |                  1 |                   0 |                     0 |             0 |                  0 |
+| [ibm-granite/granite-4.0-h-micro-GGUF:Q4_K_M][24]                 |                 9 |                  1 |                   0 |                     0 |             0 |                  0 |
+| [mistral:latest][25]                                              |                 8 |                  1 |                   1 |                     0 |             0 |                  0 |
+| [llava-llama3:latest][26]                                         |                 5 |                  1 |                   3 |                     1 |             0 |                  0 |
+| [llava:latest][27]                                                |                 5 |                  1 |                   4 |                     0 |             0 |                  0 |
+| [unsloth/gpt-oss-120b-GGUF:Q4_K_M][28]                            |                 8 |                  1 |                   0 |                     0 |             0 |                  0 |
+| [minicpm-v:latest][29]                                            |                 4 |                  1 |                   3 |                     1 |             0 |                  0 |
+| [unsloth/gpt-oss-120b-GGUF][28]                                   |                 8 |                  1 |                   0 |                     0 |             0 |                  0 |
+| [llama2:latest][21]                                               |                 6 |                  1 |                   1 |                     1 |             0 |                  0 |
+| [bakllava:latest][30]                                             |                 3 |                  1 |                   4 |                     0 |             0 |                  0 |
+| [unsloth/gpt-oss-20b-GGUF:Q4_K_M][31]                             |                 7 |                  1 |                   0 |                     0 |             0 |                  0 |
+| [deepseek-r1:14b][32]                                             |                 6 |                  1 |                   0 |                     1 |             0 |                  0 |
+| [gpt-oss:latest][33]                                              |                 3 |                  1 |                   0 |                     1 |             0 |                  0 |
+| [ggml-org/gemma-3-1b-it-GGUF:Q4_K_M][34]                          |                 2 |                  1 |                   0 |                     0 |             0 |                  0 |
+| [deepseek-r1:latest][32]                                          |                 0 |                  1 |                   1 |                     0 |             0 |                  0 |
+| [NexaAI/Qwen3-4B-4bit-MLX][35]                                    |                 0 |                  1 |                   0 |                     0 |             0 |                  0 |
+| [NexaAI/qwen3vl-8B-Thinking-4bit-mlx][36]                         |                 0 |                  1 |                   0 |                     0 |             0 |                  0 |
+| [NexaAI/qwen3vl-8B-Instruct-4bit-mlx][37]                         |                 0 |                  1 |                   0 |                     0 |             0 |                  0 |
+| [NexaAI/gpt-oss-20b-MLX-4bit][38]                                 |                 0 |                  1 |                   0 |                     0 |             0 |                  0 |
 
 ## Results by testsuites
 
 | Model               |   PASS |   ALMOST |   FAIL |   ERROR |   TIMEOUT |
 |:--------------------|-------:|---------:|-------:|--------:|----------:|
-| [smoketest][39]     |    316 |        0 |    159 |      19 |        65 |
+| [smoketest][39]     |    325 |        0 |    160 |       6 |        68 |
 | [test_utils][40]    |     43 |        0 |      0 |       0 |         0 |
-| [smokeimages][41]   |     39 |        0 |     93 |      71 |        12 |
-| [basic_answers][42] |     32 |       61 |     93 |       5 |        24 |
-| [hello][43]         |     22 |        0 |    107 |       4 |        18 |
-| [patch_file][44]    |     18 |        0 |    398 |      13 |        87 |
+| [smokeimages][41]   |     39 |        0 |     94 |      70 |        12 |
+| [basic_answers][42] |     32 |       66 |     93 |       0 |        24 |
+| [hello][43]         |     24 |        0 |    108 |       0 |        19 |
+| [patch_file][44]    |     18 |        0 |    406 |       1 |        91 |
 
 ## Results by tests
 
 | Model                       |   PASS |   ALMOST |   FAIL |   ERROR |   TIMEOUT |
 |:----------------------------|-------:|---------:|-------:|--------:|----------:|
 | [test_utils][40] 00         |     43 |        0 |      0 |       0 |         0 |
-| [smoketest][39] 03          |     33 |        0 |      6 |       1 |         3 |
-| [smoketest][39] 32          |     32 |        0 |      6 |       1 |         4 |
-| [smoketest][39] 06          |     32 |        0 |      5 |       1 |         5 |
-| [smoketest][39] 05          |     32 |        0 |      7 |       1 |         3 |
-| [smoketest][39] 04          |     32 |        0 |      7 |       1 |         3 |
-| [smoketest][39] 33          |     28 |        0 |     10 |       2 |         3 |
-| [smoketest][39] 01          |     24 |        0 |      6 |       2 |        11 |
-| [smoketest][39] 02          |     21 |        0 |      6 |       4 |        12 |
-| [smoketest][39] 11          |     20 |        0 |     20 |       1 |         2 |
-| [smoketest][39] 13          |     17 |        0 |     21 |       1 |         4 |
-| [smoketest][39] 12          |     16 |        0 |     22 |       1 |         4 |
-| [smoketest][39] 10          |     16 |        0 |     23 |       1 |         3 |
-| [basic_answers][42] 0.paris |     15 |       20 |      6 |       1 |         1 |
-| [basic_answers][42] 4.fact  |     14 |        8 |     17 |       1 |         3 |
-| [smoketest][39] 31          |     13 |        0 |     20 |       2 |         8 |
+| [smoketest][39] 03          |     34 |        0 |      6 |       0 |         3 |
+| [smoketest][39] 05          |     33 |        0 |      7 |       0 |         3 |
+| [smoketest][39] 04          |     33 |        0 |      7 |       0 |         3 |
+| [smoketest][39] 32          |     32 |        0 |      6 |       0 |         5 |
+| [smoketest][39] 06          |     32 |        0 |      5 |       0 |         6 |
+| [smoketest][39] 33          |     28 |        0 |     10 |       1 |         4 |
+| [smoketest][39] 01          |     25 |        0 |      6 |       1 |        11 |
+| [smoketest][39] 02          |     22 |        0 |      6 |       3 |        12 |
+| [smoketest][39] 11          |     21 |        0 |     20 |       0 |         2 |
+| [smoketest][39] 13          |     18 |        0 |     21 |       0 |         4 |
+| [smoketest][39] 12          |     17 |        0 |     22 |       0 |         4 |
+| [smoketest][39] 10          |     16 |        0 |     24 |       0 |         3 |
+| [basic_answers][42] 0.paris |     15 |       21 |      6 |       0 |         1 |
+| [basic_answers][42] 4.fact  |     14 |        9 |     17 |       0 |         3 |
+| [smoketest][39] 31          |     14 |        0 |     20 |       1 |         8 |
 | [smokeimages][41] 4         |     13 |        0 |     10 |      17 |         3 |
 | [smokeimages][41] 2         |      9 |        0 |     15 |      17 |         2 |
 | [smokeimages][41] 0         |      9 |        0 |     15 |      17 |         2 |
-| [hello][43] 02name          |      7 |        0 |     31 |       1 |         4 |
+| [hello][43] 02name          |      7 |        0 |     31 |       0 |         5 |
+| [hello][43] 03git           |      7 |        0 |     20 |       0 |         6 |
 | [smokeimages][41] 1         |      7 |        0 |     17 |      18 |         1 |
-| [hello][43] 01world         |      6 |        0 |     33 |       1 |         3 |
-| [hello][43] 03git           |      6 |        0 |     20 |       1 |         6 |
-| [patch_file][44] 05python   |      5 |        0 |     32 |       1 |         5 |
-| [patch_file][44] 04ed       |      4 |        0 |     31 |       1 |         7 |
-| [patch_file][44] 03patch    |      3 |        0 |     33 |       1 |         6 |
-| [hello][43] 04gitignore     |      3 |        0 |     23 |       1 |         5 |
-| [patch_file][44] 01cat      |      2 |        0 |     34 |       1 |         6 |
-| [patch_file][44] 00free     |      2 |        0 |     34 |       1 |         6 |
-| [basic_answers][42] 3.llme  |      1 |       12 |     24 |       1 |         5 |
-| [basic_answers][42] 2.llme  |      1 |       11 |     23 |       1 |         7 |
-| [basic_answers][42] 1.llme  |      1 |       10 |     23 |       1 |         8 |
-| [patch_file][44] 11cat      |      1 |        0 |     35 |       1 |         6 |
-| [patch_file][44] 02sed      |      1 |        0 |     32 |       1 |         9 |
-| [smokeimages][41] 3         |      1 |        0 |     36 |       2 |         4 |
-| [patch_file][44] 14ed       |      0 |        0 |     32 |       1 |        10 |
-| [patch_file][44] 13patch    |      0 |        0 |     34 |       1 |         8 |
-| [patch_file][44] 12sed      |      0 |        0 |     35 |       1 |         7 |
-| [patch_file][44] 10free     |      0 |        0 |     35 |       1 |         7 |
-| [patch_file][44] 15python   |      0 |        0 |     31 |       2 |        10 |
+| [hello][43] 01world         |      6 |        0 |     34 |       0 |         3 |
+| [patch_file][44] 05python   |      5 |        0 |     33 |       0 |         5 |
+| [patch_file][44] 04ed       |      4 |        0 |     32 |       0 |         7 |
+| [hello][43] 04gitignore     |      4 |        0 |     23 |       0 |         5 |
+| [patch_file][44] 03patch    |      3 |        0 |     33 |       0 |         7 |
+| [patch_file][44] 01cat      |      2 |        0 |     34 |       0 |         7 |
+| [patch_file][44] 00free     |      2 |        0 |     35 |       0 |         6 |
+| [basic_answers][42] 3.llme  |      1 |       13 |     24 |       0 |         5 |
+| [basic_answers][42] 2.llme  |      1 |       12 |     23 |       0 |         7 |
+| [basic_answers][42] 1.llme  |      1 |       11 |     23 |       0 |         8 |
+| [patch_file][44] 11cat      |      1 |        0 |     36 |       0 |         6 |
+| [patch_file][44] 02sed      |      1 |        0 |     33 |       0 |         9 |
+| [smokeimages][41] 3         |      1 |        0 |     37 |       1 |         4 |
+| [patch_file][44] 14ed       |      0 |        0 |     33 |       0 |        10 |
+| [patch_file][44] 13patch    |      0 |        0 |     35 |       0 |         8 |
+| [patch_file][44] 12sed      |      0 |        0 |     36 |       0 |         7 |
+| [patch_file][44] 10free     |      0 |        0 |     35 |       0 |         8 |
+| [patch_file][44] 15python   |      0 |        0 |     31 |       1 |        11 |
 
   [0]: https://ollama.com/library/qwen3-coder
   [1]: https://huggingface.co/unsloth/Mistral-Small-3.2-24B-Instruct-2506-GGUF
@@ -176,30 +176,30 @@ The benchmark is also used to check some local LLM servers. The slashless are ru
   [12]: https://ollama.com/library/gemma3
   [13]: https://huggingface.co/unsloth/Qwen3-4B-Thinking-2507-GGUF
   [14]: https://ollama.com/library/llava-phi3
-  [15]: https://ollama.com/library/granite3-dense
-  [16]: https://ollama.com/library/llama3
-  [17]: https://ollama.com/library/llama3.2
-  [18]: https://huggingface.co/unsloth/Qwen3-30B-A3B-GGUF
-  [19]: https://huggingface.co/ggml-org/Qwen2.5-Coder-7B-Q8_0-GGUF
-  [20]: https://ollama.com/library/llama2
-  [21]: https://huggingface.co/LiquidAI/LFM2-8B-A1B-GGUF
-  [22]: https://huggingface.co/unsloth/granite-4.0-h-tiny-GGUF
-  [23]: https://huggingface.co/ibm-granite/granite-4.0-h-micro-GGUF
-  [24]: https://ollama.com/library/mistral
-  [25]: https://ollama.com/library/llava-llama3
-  [26]: https://ollama.com/library/llava
-  [27]: https://huggingface.co/unsloth/gpt-oss-120b-GGUF
-  [28]: https://ollama.com/library/minicpm-v
-  [29]: https://ollama.com/library/bakllava
-  [30]: https://huggingface.co/unsloth/gpt-oss-20b-GGUF
-  [31]: https://ollama.com/library/deepseek-r1
-  [32]: https://ollama.com/library/gpt-oss
-  [33]: https://huggingface.co/ggml-org/gemma-3-1b-it-GGUF
-  [34]: https://huggingface.co/NexaAI/Qwen3-4B-4bit-MLX
-  [35]: https://huggingface.co/NexaAI/qwen3vl-8B-Thinking-4bit-mlx
-  [36]: https://huggingface.co/NexaAI/qwen3vl-8B-Instruct-4bit-mlx
-  [37]: https://huggingface.co/NexaAI/gpt-oss-20b-MLX-4bit
-  [38]: https://huggingface.co/unsloth/granite-4.0-h-small-GGUF
+  [15]: https://huggingface.co/unsloth/granite-4.0-h-small-GGUF
+  [16]: https://ollama.com/library/granite3-dense
+  [17]: https://ollama.com/library/llama3
+  [18]: https://ollama.com/library/llama3.2
+  [19]: https://huggingface.co/unsloth/Qwen3-30B-A3B-GGUF
+  [20]: https://huggingface.co/ggml-org/Qwen2.5-Coder-7B-Q8_0-GGUF
+  [21]: https://ollama.com/library/llama2
+  [22]: https://huggingface.co/LiquidAI/LFM2-8B-A1B-GGUF
+  [23]: https://huggingface.co/unsloth/granite-4.0-h-tiny-GGUF
+  [24]: https://huggingface.co/ibm-granite/granite-4.0-h-micro-GGUF
+  [25]: https://ollama.com/library/mistral
+  [26]: https://ollama.com/library/llava-llama3
+  [27]: https://ollama.com/library/llava
+  [28]: https://huggingface.co/unsloth/gpt-oss-120b-GGUF
+  [29]: https://ollama.com/library/minicpm-v
+  [30]: https://ollama.com/library/bakllava
+  [31]: https://huggingface.co/unsloth/gpt-oss-20b-GGUF
+  [32]: https://ollama.com/library/deepseek-r1
+  [33]: https://ollama.com/library/gpt-oss
+  [34]: https://huggingface.co/ggml-org/gemma-3-1b-it-GGUF
+  [35]: https://huggingface.co/NexaAI/Qwen3-4B-4bit-MLX
+  [36]: https://huggingface.co/NexaAI/qwen3vl-8B-Thinking-4bit-mlx
+  [37]: https://huggingface.co/NexaAI/qwen3vl-8B-Instruct-4bit-mlx
+  [38]: https://huggingface.co/NexaAI/gpt-oss-20b-MLX-4bit
   [39]: tests/smoketest.sh
   [40]: tests/test_utils.sh
   [41]: tests/smokeimages.sh
