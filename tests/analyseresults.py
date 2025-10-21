@@ -12,6 +12,28 @@ def inccell(rowid, colid, mat):
     else:
         matrow[colid] += 1
 
+links = []
+linksmap = {}
+def getlink(what, url):
+    if url in linksmap:
+        n = linksmap[url]["n"]
+    else:
+        n = len(links)
+        link = {"n": n, "what": what, "url": url}
+        links.append(link)
+        linksmap[url] = link
+    return f"[{what}][{n}]"
+
+def linkmodel(model):
+    base = model.split(":")[0]
+    if '/' in base:
+        return getlink(model, f"https://huggingface.co/{base}")
+    else:
+        return getlink(model, f"https://ollama.com/library/{base}")
+
+def linksuite(suite):
+    return getlink(suite, f"tests/{suite}.sh")
+
 model_results = {}
 def inc_model_results(model, result):
     inccell(model, result, model_results)
@@ -40,7 +62,16 @@ def print_mat(mat):
             else:
                 headers[colid] += v
     for rowid in reversed(sortrow(mat)):
-        tablerow = [rowid]
+        if mat is model_results:               
+            title = linkmodel(rowid)
+        elif mat is suite_results:
+            title = linksuite(rowid)
+        elif mat is test_results:
+            s, t = rowid.split(' ', 1)
+            title = f"{linksuite(s)} {t}"
+        else:
+            title = rowid
+        tablerow = [title]
         table.append(tablerow)
         for colid in ['PASS', 'ALMOST', 'FAIL', 'ERROR', 'TIMEOUT']:
             tablerow.append(mat[rowid].get(colid, 0))
@@ -70,7 +101,15 @@ def main():
             if row[4] == "PASS":
                 inc_model_suites(row[3], row[0])
 
+    with open("benchmark.md", 'r') as f:
+        results = f.read()
+    head = results.split("<!--cut-->")[0]
+
+    print(head)
+    print("<!--cut-->")
+
     print("# Model Results\n")
+    print("This is a preliminary benchmark on some local models. The ranking should not be considered fair or rigorous since many uncontrolled variables impact it.\n\nThe benchmark is also used to check some local LLM servers. The slashless are run on ollama, the guff models are run on a llama.cpp server + llama-seap, and the mlx models are run on a nexa server.")
     print(f"* {len(model_results)} models")
     print(f"* {len(suite_results)} testsuites")
     print(f"* {len(test_results)} tests")
@@ -84,11 +123,13 @@ def main():
     table = []
     suites = list(reversed(sortrow(suite_results)))
     for rowid in reversed(sortrow(model_results)):
-        tablerow = [rowid]
+        tablerow = [linkmodel(rowid)]
         table.append(tablerow)
         for colid in suites:
             tablerow.append(model_suites.get(rowid,{}).get(colid, 0))
-    print(tabulate(table, headers=(['Model'] + suites), tablefmt="pipe"))
+    titles = [linksuite(s) for s in suites]
+    titles.insert(0, "Models")
+    print(tabulate(table, headers=(titles), tablefmt="pipe"))
     
     print("\n## Results by testsuites\n")
 
@@ -97,6 +138,10 @@ def main():
     print("\n## Results by tests\n")
 
     print_mat(test_results)
+
+    print()
+    for link in links:
+        print(f"  [{link["n"]}]: {link["url"]}")
 
 if __name__ == "__main__":
     main()
