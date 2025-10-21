@@ -172,21 +172,25 @@ sudo llme --batch --yolo "Distupgrade the system. You are root! Do as you wish."
 
 ### Options (and config)
 
+<!--help-->
 ```console
 $ llme --help
 usage: llme [options...] [prompts...]
 
 OpenAI-compatible chat CLI.
 
+positional arguments:
+  prompts               An initial list of prompts
+
 options:
   -h, --help            show this help message and exit
   -u, --base-url BASE_URL
                         API base URL [base_url]
   -m, --model MODEL     Model name [model]
+  --list-models         List available models then exit
   --api-key API_KEY     The API key [api_key]
-  -q, --quit            Quit after processed all arguments prompts [quit]
-  -b, --batch           Run non-interactively. Implies --quit. Implicit if
-                        stdin is not a tty [batch]
+  -b, --batch           Run non-interactively. Implicit if stdin is not a tty
+                        [batch]
   -p, --plain           No colors or tty fanciness. Implicit if stdout is not
                         a tty [plain]
   -o, --chat-output CHAT_OUTPUT
@@ -201,6 +205,7 @@ options:
   -Y, --yolo            UNSAFE: Do not ask for confirmation before running
                         tools. Combine with --batch to reach the singularity.
 ```
+<!--/help-->
 
 Note: Run a fresh `--help` in case I forgot to update this README.
 
