@@ -228,7 +228,7 @@ class LLME:
         data = {
             "model": self.model,
             "messages": self.raw_messages,
-            "stream": True,
+            "stream": not self.config.bulk,
         }
         if self.config.temperature is not None:
             data["temperature"] = self.config.temperature
@@ -239,7 +239,7 @@ class LLME:
                 url,
                 json=data,
                 headers=self.api_headers,
-                stream=True,
+                stream=not self.config.bulk,
                 timeout=600,  # high enough
             )
             response.raise_for_status()
@@ -251,31 +251,34 @@ class LLME:
         full_reasoning_content = ''
         cb = None
         mode = None # reasoning, content or none
-        timings=None
+        message = None # The whole message, if any
         for line in response.iter_lines():
-            # The communication is loosly based on Server-Sent Events (SSE)
+            # In streaming, the communication is loosly based on Server-Sent Events (SSE)
             if line == b'':
                 continue
             if line[0] == 0x7b: # '{'
                 # special case of no streamimg
                 data = json.loads(line.decode())
-                message = data['choices'][0]['message']
-                self.add_message(message)
-                print(message['content'])
-                return None
-
-            data = line.split(b':', 1)
-            if len(data) != 2:
-                raise ValueError(f"Unexpected chunk: {line}")
-            event, data = data
-            if event != b'data':
-                raise ValueError(f"Unexpected event type: {line}")
-            if data == b"[DONE]":
-                logger.warn("Got [DONE] event, we shoud have stopped before")
-                continue
-            data = json.loads(data.decode())
-            choice0 = data['choices'][0]
+                logger.debug("Bulk data received %s", data)
+                choice0 = data['choices'][0]
+                # We will reuse the message as is, not need to rebuild it from the deltas
+                message = choice0['message']
+                delta = message # A whole message is just a big delta! So reuse the whole code path
+            else:
+                # Handle SSE
+                data = line.split(b':', 1)
+                if len(data) != 2:
+                    raise ValueError(f"Unexpected chunk: {line}")
+                event, data = data
+                if event != b'data':
+                    raise ValueError(f"Unexpected event type: {line}")
+                if data == b"[DONE]":
+                    logger.warn("Got [DONE] event, we shoud have stopped before")
+                    continue
+                data = json.loads(data.decode())
+                choice0 = data['choices'][0]
                 delta = choice0['delta']
+
             reasoning_content = delta.get("reasoning_content")
             if reasoning_content:
                 # Some reasoning models like qwen3 of gpt-oss have a reasoning_content field
@@ -313,9 +316,11 @@ class LLME:
         if mode:
             printn(mode)
         response.close()
-        message = {"role": "assistant", "content": full_content}
-        if full_reasoning_content:
-            message["reasoning_content"] = full_reasoning_content
+        if not message:
+            # construct the message from the deltas
+            message = {"role": "assistant", "content": full_content}
+            if full_reasoning_content:
+                message["reasoning_content"] = full_reasoning_content
         self.add_message(message)
         if cb:
             r = self.run_tool(cb[1], cb[2])
@@ -600,6 +605,7 @@ def process_args():
     parser.add_argument("--api-key", help="The API key [api_key]")
     parser.add_argument("-b", "--batch", default=None, action="store_true", help="Run non-interactively. Implicit if stdin is not a tty [batch]")
     parser.add_argument("-p", "--plain", default=None, action="store_true", help="No colors or tty fanciness. Implicit if stdout is not a tty [plain]")
+    parser.add_argument(      "--bulk", default=None, action="store_true", help="Disable stream-mode. Not that useful but it helps debugging APIs [bulk]")
     parser.add_argument("-o", "--chat-output", help="Export the full raw conversation in json")
     parser.add_argument("-i", "--chat-input", help="Continue a previous (exported) conversation")
     parser.add_argument("-s", "--system", dest="system_prompt", help="System prompt [system_prompt]")
