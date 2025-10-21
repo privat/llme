@@ -49,6 +49,10 @@ class LLME:
         self.messages = [] # the sequence of messages with the LLM
         self.raw_messages = [] # the sequence of messages really communicated with the LLM server to work-around their various API limitations
 
+        self.api_headers = [] # additional headers for the server
+        if self.config.api_key:
+            self.api_headers["Authorization"] = f"Bearer {self.config.api_key}"
+
         # Timing information
         self.total_prompt_n = 0
         self.total_predicted_n = 0
@@ -86,7 +90,7 @@ class LLME:
         """List the available models"""
         url = f"{self.config.base_url}/models"
         logger.info("Get models from %s", url)
-        response = requests.get(url, timeout=10)
+        response = requests.get(url, headers=self.api_headers, timeout=10)
         response.raise_for_status()
         models = response.json()
         ids = [m["id"] for m in models["data"]]
@@ -211,13 +215,10 @@ class LLME:
         url = f"{self.config.base_url}/chat/completions"
         logger.debug("Sending %d raw messages to %s", len(self.raw_messages), url)
 
-        headers=[]
-        if self.config.api_key:
-            headers["Authorization"] = f"Bearer {self.config.api_key}"
         with AnimationManager("blue", self.config.plain):
             response = requests.post(
                 url,
-                headers=headers,
+                headers=self.api_headers,
                 json={"model": self.model,
                       "messages": self.raw_messages,
                       "stream": True},
