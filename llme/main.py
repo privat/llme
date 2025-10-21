@@ -101,6 +101,13 @@ class LLME:
         logger.info("Available models: %s", ids)
         return ids
 
+    def warmup_model(self):
+        """
+        Run a small empty chat to load the model (if meeded) and check that the server/model is ok.
+        Run in background while the user is typing its first prompt.
+        """
+        self.warmup = Warmup(self)
+
 
     def run_tool(self, tool, stdin):
         """Run a tool and return the result as a system message (or None if cancelled)"""
@@ -189,10 +196,12 @@ class LLME:
             raise EOFError("end of batch") # ugly
         else:
             try:
+                self.warmup.check()
                 if not self.config.plain:
                     user_input = input(colored(f"{len(self.messages)}> ", "green", attrs=["bold"]))
                 else:
                     user_input = input()
+                self.warmup.check()
             except KeyboardInterrupt:
                 raise EOFError("interrupted") # ugly
 
@@ -331,6 +340,8 @@ class LLME:
             self.model = self.get_models()[0]
         logger.info("Use model %s from %s", self.model, self.config.base_url)
 
+        self.warmup_model()
+
         if self.config.chat_input:
             logger.info("Loading conversation from %s", self.config.chat_input)
             with open(self.config.chat_input, "r") as f:
@@ -402,6 +413,42 @@ class AnimationManager:
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
         self.stop()
+
+
+class Warmup:
+    def __init__(self, llm):
+        self.llm = llm
+        self.thread = threading.Thread(target=self._process)
+        self.thread.daemon = True
+        self.event = threading.Event()
+        self.message = None
+        self.thread.start()
+
+    def check(self):
+        if self.event.is_set():
+            logger.error(self.message)
+            sys.exit(1)
+
+    def _process(self):
+        url = f"{self.llm.config.base_url}/chat/completions"
+        json = {
+            "model": self.llm.model,
+            "messages": [{"role":"user", "content":""}],
+            "max_completion_tokens":1,
+            "max_tokens":1,
+            "temperature":0,
+        }
+        logger.info("warmup %s", url)
+        try:
+            with requests.post(url=url, headers=self.llm.api_headers, json=json) as response:
+                response.raise_for_status()
+        except requests.exceptions.RequestException as e:
+            self.message = extract_requests_error(e)
+            self.event.set()
+            logger.info("warmup error: %s", self.message)
+            return
+        logger.info("warmup completed")
+
 
 class Asset:
     "A loaded file"
