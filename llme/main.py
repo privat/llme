@@ -150,8 +150,7 @@ class LLME:
                 print(line, end='', flush=True)
                 content += line
         proc.wait()
-        if not content.endswith('\n'):
-            print()
+        printn(content)
 
         if proc.returncode != 0:
             print(colored(f"EXIT {proc.returncode}", "red", attrs=["bold"]))
@@ -293,8 +292,7 @@ class LLME:
             if cb:
                 # Force the LLM to stop once a tool call is found
                 break
-        if not full_content.endswith('\n'):
-            print()
+        printn(full_content)
         if timings:
             print(colored(f"cache: %dt prompt: %dt %.2ft/s predicted: %dt %.2ft/s" % (timings["cache_n"], timings["prompt_n"], timings["prompt_per_second"], timings["predicted_n"], timings["predicted_per_second"]), "grey", attrs=["bold"]))
             self.total_prompt_n += timings["prompt_n"]
@@ -499,6 +497,12 @@ def extract_requests_error(e):
 
     message = f"{text} ({e.response.status_code} {e.response.request.url})"
     return message
+
+
+def printn(previous_string):
+    """Print a newline if previous_string does not end with one"""
+    if not previous_string.endswith("\n"):
+        print()
 
 
 def apply_config(args, config, path):
