@@ -287,7 +287,7 @@ class LLME:
         if not full_content.endswith('\n'):
             print()
         if timings:
-            print(colored(f"cache: %dt prompt: %dt %.2ft/s predicted: %dt %.2ft/s (cache,prompt,predicted)" % (timings["cache_n"], timings["prompt_n"], timings["prompt_per_second"], timings["predicted_n"], timings["predicted_per_second"]), "grey", attrs=["bold"]))
+            print(colored(f"cache: %dt prompt: %dt %.2ft/s predicted: %dt %.2ft/s" % (timings["cache_n"], timings["prompt_n"], timings["prompt_per_second"], timings["predicted_n"], timings["predicted_per_second"]), "grey", attrs=["bold"]))
             self.total_prompt_n += timings["prompt_n"]
             self.total_predicted_n += timings["predicted_n"]
             self.total_prompt_ms += timings["prompt_ms"]
