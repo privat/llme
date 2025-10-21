@@ -226,15 +226,18 @@ class LLME:
     def chat_completion(self):
         """Get a response from the LLM."""
         url = f"{self.config.base_url}/chat/completions"
+        data = {
+            "model": self.model,
+            "messages": self.raw_messages,
+            "stream": True,
+        }
         logger.debug("Sending %d raw messages to %s", len(self.raw_messages), url)
 
         with AnimationManager("blue", self.config.plain):
             response = requests.post(
                 url,
+                json=data,
                 headers=self.api_headers,
-                json={"model": self.model,
-                      "messages": self.raw_messages,
-                      "stream": True},
                 stream=True,
                 timeout=600,  # high enough
             )
