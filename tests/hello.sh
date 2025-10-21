@@ -35,7 +35,7 @@ if tllme 02name "Modify hello.py so that it print 'Hello NAME', where NAME is th
 	fi
 fi	
 
-if tllme 03git "git init the current directory, and commit hello.py"; then
+if tllme 03git "git init the current directory, and commit hello.py" "$@"; then
 	cd "$WORKDIR"
 	if [ ! -d .git ]; then
 		result FAIL nogit
@@ -46,7 +46,7 @@ if tllme 03git "git init the current directory, and commit hello.py"; then
 	fi
 fi
 
-if tllme 04gitignore "keep the directory clean and create a gitignore. do not forget to commit"; then
+if tllme 04gitignore "keep the directory clean and create a gitignore. do not forget to commit" "$@"; then
 	cd "$WORKDIR"
 	if [ ! -f .gitignore ]; then
 		result FAIL nogitignore
