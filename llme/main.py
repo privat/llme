@@ -252,6 +252,7 @@ class LLME:
         cb = None
         mode = None # reasoning, content or none
         message = None # The whole message, if any
+        last_chunk = None
         for line in response.iter_lines():
             # In streaming, the communication is loosly based on Server-Sent Events (SSE)
             if line == b'':
@@ -259,7 +260,6 @@ class LLME:
             if line[0] == 0x7b: # '{'
                 # special case of no streamimg
                 data = json.loads(line.decode())
-                logger.debug("Bulk data received %s", data)
                 choice0 = data['choices'][0]
                 # We will reuse the message as is, not need to rebuild it from the deltas
                 message = choice0['message']
@@ -268,20 +268,28 @@ class LLME:
                 # Handle SSE
                 data = line.split(b':', 1)
                 if len(data) != 2:
-                    raise ValueError(f"Unexpected chunk: {line}")
+                    raise ValueError(f"Chunk: Unexpected:  {line}")
                 event, data = data
                 if event != b'data':
-                    raise ValueError(f"Unexpected event type: {line}")
-                if data == b"[DONE]":
-                    logger.warn("Got [DONE] event, we shoud have stopped before")
+                    raise ValueError(f"Chink: Unexpected event type: {line}")
+                if data in [b'[DONE]', b' [DONE]']:
+                    # We continue the connection until the server closes it. We do not trust them.
                     continue
-                data = json.loads(data.decode())
+                try:
+                    data = json.loads(data.decode())
+                except:
+                    logger.warning("Chunk: Got a weird one: %s", data)
+                    continue
                 choice0 = data['choices'][0]
                 delta = choice0['delta']
+
+            # last_chunk is used for debugging, it's usually too much to print each chunk
+            last_chunk = data
 
             reasoning_content = delta.get("reasoning_content")
             if reasoning_content:
                 # Some reasoning models like qwen3 of gpt-oss have a reasoning_content field
+                # It's non-standard but helps to distinguish the reasoning content from the main content
                 if mode and mode != full_reasoning_content:
                     printn(mode)
                 full_reasoning_content += reasoning_content
@@ -296,15 +304,23 @@ class LLME:
                 mode = full_content
                 print(content, end='', flush=True)
 
-            if choice0['finish_reason'] is not None:
-                logger.debug("last chunk %s", data)
+            finish_reason = choice0['finish_reason']
+            if finish_reason:
+                # About: finish_reason
+                # We do nothing with it for the moment
+                # Some servers give Null for continue and "" for the uneventful finish reason
+                # Some other gives "" for continue and a non empty string for finish reason
+                # So do not trust anybody and continue the connection until the server closes it
+                logger.info("Chunk: finish reason: %s", finish_reason)
+
+            timings = data.get("timings")
+            if timings:
                 if mode:
                     printn(mode)
                 mode = None
                 self.update_timing(data.get("timings"))
-                break
             elif not content and not reasoning_content:
-                logger.info("Unexpected content in chunk %s", data)
+                logger.info("Chunk: Unexpected content: %s", data)
                 continue
 
             #FIXME: this is fragile and ugly.
@@ -315,6 +331,7 @@ class LLME:
 
         if mode:
             printn(mode)
+        logger.debug("Chunk: Last one: %s", last_chunk)
         response.close()
         if not message:
             # construct the message from the deltas
