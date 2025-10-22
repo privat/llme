@@ -103,13 +103,6 @@ class LLME:
         logger.info("Available models: %s", ids)
         return ids
 
-    def warmup_model(self):
-        """
-        Run a small empty chat to load the model (if meeded) and check that the server/model is ok.
-        Run in background while the user is typing its first prompt.
-        """
-        self.warmup = Warmup(self)
-
 
     def confirm(self, question, color):
         """Ask a yes/no confirmation to the user"""
@@ -441,7 +434,7 @@ class LLME:
                 self.prompts = [sys.stdin.read()]
 
         if len(self.prompts) == 0:
-            self.warmup_model()
+            self.warmup = Warmup(self)
 
         try:
             self.loop()
@@ -500,6 +493,9 @@ class AnimationManager:
 
 
 class Warmup:
+    """ A small empty chat request.
+    It loads the model (if meeded) and checks that the server/model is ok.  Run in background while the user is typing its first prompt."""
+
     def __init__(self, llm):
         self.llm = llm
         self.thread = threading.Thread(target=self._process)
@@ -509,11 +505,17 @@ class Warmup:
         self.thread.start()
 
     def check(self):
+        """Called by the main thread"""
         if self.event.is_set():
             logger.error(self.message)
             sys.exit(1)
 
     def _process(self):
+        """ Thread,function.
+        It justs wait for the completion of a small request.
+        If everything is fine then the thread will just terminate.Otherwise it will signal am event for the main thread.
+        Note: because of Python limitation there is no real way to cancel the request. This is mildly annoying."""
+
         url = f"{self.llm.config.base_url}/chat/completions"
         json = {
             "model": self.llm.model,
@@ -524,6 +526,7 @@ class Warmup:
         }
         logger.info("warmup %s", url)
         try:
+            # TODO maybe add a timeout? I'm not sure
             with requests.post(url=url, headers=self.llm.api_headers, json=json) as response:
                 response.raise_for_status()
         except requests.exceptions.RequestException as e:
