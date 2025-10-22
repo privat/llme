@@ -18,7 +18,6 @@
 """A command-line assistant for local LLMs"""
 
 import argparse
-import base64
 import itertools
 import json
 import logging
@@ -27,12 +26,10 @@ import re
 import readline
 import subprocess
 import sys
-import tempfile
 import threading
 import time
 import tomllib
 
-import magic
 import requests
 from termcolor import colored, cprint
 
@@ -409,6 +406,7 @@ class LLME:
         if not sys.stdin.isatty():
             if len(self.prompts) > 0:
                 # There is prompts, so use stdin as data for the first prompt
+                import tempfile
                 stdinfile = tempfile.NamedTemporaryFile(mode='wb', delete=False)
                 with stdinfile as f:
                     f.write(sys.stdin.buffer.read())
@@ -597,11 +595,13 @@ class Asset:
         self.path = path
         with open(path, 'rb') as f:
             self.raw_content = f.read()
+        import magic
         self.mime_type = magic.from_buffer(self.raw_content, mime=True)
         logger.info("File %s is %s", path, self.mime_type)
 
     def content_part(self):
         """Return the content part for the user message"""
+        import base64
         if self.mime_type.startswith("image/"):
             data = base64.b64encode(self.raw_content).decode()
             url = f"data:{self.mime_type};base64,{data}"
