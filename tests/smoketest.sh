@@ -9,13 +9,13 @@ setup() {
 tllme "01" "What is the capital of France?" "$@" &&
 	smoke paris
 tllme "02" "What is the capital of France?" "What about Canada?" "And Vatican?" "And Mordor?" "And my axe?" "$@" &&
-	smoke 'tolkien\|middle\|sauror'
+	smoke 'tolkien\|middle\|sauron'
 tllme "03" "What the content on the current directory?" "$@" &&
 	smoke 'ls\|ll\|README'
 tllme "04" "What is the current operating system?" "$@" &&
 	smoke 'uname\|linux'
 tllme "05" "What is the factorial of 153?" "$@" &&
-	smoke 'factorial\|153'
+	smoke 'factorial\|153\|200634390509568239477828874698911718566246149616161171934231099284840946025238092339613294062603588435530393145048663047173051913507711632216305667129554900620296603188543122491838966881134795135997316305640071571629943041039657861120000000000000000000000000000000000000'
 tllme "06" <<<"What is the capital of France?" "$@" &&
 	smoke paris
 
