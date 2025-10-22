@@ -605,7 +605,7 @@ def extract_requests_error(e):
 
     """Server may format their error in plain text or json"""
     text = e.response.text
-    if text[0] == '{':
+    if text and text[0] == '{':
         logger.debug("full error response: %s", text)
         try:
             data = json.loads(text)
