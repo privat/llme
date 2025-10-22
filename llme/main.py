@@ -109,19 +109,27 @@ class LLME:
         self.warmup = Warmup(self)
 
 
+    def confirm(self, question, color):
+        """Ask a yes/no confirmation to the user"""
+        if self.config.yolo:
+            print(colored(f"{question}: YOLO!", color))
+            return True
+        if self.config.batch:
+            raise EOFError("No confirmation in batch mode") # ugly
+        try:
+            x = input(colored(f"{question} [Yn]? ", color)).strip()
+            if x in ['', 'y', 'Y']:
+                return True
+            return False
+        except KeyboardInterrupt:
+            raise EOFError("Confirmation interrupted") # ugly
+
+
     def run_tool(self, tool, stdin):
         """Run a tool and return the result as a system message (or None if cancelled)"""
-        if self.config.yolo:
-            print(colored(f"{len(self.messages)} YOLO RUN {tool}", "light_red"))
-        elif self.config.batch:
-            raise EOFError("No tool confirmation in batch mode") # ugly
-        else:
-            try:
-                x = input(colored(f"{len(self.messages)} RUN {tool} [Yn]? ", "light_red")).strip()
-                if x not in ['', 'y', 'Y']:
-                    return None
-            except KeyboardInterrupt:
-                raise EOFError("Confirmation interrupted") # ugly
+
+        if not self.confirm(f"{len(self.messages)} RUN {tool}", "light_red"):
+            return None
 
         # hack for unbuffered python
         if tool == "python":
