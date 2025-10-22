@@ -127,7 +127,9 @@ def print_model_suites(f):
         for colid in suites:
             n = get(model_suites, rowid, colid)
             t = get(total_model_suites, rowid, colid)
-            if n == 0:
+            if t == 0:
+                tablerow.append("")
+            elif n == 0:
                 tablerow.append(f"{color(0)} 0/{t}")
             else:
                 p = 100.0 * n / t
