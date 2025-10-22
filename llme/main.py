@@ -188,6 +188,24 @@ class LLME:
         return None
 
 
+    def input_prompt(self):
+        """Return a prompt from stdim"""
+        try:
+            if self.warmup:
+                self.warmup.check()
+            if not self.config.plain:
+                user_input = input(colored(f"{len(self.messages)}> ", "light_green"))
+            else:
+                user_input = input()
+            if self.warmup:
+                self.warmup.check()
+                # No more needed. We are on our own
+                self.warmup = None
+            return user_input
+        except KeyboardInterrupt:
+            raise EOFError("interrupted") # ugly
+
+
     def next_prompt(self):
         """Get the next prompt from the user.
         Returns None or a user message"""
@@ -204,19 +222,7 @@ class LLME:
         elif self.config.batch:
             raise EOFError("end of batch") # ugly
         else:
-            try:
-                if self.warmup:
-                    self.warmup.check()
-                if not self.config.plain:
-                    user_input = input(colored(f"{len(self.messages)}> ", "light_green"))
-                else:
-                    user_input = input()
-                if self.warmup:
-                    self.warmup.check()
-                    # No more needed. We are on our own
-                    self.warmup = None
-            except KeyboardInterrupt:
-                raise EOFError("interrupted") # ugly
+            user_input = self.input_prompt()
 
         if user_input == '':
             return None
