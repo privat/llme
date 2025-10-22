@@ -87,7 +87,7 @@ def color(rate):
         return colors[6]
 
 
-def print_mat(mat, f):
+def print_mat(mat, f, name):
     table = []
     headers = {}
     entriees = {}
@@ -121,7 +121,7 @@ def print_mat(mat, f):
             else:
                 tablerow.append("%d (%.2f%%)" % (n, 100.0*n/total))
         tablerow.append(total)
-    f.write(tabulate(table, headers=['Model', 'PASS', 'ALMOST', 'FAIL', 'ERROR', 'TIMEOUT', 'Total'], tablefmt="pipe"))
+    f.write(tabulate(table, headers=[name, 'PASS', 'ALMOST', 'FAIL', 'ERROR', 'TIMEOUT', 'Total'], tablefmt="pipe"))
     f.write("\n")
 
 
@@ -224,21 +224,21 @@ def main():
         f.write(cut)
 
         f.write("\n")
-        f.write(f"* {len(model_results)} models\n")
-        f.write(f"* {len(suite_results)} testsuites\n")
-        f.write(f"* {len(test_results)} tests\n")
+        f.write(f"* {len(model_results)} models and configurations\n")
+        f.write(f"* {len(suite_results)} test suites\n")
+        f.write(f"* {len(test_results)} test cases\n")
 
         f.write("\n## Results by models\n\n")
-        print_mat(model_results, f)
+        print_mat(model_results, f, "Model")
 
         f.write("\n## Testsuites by models\n\n")
         print_model_suites(f)
 
-        f.write("\n## Results by testsuites\n\n")
-        print_mat(suite_results, f)
+        f.write("\n## Results by test suites\n\n")
+        print_mat(suite_results, f, "Test suites")
 
-        f.write("\n## Results by tests\n\n")
-        print_mat(test_results, f)
+        f.write("\n## Results by test cases\n\n")
+        print_mat(test_results, f, "Test case")
 
         f.write("\n\n")
         for link in links:
