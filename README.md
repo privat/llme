@@ -19,7 +19,9 @@ Just give them a shell, a python interpreter, and let you (only) live (once).
 Use it as a helping (dummy assistant) to inspect configuration, source code, run commands, and edit files.
 
 
-## Quick-start a local LLM server if you don't have one already
+## Installation
+
+### Quick-start a local LLM server if you don't have one already
 
 Example with llama.cpp if you use homebrew. Look at https://github.com/ggerganov/llama.cpp for other options
 
@@ -32,7 +34,8 @@ Qwen3-Coder-30b is a nice model.
 Smaller models can can also works.
 See the [benchmark](benchmark.md) for a comparison.
 
-## Installation of llme
+
+### llme
 
 Chose your preferred installation or execution method.
 
@@ -166,7 +169,7 @@ llme can just **kill** your **OS** and **cats**.
 Do not run the following command without understanding what it does.
 
 ```bash
-sudo llme --batch --yolo "Distupgrade the system. You are root! Do as you wish."`
+sudo llme --batch --yolo "Distupgrade the system. You are root! Do as you wish."
 ```
 
 
@@ -193,12 +196,16 @@ options:
                         [batch]
   -p, --plain           No colors or tty fanciness. Implicit if stdout is not
                         a tty [plain]
+  --bulk                Disable stream-mode. Not that useful but it helps
+                        debugging APIs [bulk]
   -o, --chat-output CHAT_OUTPUT
                         Export the full raw conversation in json
   -i, --chat-input CHAT_INPUT
                         Continue a previous (exported) conversation
   -s, --system SYSTEM_PROMPT
                         System prompt [system_prompt]
+  --temperature TEMPERATURE
+                        Temperature of predictions [temperature]
   -c, --config CONFIG   Custom configuration files
   --dump-config         Print the effective config and quit
   -v, --verbose         Increase verbosity level (can be used multiple times)
@@ -228,18 +235,19 @@ My goal is to keep this simple and minimal: it should fit into a single file and
 
 PR are welcome!
 
-## OpenAI API
+### OpenAI API
 
 The two HTML routes used by llme are:
 
 * `$base_url/models` (<https://platform.openai.com/docs/api-reference/models>) for `--list-models` (and to get a default model when `--model` is empty)
-* `$base_url/chat/completions` (<https://platform.openai.com/docs/api-reference/chat>) for the main job. Streaming (<https://platform.openai.com/docs/api-reference/chat-streaming>) is used (and cannot be disabled to make the code simpler).
+* `$base_url/chat/completions` (<https://platform.openai.com/docs/api-reference/chat>) for the main job. Streaming (<https://platform.openai.com/docs/api-reference/chat-streaming>) is used by default.
+It can be disabled with `--bulk`, mainly for debugging weird APIs.
 
 Images are uploaded as content parts, for multimodal models.
 
 Tools are integrated with a custom approach and do not use the official *tools* API (yet).
 
-## Issues
+### Issues
 
 * The various OpenAI compatible servers and models implement different subsets. Compatibility is worked on and there is less random 4xx or 5xx responses. Major local LLM servers and servers were tested. See <benchmark.md>
 * Models are really sensitive to prompts and system prompts, but you can create a custom config file for each.
