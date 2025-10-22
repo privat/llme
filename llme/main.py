@@ -273,34 +273,14 @@ class LLME:
         mode = None # reasoning, content or none
         message = None # The whole message, if any
         last_chunk = None
-        for line in response.iter_lines():
-            # In streaming, the communication is loosly based on Server-Sent Events (SSE)
-            if line == b'':
-                continue
-            if line[0] == 0x7b: # '{'
-                # special case of no streamimg
-                data = json.loads(line.decode())
-                choice0 = data['choices'][0]
-                # We will reuse the message as is, not need to rebuild it from the deltas
-                message = choice0['message']
-                delta = message # A whole message is just a big delta! So reuse the whole code path
+        for data in SSEReader(response):
+            choice0 = data['choices'][0]
+
+            message = choice0.get('message')
+            if message:
+                # A whole message is just a big delta! So reuse the whole code path
+                delta = message
             else:
-                # Handle SSE
-                data = line.split(b':', 1)
-                if len(data) != 2:
-                    raise ValueError(f"Chunk: Unexpected:  {line}")
-                event, data = data
-                if event != b'data':
-                    raise ValueError(f"Chink: Unexpected event type: {line}")
-                if data in [b'[DONE]', b' [DONE]']:
-                    # We continue the connection until the server closes it. We do not trust them.
-                    continue
-                try:
-                    data = json.loads(data.decode())
-                except:
-                    logger.warning("Chunk: Got a weird one: %s", data)
-                    continue
-                choice0 = data['choices'][0]
                 delta = choice0['delta']
 
             # last_chunk is used for debugging, it's usually too much to print each chunk
@@ -495,6 +475,42 @@ class AnimationManager:
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
         self.stop()
+
+
+class SSEReader:
+    """Utility class to read the Server-Sent Events (SSE) used in stream mode"""
+    def __init__(self, response):
+        self.iter_lines = response.iter_lines()
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        while True:
+            line = next(self.iter_lines)
+            if not line:
+                continue
+            if line[0] == 0x7b: # '{'
+                # special case of no streaming
+                data = json.loads(line.decode())
+                return data
+            # Handle classic SSE
+            data = line.split(b':', 1)
+            if len(data) != 2:
+                logger.warning(f"Chunk: Unexpected: %s", line)
+                continue
+            event, data = data
+            if event != b'data':
+                logger.warning(f"Chunk: Unexpected event type: %s", line)
+                continue
+            if data in [b'[DONE]', b' [DONE]']:
+                # We continue the connection until the server closes it. We do not trust it.
+                continue
+            try:
+                data = json.loads(data.decode())
+                return data
+            except:
+                logger.warning("Chunk: Got a weird one: %s", data)
 
 
 class Warmup:
