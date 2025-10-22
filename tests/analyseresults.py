@@ -63,19 +63,21 @@ def get(mat, rowid, colid):
 
 
 def color(rate):
-    colors = "💀🔴🟠🟡🟢👑"
+    colors = "💀🔥🔴🟠🟡🟢💎"
     if rate == 0:
         return colors[0]
     if rate < 15:
         return colors[1]
-    if rate < 50:
+    if rate < 35:
         return colors[2]
-    if rate < 85:
+    if rate < 60:
         return colors[3]
-    if rate < 100:
+    if rate < 85:
         return colors[4]
-    else:
+    if rate < 100:
         return colors[5]
+    else:
+        return colors[6]
 
 
 def print_mat(mat, f):
