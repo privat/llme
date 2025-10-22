@@ -160,6 +160,10 @@ def sortrow(mat):
     return sorted(res, key=lambda x: scorerow(mat[x]))
     return res
 
+# an entry for each model x config x testcase.
+# Used to aggregate multiple runs of the same testcase
+model_config_tests = {}
+
 class TestResult:
     def __init__(self, directory):
         with open(f"{directory}/result.csv", 'r') as file:
@@ -180,6 +184,13 @@ class TestResult:
         if t is not None:
             self.model_config = f"{self.model_config} t={t}"
 
+        self.model_config_test = f"{self.model_config} {self.suite} {self.test}"
+        if self.model_config_test not in model_config_tests:
+            model_config_tests[self.model_config_test] = [self]
+        else:
+            model_config_tests[self.model_config_test].append(self)
+
+    def process(self):
         inc_model_results(self.model_config, self.result)
         inc_suite_results(self.suite, self.result)
         inc_test_results(self.suite+" "+self.test, self.result)
@@ -195,6 +206,10 @@ def main():
         except Exception as e:
             print(f"{d}: {e}")
             continue
+
+    for t in model_config_tests:
+        t = model_config_tests[t][-1]
+        t.process()
 
     with open("benchmark.md", 'r') as f:
         results = f.read()
