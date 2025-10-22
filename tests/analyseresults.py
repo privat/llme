@@ -35,11 +35,15 @@ def getlink(what, url):
     return f"[{what}][{tag}]"
 
 def linkmodel(model):
+    conf = ""
+    if " " in model:
+        model, conf = model.split(" ", 2)
+        conf = " " + conf
     base = model.split(":")[0]
     if '/' in base:
-        return getlink(model, f"https://huggingface.co/{base}")
+        return getlink(model, f"https://huggingface.co/{base}") + conf
     else:
-        return getlink(model, f"https://ollama.com/library/{base}")
+        return getlink(model, f"https://ollama.com/library/{base}") + conf
 
 def linksuite(suite):
     return getlink(suite, f"tests/{suite}.sh")
@@ -172,6 +176,9 @@ class TestResult:
             self.config = json.load(f)
 
         self.model_config = self.model
+        t = self.config.get("temperature")
+        if t is not None:
+            self.model_config = f"{self.model_config} t={t}"
 
         inc_model_results(self.model_config, self.result)
         inc_suite_results(self.suite, self.result)
