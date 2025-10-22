@@ -49,6 +49,8 @@ class LLME:
         self.messages = [] # the sequence of messages with the LLM
         self.raw_messages = [] # the sequence of messages really communicated with the LLM server to work-around their various API limitations
 
+        self.warmup = None
+
         self.api_headers = [] # additional headers for the server
         if self.config.api_key:
             self.api_headers["Authorization"] = f"Bearer {self.config.api_key}"
@@ -416,8 +418,6 @@ class LLME:
             self.model = self.get_models()[0]
         logger.info("Use model %s from %s", self.model, self.config.base_url)
 
-        self.warmup_model()
-
         if self.config.chat_input:
             logger.info("Loading conversation from %s", self.config.chat_input)
             with open(self.config.chat_input, "r") as f:
@@ -439,6 +439,9 @@ class LLME:
             else:
                 # No prompts, so use stdin as prompt
                 self.prompts = [sys.stdin.read()]
+
+        if len(self.prompts) == 0:
+            self.warmup_model()
 
         try:
             self.loop()
