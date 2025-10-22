@@ -120,6 +120,11 @@ class LLME:
             x = input(colored(f"{question} [Yn]? ", color)).strip()
             if x in ['', 'y', 'Y']:
                 return True
+            if len(x) > 3:
+                # the user is writing to much.
+                # they may have missed this is a confirmation prompt.
+                # but we are nice and store the message
+                self.prompts.insert(0, x)
             return False
         except KeyboardInterrupt:
             raise EOFError("Confirmation interrupted") # ugly
