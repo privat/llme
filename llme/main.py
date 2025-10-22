@@ -195,12 +195,16 @@ class LLME:
             raise EOFError("end of batch") # ugly
         else:
             try:
-                self.warmup.check()
+                if self.warmup:
+                    self.warmup.check()
                 if not self.config.plain:
                     user_input = input(colored(f"{len(self.messages)}> ", "light_green"))
                 else:
                     user_input = input()
-                self.warmup.check()
+                if self.warmup:
+                    self.warmup.check()
+                    # No more needed. We are on our own
+                    self.warmup = None
             except KeyboardInterrupt:
                 raise EOFError("interrupted") # ugly
 
