@@ -112,12 +112,12 @@ class LLME:
     def run_tool(self, tool, stdin):
         """Run a tool and return the result as a system message (or None if cancelled)"""
         if self.config.yolo:
-            print(colored(f"{len(self.messages)} YOLO RUN {tool}", "red", attrs=["bold"]))
+            print(colored(f"{len(self.messages)} YOLO RUN {tool}", "light_red"))
         elif self.config.batch:
             raise EOFError("No tool confirmation in batch mode") # ugly
         else:
             try:
-                x = input(colored(f"{len(self.messages)} RUN {tool} [Yn]? ", "red", attrs=["bold"])).strip()
+                x = input(colored(f"{len(self.messages)} RUN {tool} [Yn]? ", "light_red")).strip()
                 if x not in ['', 'y', 'Y']:
                     return None
             except KeyboardInterrupt:
@@ -144,7 +144,7 @@ class LLME:
         proc.stdin.close()
 
         content = ''
-        with AnimationManager("red", self.config.plain) as am:
+        with AnimationManager("light_red", self.config.plain) as am:
             while line := proc.stdout.readline():
                 am.stop()
                 print(line, end='', flush=True)
@@ -153,7 +153,7 @@ class LLME:
         printn(content)
 
         if proc.returncode != 0:
-            print(colored(f"EXIT {proc.returncode}", "red", attrs=["bold"]))
+            print(colored(f"EXIT {proc.returncode}", "light_red"))
 
         content = f"```result {tool} exitcode={proc.returncode}\n{content}\n```\n"
         return {"role": "tool", "content": content, "tool_call_id": f"toolcallid{len(self.messages)}"}
@@ -190,14 +190,14 @@ class LLME:
         if len(self.prompts) > 0:
             user_input = self.prompts.pop(0)
             if not self.config.plain:
-                print(colored(f"{len(self.messages)}>", "green", attrs=["bold"]), user_input)
+                print(colored(f"{len(self.messages)}>", "light_green"), user_input)
         elif self.config.batch:
             raise EOFError("end of batch") # ugly
         else:
             try:
                 self.warmup.check()
                 if not self.config.plain:
-                    user_input = input(colored(f"{len(self.messages)}> ", "green", attrs=["bold"]))
+                    user_input = input(colored(f"{len(self.messages)}> ", "light_green"))
                 else:
                     user_input = input()
                 self.warmup.check()
@@ -234,7 +234,7 @@ class LLME:
             data["temperature"] = self.config.temperature
         logger.debug("Sending %d raw messages to %s", len(self.raw_messages), url)
 
-        with AnimationManager("blue", self.config.plain):
+        with AnimationManager("light_blue", self.config.plain):
             response = requests.post(
                 url,
                 json=data,
@@ -245,7 +245,7 @@ class LLME:
             response.raise_for_status()
 
         if not self.config.plain:
-            print(colored(f"{len(self.messages)}< ", "blue", attrs=["bold"]), end='', flush=True)
+            print(colored(f"{len(self.messages)}< ", "light_blue"), end='', flush=True)
 
         full_content = ''
         full_reasoning_content = ''
@@ -286,7 +286,7 @@ class LLME:
                     printn(mode)
                 full_reasoning_content += reasoning_content
                 mode = full_reasoning_content
-                print(colored(reasoning_content, "grey", attrs=["bold"]), end='', flush=True)
+                print(colored(reasoning_content, "light_magenta"), end='', flush=True)
 
             content = delta.get("content")
             if content:
@@ -333,7 +333,13 @@ class LLME:
     def update_timing(self, timings):
         """Display timing information, and update the global timing information"""
         if timings:
-            print(colored(f"cache: %dt prompt: %dt %.2ft/s predicted: %dt %.2ft/s" % (timings["cache_n"], timings["prompt_n"], timings["prompt_per_second"], timings["predicted_n"], timings["predicted_per_second"]), "grey", attrs=["bold"]))
+            print(colored(f"cache: %dt prompt: %dt %.2ft/s predicted: %dt %.2ft/s" % (
+                timings["cache_n"],
+                timings["prompt_n"],
+                timings["prompt_per_second"],
+                timings["predicted_n"],
+                timings["predicted_per_second"]
+            ), "light_grey"))
             self.total_prompt_n += timings["prompt_n"]
             self.total_predicted_n += timings["predicted_n"]
             self.total_prompt_ms += timings["prompt_ms"]
@@ -409,7 +415,12 @@ class LLME:
                 os.unlink(stdinfile.name)
 
         if self.total_prompt_n > 0:
-            print(colored(f"Total: prompt: %dt %.2ft/s predicted: %dt %.2ft/s" % (self.total_prompt_n, 1000.0*self.total_prompt_n/self.total_prompt_ms, self.total_predicted_n, 1000.0*self.total_predicted_n/self.total_predicted_ms), "grey", attrs=["bold"]))
+            print(colored(f"Total: prompt: %dt %.2ft/s predicted: %dt %.2ft/s" % (
+                self.total_prompt_n,
+                1000.0*self.total_prompt_n/self.total_prompt_ms,
+                self.total_predicted_n,
+                1000.0*self.total_predicted_n/self.total_predicted_ms
+            ), "light_grey"))
 
 class AnimationManager:
     """A simple context manager for a spinner animation."""
@@ -424,7 +435,7 @@ class AnimationManager:
         for c in itertools.cycle("⠋⠙⠹⠽⠼⠴⠦⠧⠇⠏"):
             if self.stop_event.is_set():
                 break
-            sys.stdout.write(f'\r{colored(c, self.color, attrs=["bold"])} ')
+            sys.stdout.write(f"\r{colored(c, self.color)} ")
             sys.stdout.flush()
             time.sleep(0.1)
         sys.stdout.write('\r')
