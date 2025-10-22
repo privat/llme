@@ -192,13 +192,13 @@ class LLME:
         """Return a prompt from stdim"""
         try:
             if self.warmup:
-                self.warmup.check()
+                self.warmup.start()
             if not self.config.plain:
                 user_input = input(colored(f"{len(self.messages)}> ", "light_green"))
             else:
                 user_input = input()
             if self.warmup:
-                self.warmup.check()
+                self.warmup.stop()
                 # No more needed. We are on our own
                 self.warmup = None
             return user_input
@@ -502,18 +502,35 @@ class Warmup:
     It loads the model (if meeded) and checks that the server/model is ok.  Run in background while the user is typing its first prompt."""
 
     def __init__(self, llm):
+        """The thread is started a soon as possible.
+        But no signal is sent before start"""
         self.llm = llm
         self.thread = threading.Thread(target=self._process)
         self.thread.daemon = True
-        self.event = threading.Event()
         self.message = None
+        self.lock = threading.Lock()
+        self.started = False
+        self.stopped = False
         self.thread.start()
 
-    def check(self):
-        """Called by the main thread"""
-        if self.event.is_set():
-            logger.error(self.message)
-            sys.exit(1)
+
+    def start(self):
+        """Stop the program if the warmup failed.
+        Or start the watch."""
+        with self.lock:
+            if self.message is not None:
+                logger.error(self.message)
+                sys.exit(1)
+            self.started = True
+        return
+
+
+    def stop(self):
+        """Stop caring about the warmup now.
+        There is no clean way in Python to stop the running process or its requests. So just let ignore it and let it die."""
+        with self.lock:
+            self.stopped = True
+
 
     def _process(self):
         """ Thread,function.
@@ -528,18 +545,34 @@ class Warmup:
             "max_completion_tokens":1,
             "max_tokens":1,
             "temperature":0,
+            "stream": True,
         }
         logger.info("warmup %s", url)
         try:
             # TODO maybe add a timeout? I'm not sure
-            with requests.post(url=url, headers=self.llm.api_headers, json=json) as response:
+            with requests.post(url=url, headers=self.llm.api_headers, json=json, stream=True) as response:
                 response.raise_for_status()
         except requests.exceptions.RequestException as e:
-            self.message = extract_requests_error(e)
-            self.event.set()
-            logger.info("warmup error: %s", self.message)
-            return
-        logger.info("warmup completed")
+            # store, signal or ignore
+            with self.lock:
+                logger.info("warmup: raise %s", e)
+                if self.stopped: # ignore
+                    return
+
+                self.message = extract_requests_error(e)
+                if not self.started: # stored
+                    return
+
+                # signal
+                logger.error("%s", self.message)
+                # sys.stdin.clode() don't cancel readline
+                # sys.exit(1) don't stop the process
+                # both approaches are not that much thread-safe
+                # The remaining route is to send a signal that will interrupt the main thread
+                import signal
+                os.kill(os.getpid(), signal.SIGQUIT)
+                return
+        logger.info("warmup: completed")
 
 
 class Asset:
