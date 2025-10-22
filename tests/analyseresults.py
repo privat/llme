@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 
+import os
+import glob
 import csv
+import json
 from tabulate import tabulate
 
 def inccell(rowid, colid, mat):
@@ -153,17 +156,38 @@ def sortrow(mat):
     return sorted(res, key=lambda x: scorerow(mat[x]))
     return res
 
+class TestResult:
+    def __init__(self, directory):
+        with open(f"{directory}/result.csv", 'r') as file:
+            reader = csv.reader(file)
+            row = next(reader)
+        self.suite = row[0]
+        self.test = row[1]
+        self.url = row[2]
+        self.model = row[3]
+        self.result = row[4]
+        self.comment = row[5]
+
+        with open(f"{directory}/config.json", 'r') as f:
+            self.config = json.load(f)
+
+        self.model_config = self.model
+
+        inc_model_results(self.model_config, self.result)
+        inc_suite_results(self.suite, self.result)
+        inc_test_results(self.suite+" "+self.test, self.result)
+        inccell(self.model_config, self.suite, total_model_suites)
+        if self.result == "PASS":
+            inc_model_suites(self.model_config, self.suite)
+
+
 def main():
-    with open('logs/results.csv', 'r') as file:
-        reader = csv.reader(file)
-        next(reader) # skip header
-        for row in reader:
-            inc_model_results(row[3], row[4])
-            inc_suite_results(row[0], row[4])
-            inc_test_results(row[0]+" "+row[1], row[4])
-            inccell(row[3], row[0], total_model_suites)
-            if row[4] == "PASS":
-                inc_model_suites(row[3], row[0])
+    for d in glob.glob('logs/*/'):
+        try:
+            test = TestResult(d)
+        except Exception as e:
+            print(f"{d}: {e}")
+            continue
 
     with open("benchmark.md", 'r') as f:
         results = f.read()
