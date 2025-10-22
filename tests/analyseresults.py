@@ -148,11 +148,13 @@ def print_model_suites(f):
 
 
 def scorerow(row):
-    scores = {"PASS": 1000, "ALMOST": 10, "FAIL": 1, "ERROR": 0, "TIMEOUT": 1}
+    scores = {"PASS": 1000000.0, "ALMOST": 1000.0, "FAIL": 1.0, "ERROR": 0.0, "TIMEOUT": 1.0}
     score = 0
+    total = 0
     for colid in row:
         score += scores.get(colid,0) * row[colid]
-    return score
+        total += row[colid]
+    return score / total
 
 
 def sortrow(mat):
