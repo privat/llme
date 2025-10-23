@@ -5,6 +5,7 @@
 export SUITE=$(basename "$0" .sh)
 export TESTDIR=$(dirname "$0")
 export ORIGDIR=`pwd`
+export UTILDATE=${UTILDATE:-`date +%s`} # so all runs from a same initial script share a same utildate
 
 # The llme tool to check
 LLME="llme"
@@ -47,6 +48,7 @@ result() {
 		"words":$words,
 		"task":"$task",
 		"suite":"$SUITE",
+		"utildate":$UTILDATE,
 		"date":`date +%s`,
 		"path":"$LOGDIR",
 		"version":"`git -C "$TESTDIR" describe --tags --dirty`"
