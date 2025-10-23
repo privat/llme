@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 
-import os
-import glob
 import csv
+import datetime
+import glob
 import json
+import os
+import sys
 from tabulate import tabulate
 
 def inccell(rowid, colid, mat):
@@ -168,20 +170,45 @@ model_config_tasks = {}
 
 class Result:
     def __init__(self, directory):
-        with open(f"{directory}/result.csv", 'r') as file:
-            reader = csv.reader(file)
-            row = next(reader)
-        self.suite = row[0]
-        self.test = row[1]
-        self.url = row[2]
-        self.model = row[3]
-        self.result = row[4]
-        self.comment = row[5]
+        pathjson = f"{directory}/result.json"
+        if os.path.exists(pathjson):
+            with open(pathjson, 'r') as file:
+                data = json.load(file)
+                for k in data:
+                    setattr(self, k, data[k])
+        else:
+            # Convert old csv format
+            pathcsv = f"{directory}/result.csv"
+            if not os.path.exists(pathcsv):
+                print(f"{directory}: no result. skip")
+                return
+            with open(pathcsv, 'r') as file:
+                reader = csv.reader(file)
+                row = next(reader)
+                self.suite = row[0]
+                self.task = row[1]
+                self.result = row[4]
+                self.comment = row[5]
+                if len(row) > 6:
+                    self.msgs = row[6]
+                if len(row) > 7:
+                    self.words = row[7]
+                self.path = directory[:-1]
+                self.date = int(self.path.split('-')[-1])
+                data = vars(self)
+                with open(pathjson, 'w') as file:
+                    json.dump(data, file, indent=0)
 
-        with open(f"{directory}/config.json", 'r') as f:
-            self.config = json.load(f)
+        self.date = datetime.datetime.fromtimestamp(self.date)
 
-        self.model_config = self.model
+        pathconfig = f"{directory}/config.json"
+        if os.path.exists(pathconfig) and os.path.getsize(pathconfig) > 0:
+            with open(pathconfig, 'r') as f:
+                self.config = json.load(f)
+        else:
+            print(f"{directory}: no config. skip")
+            return
+
         self.model_config = self.config["model"]
         t = self.config.get("temperature")
         if t is not None:
