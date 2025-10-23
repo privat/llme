@@ -239,8 +239,9 @@ class LLME:
             return {"role": "user", "content": user_input}
 
 
-    def chat_completion(self):
-        """Get a response from the LLM."""
+    def post_chat_completion(self):
+        """Prepare and send the POST request.
+        Returns a response"""
         url = f"{self.config.base_url}/chat/completions"
         data = {
             "model": self.model,
@@ -250,15 +251,19 @@ class LLME:
         if self.config.temperature is not None:
             data["temperature"] = self.config.temperature
         logger.debug("Sending %d raw messages to %s", len(self.raw_messages), url)
+        return requests.post(
+            url,
+            json=data,
+            headers=self.api_headers,
+            stream=not self.config.bulk,
+            timeout=600,  # high enough
+        )
 
+
+    def chat_completion(self):
+        """Post mesaages and get a response from the LLM."""
         with AnimationManager("light_blue", self.config.plain):
-            response = requests.post(
-                url,
-                json=data,
-                headers=self.api_headers,
-                stream=not self.config.bulk,
-                timeout=600,  # high enough
-            )
+            response = self.post_chat_completion()
             response.raise_for_status()
 
         if not self.config.plain:
