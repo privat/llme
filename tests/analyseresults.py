@@ -37,7 +37,7 @@ def getlink(what, url):
 def linkmodel(model):
     conf = ""
     if " " in model:
-        model, conf = model.split(" ", 2)
+        model, conf = model.split(" ", 1)
         conf = " " + conf
     base = model.split(":")[0]
     if '/' in base:
@@ -61,9 +61,9 @@ suite_results = {}
 def inc_suite_results(suite, result):
     inccell(suite, result, suite_results)
 
-test_results = {}
-def inc_test_results(test, result):
-    inccell(test, result, test_results)
+task_results = {}
+def inc_task_results(task, result):
+    inccell(task, result, task_results)
 
 def get(mat, rowid, colid):
     return mat.get(rowid, {}).get(colid, 0)
@@ -103,7 +103,7 @@ def print_mat(mat, f, name):
             title = linkmodel(rowid)
         elif mat is suite_results:
             title = linksuite(rowid)
-        elif mat is test_results:
+        elif mat is task_results:
             s, t = rowid.split(' ', 1)
             title = f"{linksuite(s)} {t}"
         else:
@@ -162,11 +162,11 @@ def sortrow(mat):
     return sorted(res, key=lambda x: scorerow(mat[x]))
     return res
 
-# an entry for each model x config x testcase.
-# Used to aggregate multiple runs of the same testcase
-model_config_tests = {}
+# an entry for each model x config x task.
+# Used to aggregate multiple runs of the same task
+model_config_tasks = {}
 
-class TestResult:
+class Result:
     def __init__(self, directory):
         with open(f"{directory}/result.csv", 'r') as file:
             reader = csv.reader(file)
@@ -182,20 +182,21 @@ class TestResult:
             self.config = json.load(f)
 
         self.model_config = self.model
+        self.model_config = self.config["model"]
         t = self.config.get("temperature")
         if t is not None:
             self.model_config = f"{self.model_config} t={t}"
 
-        self.model_config_test = f"{self.model_config} {self.suite} {self.test}"
-        if self.model_config_test not in model_config_tests:
-            model_config_tests[self.model_config_test] = [self]
+        self.model_config_task = f"{self.model_config} {self.suite} {self.task}"
+        if self.model_config_task not in model_config_tasks:
+            model_config_tasks[self.model_config_task] = [self]
         else:
-            model_config_tests[self.model_config_test].append(self)
+            model_config_tasks[self.model_config_task].append(self)
 
     def process(self):
         inc_model_results(self.model_config, self.result)
         inc_suite_results(self.suite, self.result)
-        inc_test_results(self.suite+" "+self.test, self.result)
+        inc_task_results(self.suite+" "+self.task, self.result)
         inccell(self.model_config, self.suite, total_model_suites)
         if self.result == "PASS":
             inc_model_suites(self.model_config, self.suite)
@@ -204,13 +205,13 @@ class TestResult:
 def main():
     for d in glob.glob('logs/*/'):
         try:
-            test = TestResult(d)
+            result = Result(d)
         except Exception as e:
             print(f"{d}: {e}")
-            continue
+            raise e
 
-    for t in model_config_tests:
-        t = model_config_tests[t][-1]
+    for ts in model_config_tasks:
+        t = model_config_tasks[ts][-1]
         t.process()
 
     with open("benchmark.md", 'r') as f:
@@ -227,20 +228,20 @@ def main():
 
         f.write("\n")
         f.write(f"* {len(model_results)} models and configurations\n")
-        f.write(f"* {len(suite_results)} test suites\n")
-        f.write(f"* {len(test_results)} test cases\n")
+        f.write(f"* {len(suite_results)} task suites\n")
+        f.write(f"* {len(task_results)} tasks\n")
 
         f.write("\n## Results by models\n\n")
         print_mat(model_results, f, "Model")
 
-        f.write("\n## Testsuites by models\n\n")
+        f.write("\n## Task suites by models\n\n")
         print_model_suites(f)
 
-        f.write("\n## Results by test suites\n\n")
-        print_mat(suite_results, f, "Test suites")
+        f.write("\n## Results by task suites\n\n")
+        print_mat(suite_results, f, "Task suites")
 
-        f.write("\n## Results by test cases\n\n")
-        print_mat(test_results, f, "Test case")
+        f.write("\n## Results by tasks\n\n")
+        print_mat(task_results, f, "Task")
 
         f.write("\n\n")
         for link in links:
