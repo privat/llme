@@ -39,7 +39,19 @@ result() {
 	msgs=`jq '.|length' "$chat"`
 	words=`wc -w < "$chat"`
 
-	echo "$SUITE,$task,$url,$model,$1,$2,$msgs,$words" >> "$ORIGDIR/$LOGDIR/result.csv"
+	cat > "$ORIGDIR/$LOGDIR/result.json" <<-EOF
+	{
+		"result":"$1",
+		"comment":"$2",
+		"msgs":$msgs,
+		"words":$words,
+		"task":"$task",
+		"suite":"$SUITE",
+		"date":`date +%s`,
+		"path":"$LOGDIR",
+		"version":"`git -C "$TESTDIR" describe --tags --dirty`"
+	}
+	EOF
 	case $1 in
 		ERROR*|FAIL*|TIMEOUT*)
 			color=91;;
