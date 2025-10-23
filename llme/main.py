@@ -759,7 +759,6 @@ def main():
     config = process_args()
     llme = LLME(config)
     llme.start()
-    return 0
 
 
 if __name__ == "__main__":
