@@ -726,9 +726,18 @@ def process_args():
     parser.add_argument(      "--dump-config", action="store_true", help="Print the effective config and quit")
     parser.add_argument("-v", "--verbose", default=0, action="count", help="Increase verbosity level (can be used multiple times)")
     parser.add_argument("-Y", "--yolo", default=None, action="store_true", help="UNSAFE: Do not ask for confirmation before running tools. Combine with --batch to reach the singularity.")
+    parser.add_argument(      "--version", action="store_true", help="Display version information and quit")
     parser.add_argument("prompts", nargs='*', help="An initial list of prompts")
 
     args = parser.parse_intermixed_args()
+    if args.version:
+        import importlib
+        try:
+            version = importlib.metadata.version("llme-cli")
+            print(f"llme version {version}")
+        except importlib.metadata.PackageNotFoundError:
+            print(f"llme development/standalone version: {__file__}")
+        sys.exit(0)
 
     logging.basicConfig()
     logging_levels = [logging.WARNING, logging.INFO, logging.DEBUG]
