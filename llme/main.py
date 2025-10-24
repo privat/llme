@@ -468,7 +468,13 @@ class LLME:
                     self.add_message(message)
             logger.info("Loaded %d messages", len(self.messages))
         elif self.config.system_prompt:
-            self.add_message({"role": "system", "content": self.config.system_prompt})
+            system_prompt = self.config.system_prompt
+            if self.config.tool_mode == "markdown":
+                tool = all_tools["run_command"]
+                system_prompt += f"""## Tools Run shell with a fenced code block and a `run` label. Format:\n\n```run command\nstdin\n```\n\nExemple:\n\n```run python\nprint('Hello World')\n```\n\n"""
+                system_prompt += tool.fun.__doc__
+
+            self.add_message({"role": "system", "content": system_prompt})
 
         stdinfile = None
         if not sys.stdin.isatty():
