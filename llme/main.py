@@ -277,6 +277,7 @@ class LLME:
         message = None # The whole message, if any
         last_chunk = None
         for data in SSEReader(response):
+            processed = False
             choices = data.get("choices")
             if not choices:
                 # assume an empty chunk. This avoids None tests below
@@ -297,6 +298,7 @@ class LLME:
 
             reasoning_content = delta.get("reasoning_content")
             if reasoning_content:
+                processed = True
                 # Some reasoning models like qwen3 of gpt-oss have a reasoning_content field
                 # It's non-standard but helps to distinguish the reasoning content from the main content
                 if mode and mode != full_reasoning_content:
@@ -307,14 +309,16 @@ class LLME:
 
             content = delta.get("content")
             if content:
+                processed = True
                 if mode and mode != full_content:
                     printn(mode)
                 full_content += content
                 mode = full_content
                 print(content, end='', flush=True)
 
-            finish_reason = choice0['finish_reason']
+            finish_reason = choice0.get('finish_reason')
             if finish_reason:
+                processed = True
                 # About: finish_reason
                 # We do nothing with it for the moment
                 # Some servers give Null for continue and "" for the uneventful finish reason
@@ -324,11 +328,13 @@ class LLME:
 
             timings = data.get("timings")
             if timings:
+                processed = True
                 if mode:
                     printn(mode)
                 mode = None
                 self.update_timing(timings)
-            elif not content and not reasoning_content:
+
+            if not processed:
                 logger.info("Chunk: Unexpected content: %s", data)
                 continue
 
