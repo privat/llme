@@ -88,6 +88,7 @@ def color(rate):
     else:
         return colors[6]
 
+status = ['PASS', 'ALMOST', 'FAIL', 'ERROR', 'TIMEOUT', 'RUNNING']
 
 def print_mat(mat, f, name):
     table = []
@@ -116,14 +117,15 @@ def print_mat(mat, f, name):
         rate = 100.0 * get(mat, rowid, "PASS") / total
         tablerow = [f"{color(rate)} {title}"]
         table.append(tablerow)
-        for colid in ['PASS', 'ALMOST', 'FAIL', 'ERROR', 'TIMEOUT']:
+        for colid in status:
             n = get(mat, rowid, colid)
             if n == 0:
                 tablerow.append("0")
             else:
                 tablerow.append("%d (%.2f%%)" % (n, 100.0*n/total))
         tablerow.append(total)
-    f.write(tabulate(table, headers=[name, 'PASS', 'ALMOST', 'FAIL', 'ERROR', 'TIMEOUT', 'Total'], tablefmt="pipe"))
+    headers = ['name'] + status + ['Total']
+    f.write(tabulate(table, headers=headers, tablefmt="pipe"))
     f.write("\n")
 
 
