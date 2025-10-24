@@ -18,6 +18,7 @@
 """A command-line assistant for local LLMs"""
 
 import argparse
+import inspect
 import itertools
 import json
 import logging
@@ -164,8 +165,7 @@ class LLME:
         if proc.returncode != 0:
             print(colored(f"EXIT {proc.returncode}", "light_red"))
 
-        content = f"```result {command} exitcode={proc.returncode}\n{content}\n```\n"
-        return {"role": "tool", "content": content, "tool_call_id": f"toolcallid{len(self.messages)}"}
+        return f"```result {command} exitcode={proc.returncode}\n{content}\n```\n"
 
 
     def next_asset(self):
@@ -251,6 +251,8 @@ class LLME:
             "stream": not self.config.bulk,
             "stream_options": {"include_usage": True},
         }
+        if self.config.tool_mode == "native":
+            data["tools"] = [tool.schema for tool in all_tools.values()]
         if self.config.temperature is not None:
             data["temperature"] = self.config.temperature
         logger.debug("Sending %d raw messages to %s", len(self.raw_messages), url)
@@ -274,7 +276,7 @@ class LLME:
 
         full_content = ''
         full_reasoning_content = ''
-        cb = None
+        full_tool_calls = []
         mode = None # reasoning, content or none
         message = None # The whole message, if any
         last_chunk = None
@@ -318,6 +320,21 @@ class LLME:
                 mode = full_content
                 print(content, end='', flush=True)
 
+            tool_calls = delta.get("tool_calls")
+            if tool_calls:
+                processed = True
+                i =- 1
+                for tool_call in tool_calls:
+                    i = i + 1
+                    idx = tool_call.get("index", i)
+                    f = tool_call["function"]
+                    while len(full_tool_calls) <= idx:
+                        full_tool_calls.append(None)
+                    if "name" in f:
+                        full_tool_calls[idx] = tool_call
+                    else:
+                        full_tool_calls[idx]["function"]["arguments"] += f["arguments"]
+
             finish_reason = choice0.get('finish_reason')
             if finish_reason:
                 processed = True
@@ -346,8 +363,16 @@ class LLME:
                 continue
 
             #FIXME: this is fragile and ugly.
-            cb = re.search(r"^```run ([\w+-]*)\n(.*?)^```$", full_content, re.DOTALL | re.MULTILINE)
-            if cb:
+            if self.config.tool_mode == "markdown":
+                cb = re.search(r"^```run ([\w+-]*)\n(.*?)^```$", full_content, re.DOTALL | re.MULTILINE)
+                if not cb:
+                    continue
+                arguments = {"command": cb[1], "stdin": cb[2]}
+                tool_call = {
+                    "id": f"toolcallid-{len(self.messages)}",
+                    "type": "function",
+                    "function": {"name": "run_command", "arguments": json.dumps(arguments)}}
+                full_tool_calls.append(tool_call)
                 # Force the LLM to stop once a tool call is found
                 break
 
@@ -355,17 +380,28 @@ class LLME:
             printn(mode)
         logger.debug("Chunk: Last one: %s", last_chunk)
         response.close()
+
         if not message:
             # construct the message from the deltas
             message = {"role": "assistant", "content": full_content}
             if full_reasoning_content:
                 message["reasoning_content"] = full_reasoning_content
+            if full_tool_calls:
+                message["tool_calls"] = full_tool_calls
         self.add_message(message)
-        if cb:
-            r = self.run_command(cb[1], cb[2])
-            if r:
-                self.add_message(r)
-                return r
+
+        if full_tool_calls:
+            for tool_call in full_tool_calls:
+                function = tool_call["function"]
+                tool = all_tools[function["name"]]
+                args = json.loads(function["arguments"])
+                print(colored(f"CALL {tool.name}({args})", "light_red"))
+                if tool.need_self:
+                    args = {"self": self} | args
+                result = tool.fun(**args)
+                message = {"role": "tool", "content": str(result), "tool_call_id": tool_call["id"]}
+                self.add_message(message)
+            return True
         return None
 
 
@@ -614,6 +650,72 @@ class Warmup:
         logger.info("warmup: completed")
 
 
+# The dict of all registered tools
+all_tools = {}
+
+# Conversion between python and json-schema types
+type_map = {int: "integer", str: "string"}
+
+class Tool:
+    """A tool usable by the LLM. Create them wit the `@tool` decorator"""
+    def __init__(self, fun):
+        self.name = fun.__name__
+        self.fun = fun
+        self.need_self = False
+        all_tools[self.name] = self
+        self.build_schema()
+
+    def build_schema(self):
+        """Build the schema of the tool used to communicate with the LLM"""
+        signature = inspect.signature(self.fun)
+        logger.info("Tool: %s%s", self.name, signature)
+        params = {}
+        reqs = []
+        for n, p in signature.parameters.items():
+            if n == "self":
+                self.need_self = True
+                continue
+            res = {}
+            params[n] = res
+            if p.annotation != inspect._empty:
+                res["type"] = type_map[p.annotation]
+            if p.default == inspect._empty:
+                reqs.append(n)
+            else:
+                res["default"] = p.default
+
+        self.schema = {
+            "type": "function",
+            "function": {
+                "name": self.name,
+                "description": self.fun.__doc__,
+                "parameters": {
+                    "type": "object",
+                    "properties": params,
+                    "required": reqs,
+                }
+            }
+        }
+
+def tool(fun):
+    """ Tool decorator. This registers a function to be usable by the LLM."""
+    tool = Tool(fun)
+    return fun
+
+
+#@tool
+def fetch(url: str, timeout: int = 1):
+    """Return the content of webpage"""
+    return "Tokyo est la capitale du japon"
+    pass
+
+#@tool
+def weather(city_name: str):
+    """Return the current weather condition of a city"""
+    return "13ºC sunny"
+
+tool(getattr(LLME,"run_command"))
+
 class Asset:
     "A loaded file"
     def __init__(self, path):
@@ -742,6 +844,8 @@ def process_args():
     parser.add_argument("-i", "--chat-input", help="Continue a previous (exported) conversation")
     parser.add_argument("-s", "--system", dest="system_prompt", help="System prompt [system_prompt]")
     parser.add_argument(      "--temperature", default=None, type=float, help="Temperature of predictions [temperature]")
+    parser.add_argument(      "--tool-mode", default=None, choices=["markdown", "native"], help="How tools and functions are given to the LLM [tool_mode]")
+
     parser.add_argument("-c", "--config", action="append", help="Custom configuration files")
     parser.add_argument(      "--dump-config", action="store_true", help="Print the effective config and quit")
     parser.add_argument("-v", "--verbose", default=0, action="count", help="Increase verbosity level (can be used multiple times)")
@@ -771,6 +875,9 @@ def process_args():
     logger.debug("Given arguments %s", vars(args))
 
     resolve_config(args)
+
+    if args.tool_mode is None:
+        args.tool_mode = "native"
 
     if args.dump_config:
         json.dump(vars(args), sys.stdout, indent=2)
