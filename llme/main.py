@@ -447,7 +447,7 @@ class LLME:
                     pass
             except requests.exceptions.RequestException as e:
                 logger.error(extract_requests_error(e))
-                break
+                sys.exit(1)
             except KeyboardInterrupt:
                 logger.warning("Interrupted by user.")
                 if self.config.batch:
