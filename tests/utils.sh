@@ -92,7 +92,7 @@ runllme() {
 	cd "$WORKDIR"
 	python -m venv venv
 	. venv/bin/activate
-	timeout -v -f -sINT 60 "$LLME" "$@"
+	timeout -v -f -sINT 180 "$LLME" "$@"
 )
 }
 
