@@ -248,6 +248,7 @@ class LLME:
             "model": self.model,
             "messages": self.raw_messages,
             "stream": not self.config.bulk,
+            "stream_options": {"include_usage": True},
         }
         if self.config.temperature is not None:
             data["temperature"] = self.config.temperature
@@ -333,6 +334,11 @@ class LLME:
                     printn(mode)
                 mode = None
                 self.update_timing(timings)
+
+            usage = data.get("usage")
+            if usage:
+                # TODO collect the usage information
+                processed = True
 
             if not processed:
                 logger.info("Chunk: Unexpected content: %s", data)
