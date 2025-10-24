@@ -88,6 +88,7 @@ def color(rate):
     else:
         return colors[6]
 
+has_running = False
 status = ['PASS', 'ALMOST', 'FAIL', 'ERROR', 'TIMEOUT', 'RUNNING']
 
 def print_mat(mat, f, name):
@@ -232,6 +233,9 @@ class Result:
         inccell(self.model_config, self.suite, total_model_suites)
         if self.result == "PASS":
             inc_model_suites(self.model_config, self.suite)
+        if self.result == "RUNNING":
+            global has_running
+            has_running = True
 
 
 def main():
@@ -247,6 +251,9 @@ def main():
     for ts in model_config_tasks:
         t = model_config_tasks[ts][-1]
         t.process()
+
+    if not has_running:
+        status.remove('RUNNING')
 
     with open("benchmark.md", 'r') as f:
         results = f.read()
