@@ -825,6 +825,15 @@ def resolve_config(args):
         if os.path.exists(path):
             config = load_config_file(path)
             apply_config(args, config, path)
+
+    # 5. ultimate defaults where argparse default value is None
+    if args.tool_mode is None:
+        args.tool_mode = "native"
+    if args.batch is None and not sys.stdin.isatty():
+        args.batch = True
+    if args.plain is None and not sys.stdout.isatty():
+        args.plain = True
+
     logger.debug("Final config: %s", vars(args))
 
 def process_args():
@@ -876,9 +885,6 @@ def process_args():
 
     resolve_config(args)
 
-    if args.tool_mode is None:
-        args.tool_mode = "native"
-
     if args.dump_config:
         json.dump(vars(args), sys.stdout, indent=2)
         sys.exit(0)
@@ -886,11 +892,6 @@ def process_args():
     if args.base_url is None:
         print("Error: --base-url required and not definied the config file.", file=sys.stderr)
         sys.exit(1)
-
-    if args.batch is None and not sys.stdin.isatty():
-        args.batch = True
-    if args.plain is None and not sys.stdout.isatty():
-        args.plain = True
 
     return args
 
