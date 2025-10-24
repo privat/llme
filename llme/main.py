@@ -272,14 +272,9 @@ class LLME:
         )
 
 
-    def chat_completion(self):
-        """Post mesaages and get a response from the LLM."""
-        with AnimationManager("light_blue", self.config.plain):
-            response = self.post_chat_completion()
-            response.raise_for_status()
-
-        if not self.config.plain:
-            cprint(f"{len(self.messages)}< ", "light_blue", end='', flush=True)
+    def receive_chat_completion_message(self, response):
+        """Process the server response to extract and return the message.
+        This function handle; stream mode, tools, thinking, metrics, etc."""
 
         full_content = ''
         full_reasoning_content = ''
@@ -395,8 +390,22 @@ class LLME:
                 message["reasoning_content"] = full_reasoning_content
             if full_tool_calls:
                 message["tool_calls"] = full_tool_calls
+        return message
+
+
+    def chat_completion(self):
+        """Post messages and get a response from the LLM."""
+        with AnimationManager("light_blue", self.config.plain):
+            response = self.post_chat_completion()
+            response.raise_for_status()
+
+        if not self.config.plain:
+            cprint(f"{len(self.messages)}< ", "light_blue", end='', flush=True)
+
+        message = self.receive_chat_completion_message(response)
         self.add_message(message)
 
+        full_tool_calls = message.get("tool_calls")
         if full_tool_calls:
             for tool_call in full_tool_calls:
                 function = tool_call["function"]
