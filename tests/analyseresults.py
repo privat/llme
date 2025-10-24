@@ -236,6 +236,8 @@ def main():
     for d in glob.glob('logs/*/'):
         try:
             result = Result(d)
+        except json.decoder.JSONDecodeError as e:
+            print(f"{d}: {e}")
         except Exception as e:
             print(f"{d}: {e}")
             raise e
