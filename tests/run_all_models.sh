@@ -1,6 +1,7 @@
 #!/bin/bash
 
-# Usage: iter_models.sh <testsuite.sh> [llme args...]
+# Usage: run_all_models.sh <testsuite.sh> [llme args...]
+# Run testsuite on all available models in the base_url (the specified model is ignored)
 
 . "$(dirname "$0")/utils.sh"
 
@@ -17,4 +18,4 @@ echo "models: $models"
 for model in $models; do
     echo "Model: $model - Test suite: $testsuite"
     "$testsuite" "$@" -m "$model"
-done 
+done

@@ -1,6 +1,9 @@
 #!/bin/bash
 
+# Usage: run_all_suites [llme args...]
+# Run all suites
 # you are in for a threat!
+
 . "$(dirname "$0")/utils.sh"
 
 "$TESTDIR/smoketest.sh" "$@"
