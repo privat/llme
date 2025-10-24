@@ -45,8 +45,8 @@ result() {
 	{
 		"result":"$1",
 		"comment":"$2",
-		"msgs":$msgs,
-		"words":$words,
+		"msgs":${msgs:-null},
+		"words":${words:-null},
 		"task":"$task",
 		"suite":"$SUITE",
 		"utildate":$UTILDATE,
