@@ -138,7 +138,11 @@ tllme() {
 		out=/dev/stdout
 	fi
 
-	"$LLME" "$@" --dump-config > "$LOGDIR/config.json"
+	if ! "$LLME" "$@" --dump-config > "$LOGDIR/config.json"; then
+		result "ERROR" "can't get config"
+		return 1
+	fi
+
 	runllme "$@" > >(tee "$LOGDIR/log.txt" > "$out") 2> >(tee "$LOGDIR/err.txt" > "$out")
 	err=$?
 
