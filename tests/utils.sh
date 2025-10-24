@@ -114,8 +114,8 @@ tllme() {
 
 	# Tests results are stored in logs/$id/ where id is a unique identifier
 	id=$SUITE-$task-$(date +%s)
-	echo "$id" >&2
 	export LOGDIR="logs/$id"
+	echo "$LOGDIR" >&2
 	mkdir -p "$LOGDIR"
 	env | grep "^LLME_" > "$LOGDIR/env.txt"
 
