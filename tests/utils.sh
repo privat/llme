@@ -11,6 +11,7 @@ export UTILDATE=${UTILDATE:-`date +%s`} # so all runs from a same initial script
 LLME="llme"
 if ! command -v "$LLME"; then
 	echo "llme not found: $LLME" >&2
+	exit 1
 fi
 
 # run before each test. override if needed
