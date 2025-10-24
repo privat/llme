@@ -213,6 +213,9 @@ class Result:
         t = self.config.get("temperature")
         if t is not None:
             self.model_config = f"{self.model_config} t={t}"
+        t = self.config.get("tool_mode")
+        if t is not None:
+            self.model_config = f"{self.model_config} mode={t}"
 
         self.model_config_task = f"{self.model_config} {self.suite} {self.task}"
         if self.model_config_task not in model_config_tasks:
