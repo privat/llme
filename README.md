@@ -254,7 +254,7 @@ Custom tools are planned to be easily integrated, it's currently a work in progr
 
 ### Issues
 
-* The various OpenAI compatible servers and models implement different subsets. Compatibility is worked on and there is less random 4xx or 5xx responses. Major local LLM servers and servers were tested. See <benchmark.md>
+* The various OpenAI compatible servers and models implement different subsets. Compatibility is worked on and there is less random 4xx or 5xx responses. Major local LLM servers and servers were tested. See the [benchmark](benchmark.md)
 * Models are really sensitive to prompts and system prompts, but you can create a custom config file for each.
 * Models are really sensitive to how the messages are structured, unfortunately that is currently hardcoded in the program. I do not want to hard-code many tweaks and workarounds. :(
 
