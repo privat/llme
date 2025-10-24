@@ -122,17 +122,18 @@ class LLME:
             raise EOFError("Confirmation interrupted") # ugly
 
 
-    def run_tool(self, tool, stdin):
-        """Run a tool and return the result as a system message (or None if cancelled)"""
+    def run_command(self, command: str, stdin: str = ""):
+        """Execute a standard shell command and return its result.
+        If needed, the input content can be provided"""
 
-        if not self.confirm(f"{len(self.messages)} RUN {tool}", "light_red"):
+        if not self.confirm(f"{len(self.messages)} RUN {command}", "light_red"):
             return None
 
         # hack for unbuffered python
-        if tool == "python":
+        if command == "python":
             cmd = "python -u"
         else:
-            cmd = tool
+            cmd = command
 
         proc = subprocess.Popen(
             cmd,
@@ -143,7 +144,7 @@ class LLME:
             text=True,
             bufsize=1  # line-buffered
         )
-        logger.debug("Starting sub-process %s", tool)
+        logger.debug("Starting sub-process %s", command)
 
         # send data to stdin
         # FIXME: avoid deadlock...
@@ -163,7 +164,7 @@ class LLME:
         if proc.returncode != 0:
             print(colored(f"EXIT {proc.returncode}", "light_red"))
 
-        content = f"```result {tool} exitcode={proc.returncode}\n{content}\n```\n"
+        content = f"```result {command} exitcode={proc.returncode}\n{content}\n```\n"
         return {"role": "tool", "content": content, "tool_call_id": f"toolcallid{len(self.messages)}"}
 
 
@@ -361,7 +362,7 @@ class LLME:
                 message["reasoning_content"] = full_reasoning_content
         self.add_message(message)
         if cb:
-            r = self.run_tool(cb[1], cb[2])
+            r = self.run_command(cb[1], cb[2])
             if r:
                 self.add_message(r)
                 return r
