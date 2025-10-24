@@ -9,7 +9,7 @@ export UTILDATE=${UTILDATE:-`date +%s`} # so all runs from a same initial script
 
 # The llme tool to check
 LLME="llme"
-if ! command -v "$LLME"; then
+if ! command -v "$LLME" >/dev/null; then
 	echo "llme not found: $LLME" >&2
 	exit 1
 fi
@@ -38,8 +38,13 @@ result() {
 	url=`jq -r .base_url "$config"`
 	model=`jq -r .model "$config"`
 	chat="$ORIGDIR/$LOGDIR/chat.json"
-	msgs=`jq '.|length' "$chat"`
-	words=`wc -w < "$chat"`
+	if [ -f "$chat" ]; then
+		msgs=`jq '.|length' "$chat"`
+		words=`wc -w < "$chat"`
+	else
+		msgs=
+		words=
+	fi
 
 	cat > "$ORIGDIR/$LOGDIR/result.json" <<-EOF
 	{
@@ -60,6 +65,8 @@ result() {
 			color=91;;
 		PASS*)
 			color=92;;
+		RUNNING*)
+			color=94;;
 		*)
 			color=93;;
 	esac
@@ -70,7 +77,7 @@ result() {
 answer() {
 	if jq -r '.[-1].content' "$LOGDIR/chat.json" | sed '/^$/d' | tail -n1 | grep -x "$1"; then
 		result "PASS"
-	elif grep -i "$1" "$LOGDIR/log.txt"; then
+	elif grep --color=always -i "$1" "$LOGDIR/log.txt" > >(head); then
 		result "ALMOST"
 	else
 		result "FAIL"
@@ -79,7 +86,7 @@ answer() {
 
 # Check that the llm result talk about a pattern
 smoke() {
-	if grep -i "$1" "$LOGDIR/log.txt"; then
+	if grep --color=always -i "$1" "$LOGDIR/log.txt" > >(head); then
 		result "PASS"
 	else
 		result "FAIL"
@@ -116,7 +123,6 @@ tllme() {
 	# Tests results are stored in logs/$id/ where id is a unique identifier
 	id=$SUITE-$task-$(date +%s)
 	export LOGDIR="logs/$id"
-	echo "$LOGDIR" >&2
 	mkdir -p "$LOGDIR"
 	env | grep "^LLME_" > "$LOGDIR/env.txt"
 
@@ -143,7 +149,10 @@ tllme() {
 		return 1
 	fi
 
-	runllme "$@" > >(tee "$LOGDIR/log.txt" > "$out") 2> >(tee "$LOGDIR/err.txt" > "$out")
+	echo
+	result "RUNNING"
+
+	runllme "$@" 2> >(tee "$LOGDIR/err.txt" > "$out") > >(tee "$LOGDIR/log.txt" > "$out")
 	err=$?
 
 	teardown
