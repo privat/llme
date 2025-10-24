@@ -480,7 +480,7 @@ class LLME:
             system_prompt = self.config.system_prompt
             if self.config.tool_mode == "markdown":
                 tool = all_tools["run_command"]
-                system_prompt += f"""## Tools Run shell with a fenced code block and a `run` label. Format:\n\n```run command\nstdin\n```\n\nExemple:\n\n```run python\nprint('Hello World')\n```\n\n"""
+                system_prompt += f"""## Tool\n\nRun shell commands with a fenced code block and a `run` label. Format:\n\n```run command\nstdin\n```\n\nExemple:\n\n```run python\nprint('Hello World')\n```\n\n"""
                 system_prompt += tool.fun.__doc__
 
             self.add_message({"role": "system", "content": system_prompt})
