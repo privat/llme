@@ -130,12 +130,13 @@ class LLME:
 
         # hack for unbuffered python
         if tool == "python":
-            cmd = ["python", "-u"]
+            cmd = "python -u"
         else:
-            cmd = [tool]
+            cmd = tool
 
         proc = subprocess.Popen(
             cmd,
+            shell=True,
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
