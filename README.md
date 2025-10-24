@@ -206,11 +206,15 @@ options:
                         System prompt [system_prompt]
   --temperature TEMPERATURE
                         Temperature of predictions [temperature]
+  --tool-mode {markdown,native}
+                        How tools and functions are given to the LLM
+                        [tool_mode]
   -c, --config CONFIG   Custom configuration files
   --dump-config         Print the effective config and quit
   -v, --verbose         Increase verbosity level (can be used multiple times)
   -Y, --yolo            UNSAFE: Do not ask for confirmation before running
                         tools. Combine with --batch to reach the singularity.
+  --version             Display version information and quit
 ```
 <!--/help-->
 
@@ -245,7 +249,8 @@ It can be disabled with `--bulk`, mainly for debugging weird APIs.
 
 Images are uploaded as content parts, for multimodal models.
 
-Tools are integrated with a custom approach and do not use the official *tools* API (yet).
+Tools are integrated with either `--tool-mode=native` fo the native function API (<https://platform.openai.com/docs/guides/function-calling>), or with `--tool-mode=markdown` a custom approach intended for models that does not support it (or performs poorly with it).
+Custom tools are planned to be easily integrated, it's currently a work in progress, as I want to keep to code base small and simple.
 
 ### Issues
 
