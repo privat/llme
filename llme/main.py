@@ -105,7 +105,7 @@ class LLME:
     def confirm(self, question, color):
         """Ask a yes/no confirmation to the user"""
         if self.config.yolo:
-            print(colored(f"{question}: YOLO!", color))
+            cprint(f"{question}: YOLO!", color)
             return True
         if self.config.batch:
             raise EOFError("No confirmation in batch mode") # ugly
@@ -163,7 +163,7 @@ class LLME:
         printn(content)
 
         if proc.returncode != 0:
-            print(colored(f"EXIT {proc.returncode}", "light_red"))
+            cprint(f"EXIT {proc.returncode}", "light_red")
 
         return f"command: {command}\nexitcode: {proc.returncode}\nstdout:\n{content}\n"
 
@@ -272,7 +272,7 @@ class LLME:
             response.raise_for_status()
 
         if not self.config.plain:
-            print(colored(f"{len(self.messages)}< ", "light_blue"), end='', flush=True)
+            cprint(f"{len(self.messages)}< ", "light_blue", end='', flush=True)
 
         full_content = ''
         full_reasoning_content = ''
@@ -309,7 +309,7 @@ class LLME:
                     printn(mode)
                 full_reasoning_content += reasoning_content
                 mode = full_reasoning_content
-                print(colored(reasoning_content, "light_magenta"), end='', flush=True)
+                cprint(reasoning_content, "light_magenta", end='', flush=True)
 
             content = delta.get("content")
             if content:
@@ -395,7 +395,7 @@ class LLME:
                 function = tool_call["function"]
                 tool = all_tools[function["name"]]
                 args = json.loads(function["arguments"])
-                print(colored(f"CALL {tool.name}({args})", "light_red"))
+                cprint(f"CALL {tool.name}({args})", "light_red")
                 if tool.need_self:
                     args = {"self": self} | args
                 result = tool.fun(**args)
@@ -407,13 +407,13 @@ class LLME:
 
     def update_timing(self, timings):
         """Display timing information, and update the global timing information"""
-        print(colored(f"cache: %dt prompt: %dt %.2ft/s predicted: %dt %.2ft/s" % (
+        cprint(f"cache: %dt prompt: %dt %.2ft/s predicted: %dt %.2ft/s" % (
             timings["cache_n"],
             timings["prompt_n"],
             timings["prompt_per_second"],
             timings["predicted_n"],
             timings["predicted_per_second"]
-        ), "light_grey"))
+        ), "light_grey")
         self.total_prompt_n += timings["prompt_n"]
         self.total_predicted_n += timings["predicted_n"]
         self.total_prompt_ms += timings["prompt_ms"]
@@ -491,12 +491,12 @@ class LLME:
                 os.unlink(stdinfile.name)
 
         if self.total_prompt_n > 0:
-            print(colored(f"Total: prompt: %dt %.2ft/s predicted: %dt %.2ft/s" % (
+            cprint(f"Total: prompt: %dt %.2ft/s predicted: %dt %.2ft/s" % (
                 self.total_prompt_n,
                 1000.0*self.total_prompt_n/self.total_prompt_ms,
                 self.total_predicted_n,
                 1000.0*self.total_predicted_n/self.total_predicted_ms
-            ), "light_grey"))
+            ), "light_grey")
 
 class AnimationManager:
     """A simple context manager for a spinner animation."""
