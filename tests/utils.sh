@@ -68,7 +68,7 @@ result() {
 
 # Check that the llm result matches the pattern $1 on the last line.
 answer() {
-	if tail -n1 "$LOGDIR/log.txt" | grep -x "$1"; then
+	if jq -r '.[-1].content' "$LOGDIR/chat.json" | sed '/^$/d' | tail -n1 | grep -x "$1"; then
 		result "PASS"
 	elif grep -i "$1" "$LOGDIR/log.txt"; then
 		result "ALMOST"
