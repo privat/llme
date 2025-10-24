@@ -139,7 +139,7 @@ tllme() {
 	fi
 
 	"$LLME" "$@" --dump-config > "$LOGDIR/config.json"
-	runllme "$@" > >(tee "$LOGDIR/log.txt" > "$out") 2>&1
+	runllme "$@" > >(tee "$LOGDIR/log.txt" > "$out") 2> >(tee "$LOGDIR/err.txt" > "$out")
 	err=$?
 
 	teardown
