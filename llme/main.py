@@ -165,7 +165,7 @@ class LLME:
         if proc.returncode != 0:
             print(colored(f"EXIT {proc.returncode}", "light_red"))
 
-        return f"```result {command} exitcode={proc.returncode}\n{content}\n```\n"
+        return f"command: {command}\nexitcode: {proc.returncode}\nstdout:\n{content}\n"
 
 
     def next_asset(self):
