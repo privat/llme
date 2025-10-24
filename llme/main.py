@@ -277,7 +277,13 @@ class LLME:
         message = None # The whole message, if any
         last_chunk = None
         for data in SSEReader(response):
-            choice0 = data['choices'][0]
+            choices = data.get("choices")
+            if not choices:
+                # assume an empty chunk. This avoids None tests below
+                choices = [{"delta":{}}]
+            elif len(choices) > 1:
+                logger.warning("chunk: too much choices: %s", data)
+            choice0 = choices[0]
 
             message = choice0.get('message')
             if message:
