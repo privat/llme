@@ -731,12 +731,17 @@ def process_args():
 
     args = parser.parse_intermixed_args()
     if args.version:
-        import importlib
+        # version information with importlib.metadata is garbage as this mishandle both "dev" installation, and a possible concurrent old version. So we do it the old way with git and a _version file
         try:
-            version = importlib.metadata.version("llme-cli")
-            print(f"llme version {version}")
-        except importlib.metadata.PackageNotFoundError:
-            print(f"llme development/standalone version: {__file__}")
+            dirname = os.path.dirname(__file__)
+            version = subprocess.check_output(["git", "-C", dirname, "describe", "--tags", "--dirty"], text=True, stderr=subprocess.DEVNULL).strip()
+            print(f"llme development version: {version}")
+        except subprocess.CalledProcessError:
+            try:
+                from . import _version
+                print(f"llme version {_version.version}")
+            except ImportError:
+                print(f"llme standalone version")
         sys.exit(0)
 
     logging.basicConfig()
