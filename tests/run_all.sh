@@ -1,10 +1,10 @@
-#!/bin/sh
+#!/bin/bash
 
 # you are in for a threat!
-d="$(dirname "$0")"
+. "$(dirname "$0")/utils.sh"
 
-$d/smoketest.sh "$@"
-$d/smokeimages.sh "$@"
-$d/basic_answers.sh "$@"
-$d/patch_file.sh "$@"
-$d/hello.sh "$@"
+"$TESTDIR/smoketest.sh" "$@"
+"$TESTDIR/smokeimages.sh" "$@"
+"$TESTDIR/basic_answers.sh" "$@"
+"$TESTDIR/patch_file.sh" "$@"
+"$TESTDIR/hello.sh" "$@"
