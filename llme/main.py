@@ -125,7 +125,14 @@ class LLME:
 
     def run_command(self, command: str, stdin: str = ""):
         """Execute a standard shell command and return its result.
-        If needed, the input content can be provided"""
+        If needed, the input content can be provided.
+        To run python code, use `python` as command and the code in `stdin`.
+        To write file use `cat > "filepath"` as command and the content in `stdin`.
+        To patch a file, use `patch "originalfile"` as command and the unified diff in `stdin`.
+        To fetch a website use `w3m -dump "https://example.com/foo.html"` as command and no stdin.
+        To fetch a page use `curl -L "https://example.com/foo.html"` as command and no stdin.
+        Etc.
+        """
 
         if not self.confirm(f"{len(self.messages)} RUN {command}", "light_red"):
             return None
@@ -444,14 +451,14 @@ class LLME:
     def start(self):
         """Start, work, and terminate"""
 
+        models = self.get_models()
         if self.config.list_models:
-            models = self.get_models()
             print(f"Models of {self.config.base_url}:")
             for m in models:
                 print(f"* {m}")
             return
         if not self.model:
-            self.model = self.get_models()[0]
+            self.model = models[0]
         logger.info("Use model %s from %s", self.model, self.config.base_url)
 
         if self.config.chat_input:
