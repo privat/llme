@@ -724,19 +724,8 @@ def tool(fun):
     tool = Tool(fun)
     return fun
 
-
-#@tool
-def fetch(url: str, timeout: int = 1):
-    """Return the content of webpage"""
-    return "Tokyo est la capitale du japon"
-    pass
-
-#@tool
-def weather(city_name: str):
-    """Return the current weather condition of a city"""
-    return "13ºC sunny"
-
 tool(getattr(LLME,"run_command"))
+
 
 class Asset:
     "A loaded file"
@@ -858,6 +847,25 @@ def resolve_config(args):
 
     logger.debug("Final config: %s", vars(args))
 
+
+def load_module(path):
+    """Just load a random python file. I'm not sure why its so complex"""
+    import importlib.machinery
+    basename = os.path.basename(path)
+    name, ext = os.path.splitext(basename)
+    return importlib.machinery.SourceFileLoader(name, path).load_module()
+
+def load_plugin(path):
+    """Load a single python module, or all python modules of a directory."""
+    if os.path.isdir(path):
+        for filename in os.listdir(path):
+            if filename.endswith(".py"):
+                filepath = os.path.join(path, filename)
+                load_module(filepath)
+    else:
+        load_module(path)
+
+
 def process_args():
     """Handle command line arguments and envs."""
     parser = argparse.ArgumentParser(
@@ -879,6 +887,7 @@ def process_args():
 
     parser.add_argument("-c", "--config", action="append", help="Custom configuration files")
     parser.add_argument(      "--dump-config", action="store_true", help="Print the effective config and quit")
+    parser.add_argument(      "--plugin", action="append", dest="plugins", help="Add additional tool (python file or directory) [plugins]")
     parser.add_argument("-v", "--verbose", default=0, action="count", help="Increase verbosity level (can be used multiple times)")
     parser.add_argument("-Y", "--yolo", default=None, action="store_true", help="UNSAFE: Do not ask for confirmation before running tools. Combine with --batch to reach the singularity.")
     parser.add_argument(      "--version", action="store_true", help="Display version information and quit")
@@ -914,6 +923,10 @@ def process_args():
     if args.base_url is None:
         print("Error: --base-url required and not definied the config file.", file=sys.stderr)
         sys.exit(1)
+
+    if args.plugins:
+        for plugin in args.plugins:
+            load_plugin(plugin)
 
     return args
 

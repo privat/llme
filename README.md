@@ -232,6 +232,37 @@ For each option, the precedence order is the following:
 5. The system configuration file provided by the package (the lowest precedence)
 
 
+## Library, plugin system, and custom tools
+
+Important: the API is far from stable.
+
+LLME is usable as a library, so you can use its features.
+The main advantage for now to import `llme` is to add new custom tools usable by LLMs.
+
+You can transform a python function into a tool with the annotation `@llme.tool`.
+Look at [weather_plugin.py](examples/weather_plugin.py) for an example.
+
+Usages:
+
+Run the weather plugin as a standalone program (it disables all LLM tools except the weather one).
+
+```bash
+./examples/weather_plugin.py 'Will it rains tomorrow at Paris?'
+```
+
+Use llme with the `--plugin` option to add one (or more) plugin and bring in all their tools.
+
+```bash
+llme --plugin examples/weather_plugin.py 'Will it rains tomorrow at Paris?'
+```
+
+Or whole directories!
+
+```bash
+llme --plugin examples 'Will it rains tomorrow at Paris?'
+```
+
+
 ## Development
 
 I do not like Python, nor LLMs, but I needed something simple to test things quickly and play around.
@@ -249,8 +280,8 @@ It can be disabled with `--bulk`, mainly for debugging weird APIs.
 
 Images are uploaded as content parts, for multimodal models.
 
-Tools are integrated with either `--tool-mode=native` fo the native function API (<https://platform.openai.com/docs/guides/function-calling>), or with `--tool-mode=markdown` a custom approach intended for models that does not support it (or performs poorly with it).
-Custom tools are planned to be easily integrated, it's currently a work in progress, as I want to keep to code base small and simple.
+Tools are integrated with either `--tool-mode=native` for the native function API (<https://platform.openai.com/docs/guides/function-calling>), or with `--tool-mode=markdown` a custom approach intended for models that does not support it (or performs poorly with it).
+Custom tools can be profited, see the `--plugin` option.
 
 ### Issues
 
