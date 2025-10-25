@@ -128,6 +128,7 @@ tllme() {
 	env | grep "^LLME_" > "$LOGDIR/env.txt"
 
 	export LLME_CHAT_OUTPUT=$ORIGDIR/$LOGDIR/chat.json
+	export LLME_EXPORT_METRICS=$ORIGDIR/$LOGDIR/metrics.json
 	export LLME_BATCH=true
 	export LLME_YOLO=true
 
