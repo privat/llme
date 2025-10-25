@@ -433,6 +433,8 @@ class LLME:
                 if tool.need_self:
                     args = {"self": self} | args
                 result = tool.fun(**args)
+                if result is None:
+                    return None
                 message = {"role": "tool", "content": str(result), "tool_call_id": tool_call["id"]}
                 self.add_message(message)
             return True
