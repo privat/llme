@@ -211,6 +211,8 @@ options:
                         [tool_mode]
   -c, --config CONFIG   Custom configuration files
   --dump-config         Print the effective config and quit
+  --plugin PLUGINS      Add additional tool (python file or directory)
+                        [plugins]
   -v, --verbose         Increase verbosity level (can be used multiple times)
   -Y, --yolo            UNSAFE: Do not ask for confirmation before running
                         tools. Combine with --batch to reach the singularity.
