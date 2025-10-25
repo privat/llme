@@ -280,6 +280,7 @@ class LLME:
         message = None # The whole message, if any
         last_chunk = None
         first_token = True
+        reasoning_label = None
         for data in SSEReader(response):
             processed = False
             choices = data.get("choices")
@@ -301,11 +302,15 @@ class LLME:
             last_chunk = data
             self.completion_metrics["chunk_n"] += 1
 
-            reasoning_content = delta.get("reasoning_content")
+            # Some reasoning models like qwen3 of gpt-oss have a reasoning_content field, with various names
+            # It's non-standard but helps to distinguish the reasoning content from the main content
+            for label in ["reasoning_content", "reasoning"]:
+                reasoning_content = delta.get(label)
+                if reasoning_content:
+                    reasoning_label = label
+                    break # We found one
             if reasoning_content:
                 processed = True
-                # Some reasoning models like qwen3 of gpt-oss have a reasoning_content field
-                # It's non-standard but helps to distinguish the reasoning content from the main content
                 if mode and mode != full_reasoning_content:
                     printn(mode)
                 full_reasoning_content += reasoning_content
@@ -387,7 +392,7 @@ class LLME:
             # construct the message from the deltas
             message = {"role": "assistant", "content": full_content}
             if full_reasoning_content:
-                message["reasoning_content"] = full_reasoning_content
+                message[reasoning_label] = full_reasoning_content
             if full_tool_calls:
                 message["tool_calls"] = full_tool_calls
         return message
