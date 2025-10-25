@@ -531,7 +531,8 @@ class LLME:
             if stdinfile:
                 os.unlink(stdinfile.name)
 
-        cprint(f"Total: {self.metrics.infoline(self.metrics.total)}", "light_grey")
+        if self.metrics.total:
+            cprint(f"Total: {self.metrics.infoline(self.metrics.total)}", "light_grey")
 
 class AnimationManager:
     """A simple context manager for a spinner animation."""
