@@ -57,7 +57,8 @@ result() {
 		"utildate":$UTILDATE,
 		"date":`date +%s`,
 		"path":"$LOGDIR",
-		"version":"`git -C "$TESTDIR" describe --tags --dirty`"
+		"git-version":"`git -C "$ORIGDIR/$TESTDIR" describe --tags --dirty`",
+		"llme-version":"`"$LLME" --version`"
 	}
 	EOF
 	case $1 in
