@@ -270,6 +270,63 @@ My goal is to keep this simple and minimal: it should fit into a single file and
 
 PR are welcome!
 
+### TODO
+
+* OpenAI API features
+  * [x] API token (untested)
+  * [x] list models
+  * [x] stream mode
+  * [x] bulk mode (non stream mode)
+  * [x] thinking mode
+  * [x] multimodal
+  * [x] attached files
+  * [x] attached images
+  * [ ] ?
+* Tools
+  * [x] markdown tools
+  * [x] native tools
+  * [x] run shell command
+  * [x] run Python code
+  * [x] user-defined tools
+  * [ ] sandboxing
+  * [ ] whitelist/blacklist
+* User interface & features
+  * [x] readline
+  * [ ] better prompt & history
+  * [x] braille spinner
+  * [x] model warmup
+  * [x] save/load conversation
+  * [ ] export metrics/usage/statistics
+  * [ ] slash commands
+  * [ ] undo/retry/edit
+  * [ ] better tool reporting
+* Customization and models
+  * [x] config files
+  * [x] config with env vars
+  * [ ] type check / conversion
+  * [x] plugin system
+  * [ ] better tool selection
+  * [x] temperature
+  * [ ] other hyper parameters
+  * [ ] handle non-conform thinking & tools
+  * [ ] detect model features (is that even possible?)
+  * [x] bench system & reporting
+* Code quality
+  * [x] docstring and comments
+  * [x] small code base
+  * [x] small methods
+  * [x] logging
+  * [x] tests suites
+  * [ ] better separation of CLI and LLM
+  * [ ] better libification
+* Misc
+  * [x] README
+  * [x] TODO list :p
+  * [x] build file
+  * [x] PyPI [package](https://pypi.org/project/llme-cli/)
+  * [x] plugin example
+  * [ ] ?
+
 ### OpenAI API
 
 The two HTML routes used by llme are:
