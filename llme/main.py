@@ -53,11 +53,7 @@ class LLME:
         if self.config.api_key:
             self.api_headers["Authorization"] = f"Bearer {self.config.api_key}"
 
-        # Timing information
-        self.total_prompt_n = 0
-        self.total_predicted_n = 0
-        self.total_prompt_ms = 0.0
-        self.total_predicted_ms = 0.0
+        self.metrics = Metrics()
 
     def add_message(self, message):
         """
@@ -276,12 +272,14 @@ class LLME:
         """Process the server response to extract and return the message.
         This function handle; stream mode, tools, thinking, metrics, etc."""
 
+        start_time = time.perf_counter()
         full_content = ''
         full_reasoning_content = ''
         full_tool_calls = []
         mode = None # reasoning, content or none
         message = None # The whole message, if any
         last_chunk = None
+        first_token = True
         for data in SSEReader(response):
             processed = False
             choices = data.get("choices")
@@ -301,6 +299,7 @@ class LLME:
 
             # last_chunk is used for debugging, it's usually too much to print each chunk
             last_chunk = data
+            self.completion_metrics["chunk_n"] += 1
 
             reasoning_content = delta.get("reasoning_content")
             if reasoning_content:
@@ -350,19 +349,20 @@ class LLME:
             timings = data.get("timings")
             if timings:
                 processed = True
-                if mode:
-                    printn(mode)
-                mode = None
-                self.update_timing(timings)
+                self.completion_metrics.update(timings)
 
             usage = data.get("usage")
             if usage:
-                # TODO collect the usage information
                 processed = True
+                self.completion_metrics.update(usage)
 
             if not processed:
                 logger.info("Chunk: Unexpected content: %s", data)
                 continue
+            elif first_token:
+                first_token_time = time.perf_counter()
+                self.completion_metrics["first_token_ms"] = (first_token_time - start_time) * 1000.0
+                first_token = False
 
             #FIXME: this is fragile and ugly.
             if self.config.tool_mode == "markdown":
@@ -395,14 +395,27 @@ class LLME:
 
     def chat_completion(self):
         """Post messages and get a response from the LLM."""
+        self.completion_metrics = {}
+        start_time = time.perf_counter()
+        self.completion_metrics["chunk_n"] = 0
+        self.completion_metrics["message_n"] = 1 # only one
+
         with AnimationManager("light_blue", self.config.plain):
             response = self.post_chat_completion()
             response.raise_for_status()
+
+        response_time = time.perf_counter()
+        self.completion_metrics["response_ms"] = (response_time - start_time) * 1000.0
 
         if not self.config.plain:
             cprint(f"{len(self.messages)}< ", "light_blue", end='', flush=True)
 
         message = self.receive_chat_completion_message(response)
+        message_time = time.perf_counter()
+        self.completion_metrics["total_ms"] = (message_time - start_time) * 1000.0
+
+        self.update_metrics()
+
         self.add_message(message)
 
         full_tool_calls = message.get("tool_calls")
@@ -421,19 +434,18 @@ class LLME:
         return None
 
 
-    def update_timing(self, timings):
-        """Display timing information, and update the global timing information"""
-        cprint(f"cache: %dt prompt: %dt %.2ft/s predicted: %dt %.2ft/s" % (
-            timings["cache_n"],
-            timings["prompt_n"],
-            timings["prompt_per_second"],
-            timings["predicted_n"],
-            timings["predicted_per_second"]
-        ), "light_grey")
-        self.total_prompt_n += timings["prompt_n"]
-        self.total_predicted_n += timings["predicted_n"]
-        self.total_prompt_ms += timings["prompt_ms"]
-        self.total_predicted_ms += timings["predicted_ms"]
+    def update_metrics(self):
+        """Display metrics information, and update the global metrics information"""
+        data = self.completion_metrics
+        logger.info("metrics: %s", data)
+        data["last_token_ms"] = data["total_ms"] - data["first_token_ms"] - data["response_ms"]
+        self.metrics.update(data)
+
+        cprint(self.metrics.infoline(data), "light_grey")
+
+        if self.config.export_metrics:
+            with open(self.config.export_metrics, "w") as file:
+                json.dump({"total": self.metrics.total, "history": self.metrics.history}, file, indent=2)
 
 
     def loop(self):
@@ -512,13 +524,7 @@ class LLME:
             if stdinfile:
                 os.unlink(stdinfile.name)
 
-        if self.total_prompt_n > 0:
-            cprint(f"Total: prompt: %dt %.2ft/s predicted: %dt %.2ft/s" % (
-                self.total_prompt_n,
-                1000.0*self.total_prompt_n/self.total_prompt_ms,
-                self.total_predicted_n,
-                1000.0*self.total_predicted_n/self.total_predicted_ms
-            ), "light_grey")
+        cprint(f"Total: {self.metrics.infoline(self.metrics.total)}", "light_grey")
 
 class AnimationManager:
     """A simple context manager for a spinner animation."""
@@ -556,6 +562,47 @@ class AnimationManager:
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
         self.stop()
+
+
+class Metrics:
+    """Help accounting various metrics"""
+    def __init__(self):
+        self.total = {}
+        self.history = []
+
+    def update(self, d):
+        """Add all"""
+        self.history.append(d)
+        for key in d:
+            value = d[key]
+            if key in self.total:
+                self.total[key] += value
+            else:
+                self.total[key] = value
+
+    def infoline(self, d):
+        """Write a concise infoline"""
+        info = []
+        if "cache_n" in d:
+            info.append(f"cache:%dt prompt:%dt %.2ft/s predicted:%dt %.2ft/s" % (
+                d["cache_n"],
+                d["prompt_n"],
+                1000.0 * d["prompt_n"] / d["prompt_ms"],
+                d["predicted_n"],
+                1000.0 * d["predicted_n"] / d["predicted_ms"],
+            ))
+        elif "prompt_tokens" in d:
+            info.append(f"prompt:%dt predicted:%dt" % (
+                d["prompt_tokens"],
+                d["completion_tokens"],
+            ))
+        info.append(f"resp:%.2fs + 1st:%.2fs + last:%.2fs = %.2fs" % (
+            d["response_ms"] / 1000.0,
+            d["first_token_ms"] / 1000.0,
+            d["last_token_ms"] / 1000.0,
+            d["total_ms"] / 1000.0,
+        ))
+        return " ".join(info)
 
 
 class SSEReader:
@@ -881,6 +928,7 @@ def process_args():
     parser.add_argument(      "--bulk", default=None, action="store_true", help="Disable stream-mode. Not that useful but it helps debugging APIs [bulk]")
     parser.add_argument("-o", "--chat-output", help="Export the full raw conversation in json")
     parser.add_argument("-i", "--chat-input", help="Continue a previous (exported) conversation")
+    parser.add_argument(      "--export-metrics", help="Export metrics, usage, etc. in json")
     parser.add_argument("-s", "--system", dest="system_prompt", help="System prompt [system_prompt]")
     parser.add_argument(      "--temperature", default=None, type=float, help="Temperature of predictions [temperature]")
     parser.add_argument(      "--tool-mode", default=None, choices=["markdown", "native"], help="How tools and functions are given to the LLM [tool_mode]")

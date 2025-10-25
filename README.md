@@ -202,6 +202,8 @@ options:
                         Export the full raw conversation in json
   -i, --chat-input CHAT_INPUT
                         Continue a previous (exported) conversation
+  --export-metrics EXPORT_METRICS
+                        Export metrics, usage, etc. in json
   -s, --system SYSTEM_PROMPT
                         System prompt [system_prompt]
   --temperature TEMPERATURE
@@ -298,7 +300,7 @@ PR are welcome!
   * [x] braille spinner
   * [x] model warmup
   * [x] save/load conversation
-  * [ ] export metrics/usage/statistics
+  * [x] export metrics/usage/statistics
   * [ ] slash commands
   * [ ] undo/retry/edit
   * [ ] better tool reporting
