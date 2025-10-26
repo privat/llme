@@ -208,6 +208,18 @@ class LLME:
             raise EOFError("interrupted") # ugly
 
 
+    def next_input(self):
+        """ Get the next prompt or slash command"""
+        if len(self.prompts) > 0:
+            user_input = self.prompts.pop(0)
+            if not self.config.plain:
+                print(colored(f"{len(self.messages)}>", "light_green"), user_input)
+        elif self.config.batch:
+            raise EOFError("end of batch") # ugly
+        else:
+            user_input = self.input_prompt()
+        return user_input
+
     def next_prompt(self):
         """Get the next prompt from the user.
         Returns None or a user message"""
@@ -217,17 +229,21 @@ class LLME:
         while file := self.next_asset():
             files.append(file)
 
-        if len(self.prompts) > 0:
-            user_input = self.prompts.pop(0)
-            if not self.config.plain:
-                print(colored(f"{len(self.messages)}>", "light_green"), user_input)
-        elif self.config.batch:
-            raise EOFError("end of batch") # ugly
-        else:
-            user_input = self.input_prompt()
+        while True:
+            user_input = self.next_input()
 
-        if user_input == '':
-            return None
+            if user_input == '':
+                return None
+            if user_input[0] != '/':
+                break
+            try:
+                self.slash_command(user_input)
+            except EOFError as e:
+                # was likely /quit
+                raise e
+            except Exception as e:
+                # Allow the user to recover from errors
+                logger.error("%s", e)
 
         while file := self.next_asset():
             files.append(file)
@@ -551,6 +567,72 @@ class LLME:
             sel = "-> " if m == self.model else "   "
             print(f"{sel}{m}")
         return models
+
+    def slash_command(self, user_input):
+        "Execute a slash command"
+        #FIXME too much hardcoded
+        args = user_input.split(None, 1)
+        cmd = args.pop(0)
+        arg = args[0].strip() if args else None
+        if cmd in "/tools":
+            list_tools()
+        elif cmd in "/config":
+            for k, v in vars(self.config).items():
+                print(f"{k}: {repr(v)}")
+        elif cmd in "/models":
+            self.list_models()
+        elif cmd in "/save":
+            self.save_chat(arg)
+        elif cmd in "/load":
+            self.load_chat(arg)
+        elif cmd in "/metrics":
+            for k, v in metrics.total.items():
+                print(f"{k}: {repr(v)}")
+        elif cmd in "/set":
+            args = arg.split('=', 1)
+            if len(args) != 2:
+                print("set: syntax error")
+            else:
+                self.set_config(*args)
+        elif cmd in "/quit":
+            raise EOFError("/quit")
+        elif cmd in "/help":
+            help = [
+                "/tools        list tools",
+                "/config       show configuration options",
+                "/models       list models",
+                "/save FILE    save chat",
+                "/load FILE    load chat",
+                "/metrics      show current metrics",
+                "/set OPT=VAL  change a config option",
+                "/quit         exit the program",
+                "/help         show this help",
+            ]
+            for h in help:
+                print(h)
+        else:
+            print(f"Unknown {user_input}. Use /help for help.")
+
+    def set_config(self, opt, val):
+        "Dynamically change a config option"
+        opt = opt.strip()
+        val = val.strip()
+        config = vars(self.config)
+        opts = [ k for k in config  if k.startswith(opt)]
+        if not opts:
+            raise KeyError(f"unknown option: {opt}")
+        if len(opts) > 1:
+            raise KeyError(f"ambiguous option: {opt} could match {", ".join(opts)}")
+        opt = opts[0]
+
+        if opt == "verbose":
+            val = int(val)
+            set_verbose(val)
+        elif opt == "model":
+            self.model = val
+        logger.info("set %s: %r", opt, val)
+        # TODO convert types. but don't duplicate argparse
+        setattr(self.config, opt, val)
 
 
 class AnimationManager:
