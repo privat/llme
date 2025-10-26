@@ -476,33 +476,32 @@ class LLME:
                 break
 
 
+    def prepare_system_prompt(self):
+        """Build the system message"""
+        system_prompt = self.config.system_prompt
+        if self.config.tool_mode == "markdown":
+            tool = all_tools["run_command"]
+            system_prompt += f"""## Tool\n\nRun shell commands with a fenced code block and a `run` label. Format:\n\n```run command\nstdin\n```\n\nExemple:\n\n```run python\nprint('Hello World')\n```\n\n"""
+            system_prompt += tool.doc
+
+        return {"role": "system", "content": system_prompt}
+
+
     def start(self):
         """Start, work, and terminate"""
 
         models = self.get_models()
-        if self.config.list_models:
-            print(f"Models of {self.config.base_url}:")
-            for m in models:
-                print(f"* {m}")
-            return
         if not self.model:
             self.model = models[0]
+        if self.config.list_models:
+            self.list_models()
+            return
         logger.info("Use model %s from %s", self.model, self.config.base_url)
 
         if self.config.chat_input:
-            logger.info("Loading conversation from %s", self.config.chat_input)
-            with open(self.config.chat_input, "r") as f:
-                for message in json.load(f):
-                    self.add_message(message)
-            logger.info("Loaded %d messages", len(self.messages))
+            self.load_chat(self.config.chat_input)
         elif self.config.system_prompt:
-            system_prompt = self.config.system_prompt
-            if self.config.tool_mode == "markdown":
-                tool = all_tools["run_command"]
-                system_prompt += f"""## Tool\n\nRun shell commands with a fenced code block and a `run` label. Format:\n\n```run command\nstdin\n```\n\nExemple:\n\n```run python\nprint('Hello World')\n```\n\n"""
-                system_prompt += tool.fun.__doc__
-
-            self.add_message({"role": "system", "content": system_prompt})
+            self.add_message(self.prepare_system_prompt())
 
         stdinfile = None
         if not sys.stdin.isatty():
@@ -525,14 +524,34 @@ class LLME:
             self.loop()
         finally:
             if self.config.chat_output:
-                logger.info("Dumping conversation to %s", self.config.chat_output)
-                with open(self.config.chat_output, "w") as f:
-                    json.dump(self.messages, f, indent=2)
+                self.save_chat(self.config.chat_output)
             if stdinfile:
                 os.unlink(stdinfile.name)
 
         if self.metrics.total:
             cprint(f"Total: {self.metrics.infoline(self.metrics.total)}", "light_grey")
+
+    def load_chat(self, file):
+        logger.info("Loading conversation from %s", file)
+        with open(file, "r") as f:
+            for message in json.load(f):
+                self.add_message(message)
+        logger.info("Loaded %d messages", len(self.messages))
+
+    def save_chat(self, file):
+        logger.info("Dumping conversation to %s", file)
+        with open(file, "w") as f:
+            json.dump(self.messages, f, indent=2)
+
+    def list_models(self):
+        "Print the list of models"
+        print(f"Models of {self.config.base_url}:")
+        models = self.get_models()
+        for m in models:
+            sel = "-> " if m == self.model else "   "
+            print(f"{sel}{m}")
+        return models
+
 
 class AnimationManager:
     """A simple context manager for a spinner animation."""
@@ -930,6 +949,26 @@ def list_tools():
         for line in lines[1:]:
             print(f"  {line}")
 
+def show_version():
+    """Print the version number.
+    Note: version information with importlib.metadata is garbage as this mishandle both "dev" installation, and a possible concurrent old version. So we do it the old way with git and a _version file"""
+    try:
+        dirname = os.path.dirname(__file__)
+        version = subprocess.check_output(["git", "-C", dirname, "describe", "--tags", "--dirty"], text=True, stderr=subprocess.DEVNULL).strip()
+        print(f"llme development version: {version}")
+    except subprocess.CalledProcessError:
+        try:
+            from . import _version
+            print(f"llme version {_version.version}")
+        except ImportError:
+            print(f"llme standalone version")
+
+def set_verbose(level):
+    "Assign a global vesbose level (in number of -v)"
+    logging_levels = [logging.WARNING, logging.INFO, logging.DEBUG]
+    logger.setLevel(logging_levels[min(level, len(logging_levels) - 1)])
+    logger.info("Log level set to %s", logging.getLevelName(logger.level))
+
 def process_args():
     """Handle command line arguments and envs."""
     parser = argparse.ArgumentParser(
@@ -961,23 +1000,11 @@ def process_args():
 
     args = parser.parse_intermixed_args()
     if args.version:
-        # version information with importlib.metadata is garbage as this mishandle both "dev" installation, and a possible concurrent old version. So we do it the old way with git and a _version file
-        try:
-            dirname = os.path.dirname(__file__)
-            version = subprocess.check_output(["git", "-C", dirname, "describe", "--tags", "--dirty"], text=True, stderr=subprocess.DEVNULL).strip()
-            print(f"llme development version: {version}")
-        except subprocess.CalledProcessError:
-            try:
-                from . import _version
-                print(f"llme version {_version.version}")
-            except ImportError:
-                print(f"llme standalone version")
+        show_version()
         sys.exit(0)
 
     logging.basicConfig()
-    logging_levels = [logging.WARNING, logging.INFO, logging.DEBUG]
-    logger.setLevel(logging_levels[min(args.verbose, len(logging_levels) - 1)])
-    logger.info("Log level set to %s", logging.getLevelName(logger.level))
+    set_verbose(args.verbose)
     logger.debug("Given arguments %s", vars(args))
 
     resolve_config(args)
