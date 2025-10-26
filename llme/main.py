@@ -738,6 +738,7 @@ class Tool:
     def __init__(self, fun):
         self.name = fun.__name__
         self.fun = fun
+        self.doc = fun.__doc__
         self.need_self = False
         all_tools[self.name] = self
         self.build_schema()
@@ -745,6 +746,7 @@ class Tool:
     def build_schema(self):
         """Build the schema of the tool used to communicate with the LLM"""
         signature = inspect.signature(self.fun)
+        self.signature = signature
         logger.info("Tool: %s%s", self.name, signature)
         params = {}
         reqs = []
@@ -765,7 +767,7 @@ class Tool:
             "type": "function",
             "function": {
                 "name": self.name,
-                "description": self.fun.__doc__,
+                "description": self.doc,
                 "parameters": {
                     "type": "object",
                     "properties": params,
@@ -920,6 +922,13 @@ def load_plugin(path):
     else:
         load_module(path)
 
+def list_tools():
+    for name in all_tools:
+        tool = all_tools[name]
+        lines = tool.doc.splitlines()
+        print(f"{name}{tool.signature} {lines[0]}")
+        for line in lines[1:]:
+            print(f"  {line}")
 
 def process_args():
     """Handle command line arguments and envs."""
@@ -942,6 +951,7 @@ def process_args():
     parser.add_argument(      "--tool-mode", default=None, choices=["markdown", "native"], help="How tools and functions are given to the LLM [tool_mode]")
 
     parser.add_argument("-c", "--config", action="append", help="Custom configuration files")
+    parser.add_argument(      "--list-tools", action="store_true", help="List available tools then exit")
     parser.add_argument(      "--dump-config", action="store_true", help="Print the effective config and quit")
     parser.add_argument(      "--plugin", action="append", dest="plugins", help="Add additional tool (python file or directory) [plugins]")
     parser.add_argument("-v", "--verbose", default=0, action="count", help="Increase verbosity level (can be used multiple times)")
@@ -976,13 +986,17 @@ def process_args():
         json.dump(vars(args), sys.stdout, indent=2)
         sys.exit(0)
 
-    if args.base_url is None:
-        print("Error: --base-url required and not definied the config file.", file=sys.stderr)
-        sys.exit(1)
-
     if args.plugins:
         for plugin in args.plugins:
             load_plugin(plugin)
+
+    if args.list_tools:
+        list_tools()
+        sys.exit(0)
+
+    if args.base_url is None:
+        print("Error: --base-url required and not definied the config file.", file=sys.stderr)
+        sys.exit(1)
 
     return args
 
