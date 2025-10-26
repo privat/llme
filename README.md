@@ -212,6 +212,7 @@ options:
                         How tools and functions are given to the LLM
                         [tool_mode]
   -c, --config CONFIG   Custom configuration files
+  --list-tools          List available tools then exit
   --dump-config         Print the effective config and quit
   --plugin PLUGINS      Add additional tool (python file or directory)
                         [plugins]
@@ -234,6 +235,30 @@ For each option, the precedence order is the following:
 3. The environment variables (`LLME_SOMETHING`)
 4. The user configuration file (`~/.config/llme/config.toml`)
 5. The system configuration file provided by the package (the lowest precedence)
+
+
+### Slash Commands
+
+Special commands can be executed during the chat.
+Those starts with a `/` and can be used when a prompt is expected (interactively or in the command line).
+The command `/help` show the available slash commands.
+
+<!--slash-help-->
+```console
+$ llme /help /quit
+/tools        list tools
+/config       show configuration options
+/models       list models
+/save FILE    save chat
+/load FILE    load chat
+/metrics      show current metrics
+/set OPT=VAL  change a config option
+/quit         exit the program
+/help         show this help
+```
+<!--/slash-help-->
+
+Note: Run a fresh `/help` in case I forgot to update this README.
 
 
 ## Library, plugin system, and custom tools
@@ -301,7 +326,7 @@ PR are welcome!
   * [x] model warmup
   * [x] save/load conversation
   * [x] export metrics/usage/statistics
-  * [ ] slash commands
+  * [x] slash commands
   * [ ] undo/retry/edit
   * [ ] better tool reporting
 * Customization and models
