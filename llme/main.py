@@ -550,9 +550,14 @@ class LLME:
     def load_chat(self, file):
         logger.info("Loading conversation from %s", file)
         with open(file, "r") as f:
-            for message in json.load(f):
-                self.add_message(message)
-        logger.info("Loaded %d messages", len(self.messages))
+            self.reset_messages(json.load(f))
+
+    def reset_messages(self, messages):
+        self.messages.clear()
+        self.raw_messages.clear()
+        for message in messages:
+            self.add_message(message)
+        logger.info("Reset %d messages", len(self.messages))
 
     def save_chat(self, file):
         logger.info("Dumping conversation to %s", file)
@@ -581,6 +586,14 @@ class LLME:
                 print(f"{k}: {repr(v)}")
         elif cmd in "/models":
             self.list_models()
+        elif cmd in "/retry":
+            if not self.rollback("assistant"):
+                logger.error("no assistant message to retry")
+        elif cmd in "/undo":
+            if not self.rollback("user"):
+                logger.error("no user message to undo")
+        elif cmd in "/edit":
+            self.edit()
         elif cmd in "/save":
             self.save_chat(arg)
         elif cmd in "/load":
@@ -598,12 +611,15 @@ class LLME:
             raise EOFError("/quit")
         elif cmd in "/help":
             help = [
-                "/tools        list tools",
-                "/config       show configuration options",
-                "/models       list models",
+                "/models       list available models",
+                "/tools        list available tools",
+                "/metrics      list current metrics",
+                "/retry        cancel and regenerate the last assistant message",
+                "/undo         cancel the last user message (and the response)",
+                "/edit         run EDITOR on the chat (save,editor,load)",
                 "/save FILE    save chat",
                 "/load FILE    load chat",
-                "/metrics      show current metrics",
+                "/config       list configuration options",
                 "/set OPT=VAL  change a config option",
                 "/quit         exit the program",
                 "/help         show this help",
@@ -612,6 +628,27 @@ class LLME:
                 print(h)
         else:
             print(f"Unknown {user_input}. Use /help for help.")
+
+    def rollback(self, role):
+        "Erase the last message of role, return True on success"
+        candidate = None
+        for i, message in enumerate(self.messages):
+            if message.get("role") == role:
+                candidate = i
+        if not candidate:
+            return False
+        self.reset_messages(self.messages[:candidate])
+        return True
+
+    def edit(self):
+        "Save the chat in a tmpfile, edit it, and load it back"
+        import tempfile
+        with tempfile.NamedTemporaryFile(mode='w', delete=True) as tmp:
+            self.save_chat(tmp.name)
+            editor = os.environ.get("EDITOR", "editor")
+            subprocess.run([editor, tmp.name], check=True)
+            self.load_chat(tmp.name)
+
 
     def set_config(self, opt, val):
         "Dynamically change a config option"

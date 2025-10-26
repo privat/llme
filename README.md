@@ -246,12 +246,15 @@ The command `/help` show the available slash commands.
 <!--slash-help-->
 ```console
 $ llme /help /quit
-/tools        list tools
-/config       show configuration options
-/models       list models
+/models       list available models
+/tools        list available tools
+/metrics      list current metrics
+/retry        cancel and regenerate the last assistant message
+/undo         cancel the last user message (and the response)
+/edit         run EDITOR on the chat (save,editor,load)
 /save FILE    save chat
 /load FILE    load chat
-/metrics      show current metrics
+/config       list configuration options
 /set OPT=VAL  change a config option
 /quit         exit the program
 /help         show this help
@@ -327,7 +330,7 @@ PR are welcome!
   * [x] save/load conversation
   * [x] export metrics/usage/statistics
   * [x] slash commands
-  * [ ] undo/retry/edit
+  * [x] undo/retry/edit
   * [ ] better tool reporting
 * Customization and models
   * [x] config files
