@@ -6,14 +6,15 @@ set -xe
 exec </dev/null
 
 llme hello world "$@"
-llme hello world --bulk "$@"
-llme <<<hello world "$@"
-llme <<<hello "$@"
-llme -v -v --dump-config "$@" > dumpconfig.txt
+
+llme '' "$@"
 
 llme README.md hello "$@"
 llme hello README.md "$@"
 llme /etc/shadow hello "$@"
+
+llme <<<hello world "$@"
+llme <<<hello "$@"
 
 #  -u, --base-url BASE_URL API base URL [base_url]
 ! llme -u bad hello "$@"
@@ -36,7 +37,7 @@ llme --api-key '' hello "$@"
 llme -p hello "$@"
 
 #  --bulk                Disable stream-mode. Not that useful but it helps debugging APIs [bulk]
-llme --bulh hello "$@"
+llme --bulk hello "$@"
 
 #  -o, --chat-output CHAT_OUTPUT Export the full raw conversation in json
 llme -o tmp.json hello "$@"
@@ -50,7 +51,7 @@ llme -i '' hello "$@"
 
 #  --export-metrics EXPORT_METRICS Export metrics, usage, etc. in json
 llme --export-metrics tmp.json hello "$@"
-llme --export-metrics /bad/file hello "$@"
+! llme --export-metrics /bad/file hello "$@"
 llme --export-metrics '' hello "$@"
 
 #  -s, --system SYSTEM_PROMPT System prompt [system_prompt]
@@ -59,19 +60,19 @@ llme -s '' 'word' "$@"
 
 #  --temperature TEMPERATURE Temperature of predictions [temperature]
 llme --temperature 0 hello "$@"
-llme --temperature '' hello "$@"
-llme --temperature bad hello "$@"
+! llme --temperature '' hello "$@"
+! llme --temperature bad hello "$@"
 
 #  --tool-mode {markdown,native} How tools and functions are given to the LLM [tool_mode]
-llme --tool-mode marksown hello "$@"
+llme --tool-mode markdown hello "$@"
 llme --tool-mode native hello "$@"
-llme --tool-mode bad hello "$@"
-llme --tool-mode '' hello "$@"
+! llme --tool-mode bad hello "$@"
+! llme --tool-mode '' hello "$@"
 
 #  -c, --config CONFIG   Custom configuration files
-llme -c llme/config.toml
+llme -c tests/data/config.toml
 ! llme -c bad hello "$@"
-llme -c '' hello "$@"
+! llme -c '' hello "$@"
 
 #  --list-tools          List available tools then exit
 llme --list-tools hello "$@"
@@ -82,12 +83,13 @@ llme --dump-config hello "$@"
 #  --plugin PLUGINS      Add additional tool (python file or directory) [plugins]
 llme --plugin examples/weather_plugin.py hello "$@"
 llme --plugin examples hello "$@"
-llme --plugin bad hello "$@"
+! llme --plugin bad hello "$@"
 
 #  -v, --verbose         Increase verbosity level (can be used multiple times)
 llme -v hello "$@"
 llme -vv hello "$@"
 llme -vvv hello "$@"
+llme -vvvv hello "$@"
 
 #  -Y, --yolo            UNSAFE: Do not ask for confirmation before running tools. Combine with --batch to reach the singularity.
 llme --yolo hello "$@"
@@ -139,20 +141,20 @@ llme '/config' hello "$@"
 
 # /set OPT=VAL  change a config option
 llme '/set verbose=1' hello "$@"
-llme '/set base_url=bad' hello "$@"
+! llme '/set base_url=bad' hello "$@"
 llme '/set bad=bad' hello "$@"
 llme '/set bad' hello "$@"
 llme '/set' hello "$@"
 
 # /quit         exit the program
-llme '/quit' hello "$@"
+llme /quit hello "$@"
 
 # /help         show this help
-llme '/help' hello "$@"
+llme /help hello "$@"
 
 # prefix
 llme /he hello "$@"
-!llme /bad hello "$@"
-!llme / hello "$@"
+llme /bad hello "$@"
+! llme / hello "$@" # its the root directory.. hum
 
 echo "SUCCESS"
