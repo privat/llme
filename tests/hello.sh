@@ -52,7 +52,7 @@ if tllme 04gitignore "keep the directory clean and create a gitignore. do not fo
 		result FAIL nogitignore
 	elif [ ! "`git log --oneline | wc -l`" -eq 2 ]; then
 		result FAIL not2commits
-	elif [ -n "$(git status --procelain)" ]; then
+	elif [ -n "$(git status --porcelain)" ]; then
 		result FAIL noclean
 	else
 		result PASS
