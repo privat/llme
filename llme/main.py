@@ -49,7 +49,7 @@ class LLME:
 
         self.warmup = None
 
-        self.api_headers = [] # additional headers for the server
+        self.api_headers = {} # additional headers for the server
         if self.config.api_key:
             self.api_headers["Authorization"] = f"Bearer {self.config.api_key}"
 
