@@ -485,7 +485,12 @@ class LLME:
                 cprint(f"CALL {tool.name}({args})", "light_red")
                 if tool.need_self:
                     args = {"self": self} | args
-                result = tool.fun(**args)
+                try:
+                    result = tool.fun(**args)
+                except Exception as e:
+                    message = {"role": "tool", "content": f"Error: bad too usage {function["name"]}. {e}", "tool_call_id": tool_call["id"]}
+                    self.add_message(message)
+                    continue
                 if result is None:
                     return None
                 message = {"role": "tool", "content": str(result), "tool_call_id": tool_call["id"]}
