@@ -47,6 +47,21 @@ class LLME:
         self.messages = [] # the sequence of messages with the LLM
         self.raw_messages = [] # the sequence of messages really communicated with the LLM server to work-around their various API limitations
 
+        self.slash_commands = [
+            "/models       list available models",
+            "/tools        list available tools",
+            "/metrics      list current metrics",
+            "/retry        cancel and regenerate the last assistant message",
+            "/undo         cancel the last user message (and the response)",
+            "/edit         run EDITOR on the chat (save,editor,load)",
+            "/save FILE    save chat",
+            "/load FILE    load chat",
+            "/config       list configuration options",
+            "/set OPT=VAL  change a config option",
+            "/quit         exit the program",
+            "/help         show this help",
+        ]
+
         self.warmup = None
         if self.config.batch:
             self.session = None
@@ -58,6 +73,16 @@ class LLME:
             self.api_headers["Authorization"] = f"Bearer {self.config.api_key}"
 
         self.metrics = Metrics()
+
+    def slash_completer(self):
+        """Return a completer for slash commands"""
+        words = [word.split()[0] for word in self.slash_commands]
+        notsettable = ["config", "plugins", "version", "dump_config", "list_tools", "list_models", "prompts"]
+        for c in vars(self.config):
+            if c not in notsettable:
+                words.append(f"/set {c}=")
+
+        return prompt_toolkit.completion.WordCompleter(words, sentence=True)
 
     def add_message(self, message):
         """
@@ -617,21 +642,7 @@ class LLME:
         elif cmd in "/quit":
             raise EOFError("/quit")
         elif cmd in "/help":
-            help = [
-                "/models       list available models",
-                "/tools        list available tools",
-                "/metrics      list current metrics",
-                "/retry        cancel and regenerate the last assistant message",
-                "/undo         cancel the last user message (and the response)",
-                "/edit         run EDITOR on the chat (save,editor,load)",
-                "/save FILE    save chat",
-                "/load FILE    load chat",
-                "/config       list configuration options",
-                "/set OPT=VAL  change a config option",
-                "/quit         exit the program",
-                "/help         show this help",
-            ]
-            for h in help:
+            for h in self.slash_commands:
                 print(h)
         else:
             print(f"Unknown {user_input}. Use /help for help.")
