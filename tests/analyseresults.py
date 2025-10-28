@@ -262,8 +262,9 @@ def main():
         keep[model] = True
 
     base_models = {}
-    for ts in model_config_tasks:
-        t = model_config_tasks[ts][-1]
+    for ts, tests in model_config_tasks.items():
+        tests.sort(key=lambda x: x.date)
+        t = tests[-1]
         if t.model_config in keep:
             t.process()
             base_models[t.model] = True
