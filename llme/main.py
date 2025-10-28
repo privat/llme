@@ -24,13 +24,13 @@ import json
 import logging
 import os
 import re
-import readline
 import subprocess
 import sys
 import threading
 import time
 import tomllib
 
+import prompt_toolkit
 import requests
 from termcolor import colored, cprint
 
@@ -48,6 +48,10 @@ class LLME:
         self.raw_messages = [] # the sequence of messages really communicated with the LLM server to work-around their various API limitations
 
         self.warmup = None
+        if self.config.batch:
+            self.session = None
+        else:
+            self.session = prompt_toolkit.PromptSession(complete_while_typing=True)
 
         self.api_headers = {} # additional headers for the server
         if self.config.api_key:
@@ -106,7 +110,10 @@ class LLME:
         if self.config.batch:
             raise EOFError("No confirmation in batch mode") # ugly
         try:
-            x = input(colored(f"{question} [Yn]? ", color)).strip()
+            if self.session:
+                x = prompt_toolkit.prompt([(color, f"{question} [Yn]? ")]).strip()
+            else:
+                x = input(f"{question} [Yn]? ").strip()
             if x in ['', 'y', 'Y']:
                 return True
             if len(x) > 3:
@@ -130,7 +137,7 @@ class LLME:
         Etc.
         """
 
-        if not self.confirm(f"{len(self.messages)} RUN {command}", "light_red"):
+        if not self.confirm(f"{len(self.messages)} RUN {command}", "#ff0000"):
             return None
 
         # hack for unbuffered python
@@ -195,8 +202,8 @@ class LLME:
         try:
             if self.warmup:
                 self.warmup.start()
-            if not self.config.plain:
-                user_input = input(colored(f"{len(self.messages)}> ", "light_green"))
+            if self.session:
+                user_input = self.session.prompt([("#00ff00", "> ")], placeholder=[("#7f7f7f", "A prompt, /h for help, Ctrl-C to interrupt")])
             else:
                 user_input = input()
             if self.warmup:

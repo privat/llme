@@ -19,6 +19,7 @@ classifiers = [
 dependencies = [
     "requests",
     "termcolor",
+    "prompt-toolkit",
     "python-magic",
 ]
 
