@@ -475,7 +475,12 @@ class LLME:
         if full_tool_calls:
             for tool_call in full_tool_calls:
                 function = tool_call["function"]
-                tool = all_tools[function["name"]]
+                tool = all_tools.get(function["name"])
+                if not tool:
+                    logger.error("Unknown tool %s", function["name"])
+                    message = {"role": "tool", "content": f"Error: unknown tool {function["name"]}. Available tools: {", ".join(all_tools)}", "tool_call_id": tool_call["id"]}
+                    self.add_message(message)
+                    continue
                 args = json.loads(function["arguments"])
                 cprint(f"CALL {tool.name}({args})", "light_red")
                 if tool.need_self:
