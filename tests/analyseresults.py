@@ -171,8 +171,12 @@ def sortrow(mat):
 # Used to aggregate multiple runs of the same task
 model_config_tasks = {}
 
+# Error count
+errors = {}
+
 class Result:
     def __init__(self, directory):
+        self.directory = directory
         self.result = None
         self.config = None
         pathjson = f"{directory}/result.json"
@@ -229,6 +233,11 @@ class Result:
         else:
             model_config_tasks[self.model_config_task].append(self)
 
+    def __repr__(self):
+        return self.model_config_task
+    def __str__(self):
+        return self.model_config_task
+
     def process(self):
         inc_model_results(self.model_config, self.result)
         inc_suite_results(self.suite, self.result)
@@ -239,7 +248,20 @@ class Result:
         if self.result == "RUNNING":
             global has_running
             has_running = True
-
+        if self.result == "ERROR":
+            with open(f"{self.directory}/err.txt", "r") as f:
+                causes = list(f.readlines())
+                if len(causes) == 0:
+                    cause = ""
+                elif causes[-1]:
+                    cause = causes[-1]
+                else:
+                    cause = causes[-2]
+                cause = cause[:80]
+            if cause in errors:
+                errors[cause].append(self)
+            else:
+                errors[cause] = [self]
 
 def main():
     results = []
@@ -301,6 +323,14 @@ def main():
 
         f.write("\n## Results by tasks\n\n")
         print_mat(task_results, f, "Task")
+
+        if False:
+            f.write("\n## Error Causes\n\n")
+            causes = sorted(errors.keys(), key=lambda x: -len(errors[x]))
+            table=[]
+            for c in causes:
+                table.append([c, len(errors[c]), errors[c][:5]])
+            f.write(tabulate(table, headers=["Cause", "Count", "Configs"], tablefmt="pipe"))
 
         f.write("\n\n")
         for link in links:
