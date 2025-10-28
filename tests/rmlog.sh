@@ -1,7 +1,7 @@
 #!/bin/bash
 
 mkdir -p logs.bak
-for f in $(grep "$1" logs/*/result.csv -l); do
+for f in $(grep "$1" logs/*/config.json -l); do
 	d=$(dirname "$f")
 	if [ ! -d "$d" ]; then
 		continue
