@@ -538,8 +538,9 @@ class LLME:
     def start(self):
         """Start, work, and terminate"""
 
-        models = self.get_models()
+        models = None
         if not self.model:
+            models = self.get_models()
             self.model = models[0]
         if self.config.list_models:
             self.list_models()
@@ -566,6 +567,8 @@ class LLME:
                 self.prompts = [sys.stdin.read()]
 
         if len(self.prompts) == 0:
+            if not models:
+                self.get_models()
             self.warmup = Warmup(self)
 
         try:
