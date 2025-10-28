@@ -164,7 +164,7 @@ tllme() {
 		return 124
 	elif [ "$err" -ne 0 ]; then
 		grep --color -i error "$LOGDIR/log.txt"
-		result "ERROR"
+		result "ERROR" "$(tail -n 1 "$LOGDIR/err.txt")"
 		return $err
 	fi
 
