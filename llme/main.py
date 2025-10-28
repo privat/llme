@@ -481,14 +481,14 @@ class LLME:
                     message = {"role": "tool", "content": f"Error: unknown tool {function["name"]}. Available tools: {", ".join(all_tools)}", "tool_call_id": tool_call["id"]}
                     self.add_message(message)
                     continue
-                args = json.loads(function["arguments"])
-                cprint(f"CALL {tool.name}({args})", "light_red")
-                if tool.need_self:
-                    args = {"self": self} | args
                 try:
+                    args = json.loads(function["arguments"])
+                    cprint(f"CALL {tool.name}({args})", "light_red")
+                    if tool.need_self:
+                        args = {"self": self} | args
                     result = tool.fun(**args)
                 except Exception as e:
-                    message = {"role": "tool", "content": f"Error: bad too usage {function["name"]}. {e}", "tool_call_id": tool_call["id"]}
+                    message = {"role": "tool", "content": f"Error: bad tool usage {function["name"]}. {e}", "tool_call_id": tool_call["id"]}
                     self.add_message(message)
                     continue
                 if result is None:
@@ -539,7 +539,7 @@ class LLME:
         system_prompt = self.config.system_prompt
         if self.config.tool_mode == "markdown":
             tool = all_tools["run_command"]
-            system_prompt += f"""## Tool\n\nRun shell commands with a fenced code block and a `run` label. Format:\n\n```run command\nstdin\n```\n\nExemple:\n\n```run python\nprint('Hello World')\n```\n\n"""
+            system_prompt += f"""## Tool run_command\n\nRun shell commands with a fenced code block and a `run` label. Format:\n\n```run command\nstdin\n```\n\nExemple:\n\n```run python\nprint('Hello World')\n```\n\n"""
             system_prompt += tool.doc
 
         return {"role": "system", "content": system_prompt}
