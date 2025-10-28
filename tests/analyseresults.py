@@ -173,6 +173,8 @@ model_config_tasks = {}
 
 class Result:
     def __init__(self, directory):
+        self.result = None
+        self.config = None
         pathjson = f"{directory}/result.json"
         if os.path.exists(pathjson):
             with open(pathjson, 'r') as file:
@@ -212,7 +214,8 @@ class Result:
             print(f"{directory}: no config. skip")
             return
 
-        self.model_config = self.config["model"]
+        self.model = self.config["model"]
+        self.model_config = self.model
         t = self.config.get("temperature")
         if t is not None:
             self.model_config = f"{self.model_config} t={t}"
@@ -239,18 +242,31 @@ class Result:
 
 
 def main():
+    results = []
     for d in glob.glob('logs/*/'):
         try:
             result = Result(d)
+            if result.config:
+                results.append(result)
         except json.decoder.JSONDecodeError as e:
             print(f"{d}: {e}")
         except Exception as e:
             print(f"{d}: {e}")
             raise e
 
+    keep = {}
+    for result in results:
+        if result.result == "ERROR":
+            continue
+        model = result.model_config
+        keep[model] = True
+
+    base_models = {}
     for ts in model_config_tasks:
         t = model_config_tasks[ts][-1]
-        t.process()
+        if t.model_config in keep:
+            t.process()
+            base_models[t.model] = True
 
     if not has_running:
         status.remove('RUNNING')
@@ -268,7 +284,8 @@ def main():
         f.write(cut)
 
         f.write("\n")
-        f.write(f"* {len(model_results)} models and configurations\n")
+        f.write(f"* {len(base_models)} models\n")
+        f.write(f"* {len(model_results)} model configurations\n")
         f.write(f"* {len(suite_results)} task suites\n")
         f.write(f"* {len(task_results)} tasks\n")
 
