@@ -79,7 +79,7 @@ def color(rate):
         return colors[1]
     if rate < 35:
         return colors[2]
-    if rate < 60:
+    if rate < 65:
         return colors[3]
     if rate < 85:
         return colors[4]
