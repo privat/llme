@@ -529,6 +529,8 @@ class LLME:
                 except Exception as e:
                     cprint(f"Exception {e}", color="red")
                     message = {"role": "tool", "content": f"Error: bad tool usage {function["name"]}. {e}", "tool_call_id": tool_call["id"]}
+                    # TODO: think about something better than this. Catching any errors hide real llme bugs.
+                    raise e
                     self.add_message(message)
                     continue
                 if result is None:
