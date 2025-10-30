@@ -390,8 +390,12 @@ class LLME:
                         full_tool_calls.append(None)
                     if "name" in f:
                         full_tool_calls[idx] = tool_call
+                        cprint(f["name"], color="red")
+                        cprint(f["arguments"], color="red", end='', flush=True)
                     else:
                         full_tool_calls[idx]["function"]["arguments"] += f["arguments"]
+                        cprint(f["arguments"], color="red", end='', flush=True)
+                    mode="." # force \n after the tool_call is fully outputed
 
             finish_reason = choice0.get('finish_reason')
             if finish_reason:
