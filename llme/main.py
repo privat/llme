@@ -491,7 +491,11 @@ class LLME:
                     if tool.need_self:
                         args = {"self": self} | args
                     result = tool.fun(**args)
+                except EOFError as e:
+                    # was likely ^C or --batch
+                    raise e
                 except Exception as e:
+                    cprint(f"Exception {e}", color="red")
                     message = {"role": "tool", "content": f"Error: bad tool usage {function["name"]}. {e}", "tool_call_id": tool_call["id"]}
                     self.add_message(message)
                     continue
