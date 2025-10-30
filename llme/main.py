@@ -150,6 +150,25 @@ class LLME:
         except KeyboardInterrupt:
             raise EOFError("Confirmation interrupted") # ugly
 
+    def cat_write(self, file, stdin):
+        if not os.path.exists(file):
+            cprint(stdin, color="green")
+            return
+
+        import difflib
+        with open(file, "r") as f:
+            old = f.readlines()
+        new = stdin.splitlines(keepends=True)
+        print(f"file exists")
+        for line in difflib.unified_diff(old, new, file, file):
+            if line[0] == '+':
+                color = "green"
+            elif line[0] == '-':
+                color = "red"
+            else:
+                color = "white"
+            cprint(line.rstrip("\n"), color=color)
+
 
     def run_command(self, command: str, stdin: str = ""):
         """Execute a standard shell command and return its result.
@@ -169,6 +188,8 @@ class LLME:
         need_confirm = True
         if len(cmd) <= 2 and cmd[0] in ["cat", "ls", "pwd", "echo"]:
             need_confirm = False
+        elif len(cmd) == 3 and cmd[0] == "cat" and cmd[1] == ">":
+            self.cat_write(cmd[2], stdin)
         elif stdin:
             cprint("$ " + command, color="light_red")
             cprint(stdin)
