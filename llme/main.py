@@ -162,6 +162,10 @@ class LLME:
         Etc.
         """
 
+        if stdin:
+            cprint(command, color="light_red")
+            cprint(stdin, color="red")
+
         if not self.confirm(f"{len(self.messages)} RUN {command}", "#ff0000"):
             return None
 
@@ -483,7 +487,7 @@ class LLME:
                     continue
                 try:
                     args = json.loads(function["arguments"])
-                    cprint(f"CALL {tool.name}({args})", "light_red")
+                    logger.info(f"CALL %s(%s)", tool.name, args)
                     if tool.need_self:
                         args = {"self": self} | args
                     result = tool.fun(**args)
