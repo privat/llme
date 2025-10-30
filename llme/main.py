@@ -127,16 +127,16 @@ class LLME:
         return ids
 
 
-    def confirm(self, question, color):
+    def confirm(self, question):
         """Ask a yes/no confirmation to the user"""
         if self.config.yolo:
-            cprint(f"{question}: YOLO!", color)
+            cprint(f"{question}: YOLO!", color="light_red")
             return True
         if self.config.batch:
             raise EOFError("No confirmation in batch mode") # ugly
         try:
             if self.session:
-                x = prompt_toolkit.prompt([(color, f"{question} [Yn]? ")]).strip()
+                x = prompt_toolkit.prompt([("#ff0000", f"{question} [Yn]? ")]).strip()
             else:
                 x = input(f"{question} [Yn]? ").strip()
             if x in ['', 'y', 'Y']:
@@ -194,7 +194,7 @@ class LLME:
             cprint("$ " + command, color="light_red")
             cprint(stdin)
 
-        if need_confirm and not self.confirm(f"{len(self.messages)} RUN {command}", "#ff0000"):
+        if need_confirm and not self.confirm(f"{len(self.messages)} RUN {command}"):
             return None
 
         # hack for unbuffered python
