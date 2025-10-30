@@ -162,11 +162,18 @@ class LLME:
         Etc.
         """
 
-        if stdin:
-            cprint(command, color="light_red")
-            cprint(stdin, color="red")
+        import shlex
+        cmd = shlex.split(command, posix=True)
 
-        if not self.confirm(f"{len(self.messages)} RUN {command}", "#ff0000"):
+        # special known commands
+        need_confirm = True
+        if len(cmd) <= 2 and cmd[0] in ["cat", "ls", "pwd", "echo"]:
+            need_confirm = False
+        elif stdin:
+            cprint("$ " + command, color="light_red")
+            cprint(stdin)
+
+        if need_confirm and not self.confirm(f"{len(self.messages)} RUN {command}", "#ff0000"):
             return None
 
         # hack for unbuffered python
