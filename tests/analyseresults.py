@@ -3,6 +3,7 @@
 import csv
 import datetime
 import glob
+import itertools
 import json
 import os
 import sys
@@ -171,14 +172,16 @@ def sortrow(mat):
 # Used to aggregate multiple runs of the same task
 model_config_tasks = {}
 
-# Error count
+# Error results by modet_config
 errors = {}
+
 
 class Result:
     def __init__(self, directory):
         self.directory = directory
         self.result = None
         self.config = None
+        self.cause = None
         pathjson = f"{directory}/result.json"
         if os.path.exists(pathjson):
             with open(pathjson, 'r') as file:
@@ -207,6 +210,17 @@ class Result:
                 data = vars(self)
                 with open(pathjson, 'w') as file:
                     json.dump(data, file, indent=0)
+        patherr = f"{self.directory}/err.txt"
+        if os.path.exists(patherr):
+            with open(patherr, "r") as f:
+                causes = list(f.readlines())
+                while causes and not causes[-1]:
+                    causes.pop()
+                if causes:
+                    cause = causes[-1].strip()[:80]
+                else:
+                    cause = "???"
+            self.cause = cause
 
         self.date = datetime.datetime.fromtimestamp(self.date)
 
@@ -224,8 +238,10 @@ class Result:
         if t is not None:
             self.model_config = f"{self.model_config} t={t}"
         t = self.config.get("tool_mode")
-        if t is not None:
-            self.model_config = f"{self.model_config} mode={t}"
+        if t is None:
+            t = "markdown"
+            self.config["tool_mode"] = t
+        self.model_config = f"{self.model_config} mode={t}"
 
         self.model_config_task = f"{self.model_config} {self.suite} {self.task}"
         if self.model_config_task not in model_config_tasks:
@@ -249,19 +265,23 @@ class Result:
             global has_running
             has_running = True
         if self.result == "ERROR":
-            with open(f"{self.directory}/err.txt", "r") as f:
-                causes = list(f.readlines())
-                if len(causes) == 0:
-                    cause = ""
-                elif causes[-1]:
-                    cause = causes[-1]
-                else:
-                    cause = causes[-2]
-                cause = cause[:80]
-            if cause in errors:
-                errors[cause].append(self)
+            if self.cause in errors:
+                errors[self.cause].append(self)
             else:
-                errors[cause] = [self]
+                errors[self.cause] = [self]
+
+    def replay(self):
+        res = f"./tests/{self.suite}.sh -m {self.model}"
+        c = self.config["config"]
+        if c:
+            res += f" -c {c[0]}"
+        t = self.config.get("temperature")
+        if t is not None:
+            res += f" --temperature={t}"
+        t = self.config.get("tool_mode")
+        if t is not None:
+            res += f" --tool-mode={t}"
+        return res
 
 def main():
     results = []
@@ -284,11 +304,13 @@ def main():
         keep[model] = True
 
     base_models = {}
+    keept_results = []
     for ts, tests in model_config_tasks.items():
         tests.sort(key=lambda x: x.date)
         t = tests[-1]
         if t.model_config in keep:
             t.process()
+            keept_results.append(t)
             base_models[t.model] = True
 
     if not has_running:
@@ -324,17 +346,29 @@ def main():
         f.write("\n## Results by tasks\n\n")
         print_mat(task_results, f, "Task")
 
-        if False:
-            f.write("\n## Error Causes\n\n")
-            causes = sorted(errors.keys(), key=lambda x: -len(errors[x]))
-            table=[]
-            for c in causes:
-                table.append([c, len(errors[c]), errors[c][:5]])
-            f.write(tabulate(table, headers=["Cause", "Count", "Configs"], tablefmt="pipe"))
-
         f.write("\n\n")
         for link in links:
             f.write(f"  [{link["tag"]}]: {link["url"]}\n")
+
+    with open("benchmark_more.md", "w") as f:
+        f.write("\n## Error Causes\n\n")
+        causes = sorted(errors.keys(), key=lambda x: -len(errors[x]))
+        table=[]
+        for c in causes:
+            f.write(f"{c} ({len(errors[c])})\n")
+            for e in errors[c][:10]:
+                f.write(f" * {e} {e.directory}\n")
+            f.write("\n")
+
+        f.write("\n## Replay ERRORs\n\n")
+        key = lambda x: (x.model_config, x.suite)
+        data = keept_results
+        data = itertools.filterfalse(lambda x: x.result != "ERROR", data)
+        data = sorted(data, key=key)
+        for config_task, results in itertools.groupby(data, key):
+            results = list(results)
+            f.write(f"{results[0].replay()} # {len(results)} {results[0].cause}\n")
+
 
 if __name__ == "__main__":
     main()
