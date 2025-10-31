@@ -789,6 +789,20 @@ class AnimationManager:
         self.stop()
 
 
+def add_in_dict(total, delta):
+    """Deep increase of all values in total"""
+    for key, value in delta.items():
+        if key in total:
+            if isinstance(value, dict):
+                add_in_dict(total[key], value)
+            elif isinstance(value, int) or isinstance(value, float):
+                total[key] += value
+            else:
+                logger.warning("Metrics: unmanaged type for key %s: %r", key, value)
+        else:
+            total[key] = value
+
+
 class Metrics:
     """Help accounting various metrics"""
     def __init__(self):
@@ -798,12 +812,7 @@ class Metrics:
     def update(self, d):
         """Add all"""
         self.history.append(d)
-        for key in d:
-            value = d[key]
-            if key in self.total:
-                self.total[key] += value
-            else:
-                self.total[key] = value
+        add_in_dict(self.total, d)
 
     def infoline(self, d):
         """Write a concise infoline"""
