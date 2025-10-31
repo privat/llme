@@ -40,20 +40,20 @@ validate() {
 	validate_file pyproject.toml
 }
 
-tllme 10free "swap the order of 'dependencies' and 'classifiers' settings in the file tests/data/pyproject.toml. Do not do any other changes." "$@" && 
+tllme 10free "swap the order of 'dependencies' and 'classifiers' settings in the file pyproject.toml. Do not do any other changes." "$@" && 
 validate
 
-tllme 11cat "swap the order of 'dependencies' and 'classifiers' settings in the file tests/data/pyproject.toml. Do not do any other changes. Use cat to update the file." "$@" && 
+tllme 11cat "swap the order of 'dependencies' and 'classifiers' settings in the file pyproject.toml. Do not do any other changes. Use cat to update the file." "$@" && 
 validate
 
-tllme 12sed "Swap the order of 'dependencies' and 'classifiers' settings in the file tests/data/pyproject.toml. Do not do any other changes. Use sed to update the file." "$@" && 
+tllme 12sed "Swap the order of 'dependencies' and 'classifiers' settings in the file pyproject.toml. Do not do any other changes. Use sed to update the file." "$@" && 
 validate
 
-tllme 13patch "Swap the order of 'dependencies' and 'classifiers' settings in the file tests/data/pyproject.toml. Do not do any other changes. Use patch to update the file." "$@" && 
+tllme 13patch "Swap the order of 'dependencies' and 'classifiers' settings in the file pyproject.toml. Do not do any other changes. Use patch to update the file." "$@" && 
 validate
 
-tllme 14ed "Swap the order of 'dependencies' and 'classifiers' settings in the file tests/data/pyproject.toml. Do not do any other changes. Use ed to update the file." "$@" && 
+tllme 14ed "Swap the order of 'dependencies' and 'classifiers' settings in the file pyproject.toml. Do not do any other changes. Use ed to update the file." "$@" && 
 validate
 
-tllme 15python "Swap the order of 'dependencies' and 'classifiers' settings in the file tests/data/pyproject.toml. Do not do any other changes. Use python to update the file." "$@" && 
+tllme 15python "Swap the order of 'dependencies' and 'classifiers' settings in the file pyproject.toml. Do not do any other changes. Use python to update the file." "$@" && 
 validate
