@@ -692,7 +692,7 @@ class LLME:
         elif cmd in "/load":
             self.load_chat(arg)
         elif cmd in "/metrics":
-            for k, v in metrics.total.items():
+            for k, v in self.metrics.total.items():
                 print(f"{k}: {repr(v)}")
         elif cmd in "/set":
             args = arg.split('=', 1)
