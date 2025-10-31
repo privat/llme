@@ -557,6 +557,8 @@ class LLME:
         """Display metrics information, and update the global metrics information"""
         data = self.completion_metrics
         logger.info("metrics: %s", data)
+        if not "first_token_ms" in data:
+            data["first_token_ms"] = 0.0
         data["last_token_ms"] = data["total_ms"] - data["first_token_ms"] - data["response_ms"]
         self.metrics.update(data)
 
