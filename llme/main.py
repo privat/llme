@@ -182,11 +182,17 @@ class LLME:
         """
 
         import shlex
-        cmd = shlex.split(command, posix=True)
+        try:
+            cmd = shlex.split(command, posix=True)
+        except ValueError:
+            # no closing quotation. Let subprocess handle and returns the error
+            cmd = None
 
         # special known commands
         need_confirm = True
-        if len(cmd) <= 2 and cmd[0] in ["cat", "ls", "pwd", "echo"]:
+        if not cmd:
+            pass
+        elif len(cmd) <= 2 and cmd[0] in ["cat", "ls", "pwd", "echo"]:
             need_confirm = False
         elif len(cmd) == 3 and cmd[0] == "cat" and cmd[1] == ">":
             self.cat_write(cmd[2], stdin)
