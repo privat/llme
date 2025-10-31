@@ -11,3 +11,5 @@
 "$TESTDIR/basic_answers.sh" "$@"
 "$TESTDIR/patch_file.sh" "$@"
 "$TESTDIR/hello.sh" "$@"
+"$TESTDIR/debug_fib.sh" "$@"
+"$TESTDIR/crapto.sh" "$@"
