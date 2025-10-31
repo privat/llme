@@ -1054,7 +1054,7 @@ def extract_requests_error(e):
         if "message" in data:
             text = data["message"]
 
-    message = f"{text} ({e.response.status_code} {e.response.request.url})"
+    message = f"{text.strip()} ({e.response.status_code} {e.response.request.url})"
     return message
 
 
