@@ -216,6 +216,7 @@ class LLME:
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
+            errors="backslashreplace", # Avoid encoding errors in the output
             bufsize=1  # line-buffered
         )
         logger.debug("Starting sub-process %s", command)
