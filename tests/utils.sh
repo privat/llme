@@ -31,6 +31,11 @@ copy() {
 	done
 }
 
+# escape $1 as a json string ("" included)
+jsonescape() {
+	jq -Rn --arg str "$1" '$str'
+}
+
 
 # Register a test result
 result() {
@@ -48,8 +53,8 @@ result() {
 
 	cat > "$ORIGDIR/$LOGDIR/result.json" <<-EOF
 	{
-		"result":"$1",
-		"comment":"$2",
+		"result":$(jsonescape "$1"),
+		"comment":$(jsonescape "$2"),
 		"msgs":${msgs:-null},
 		"words":${words:-null},
 		"task":"$task",
