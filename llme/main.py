@@ -525,9 +525,15 @@ class LLME:
                     continue
                 try:
                     args = json.loads(function["arguments"])
-                    logger.info(f"CALL %s(%s)", tool.name, args)
-                    if tool.need_self:
-                        args = {"self": self} | args
+                except json.JSONDecodeError as e:
+                    logger.error("Bad tool arguments %s: %s", e, function["arguments"])
+                    message = {"role": "tool", "content": f"Error: bad tool arguments {function["name"]}. {e}", "tool_call_id": tool_call["id"]}
+                    self.add_message(message)
+                    continue
+                logger.info(f"CALL %s(%s)", tool.name, args)
+                if tool.need_self:
+                    args = {"self": self} | args
+                try:
                     result = tool.fun(**args)
                 except EOFError as e:
                     # was likely ^C or --batch
