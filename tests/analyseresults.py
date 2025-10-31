@@ -369,6 +369,21 @@ def main():
             results = list(results)
             f.write(f"{results[0].replay()} # {len(results)} {results[0].cause}\n")
 
+        f.write("\n## Missing tests\n\n")
+        all_suites = suite_results.keys()
+        key = lambda x: x.model_config
+        data = keept_results
+        data = sorted(data, key=key)
+        for config, results in itertools.groupby(data, key):
+            suites = {}
+            for r in results:
+                suites[r.suite] = True
+            for s in all_suites:
+                if s not in suites:
+                    missing = Result(r.directory)
+                    missing.suite = s
+                    f.write(f"{missing.replay()} # {config} missing {s}\n")
+
 
 if __name__ == "__main__":
     main()
