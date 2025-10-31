@@ -10,7 +10,7 @@ validate() {
 	cd "$WORKDIR"
 	if ! gcc fib.c -o fib; then
 		result FAIL "cannot compile"
-	elif ! res=$(./fib); then
+	elif ! res=$(timeout 10 ./fib); then
 		result FAIL "cannot execute"
 	elif echo "$res" | grep --color 512; then
 		result FAIL "unfixed"
