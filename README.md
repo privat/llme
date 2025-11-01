@@ -64,7 +64,7 @@ Clone then install in development mode
 
 ```bash
 git clone https://github.com/privat/llme.git
-pipx install -e llme
+pipx install -e ./llme
 llme --help
 ```
 
