@@ -109,6 +109,10 @@ class LLME:
             self.raw_messages.append({"role": message["role"], "content": "\n".join(text_content)})
             return
 
+        if message["role"] == "tool" and self.config.tool_mode != "native":
+            message = message.copy()
+            message["role"] = "user"
+
         self.raw_messages.append(message)
 
     def get_models(self):
