@@ -333,6 +333,7 @@ def main():
         f.write(f"* {len(model_results)} model configurations\n")
         f.write(f"* {len(suite_results)} task suites\n")
         f.write(f"* {len(task_results)} tasks\n")
+        f.write(f"* {len(keept_results)} results\n")
 
         f.write("\n## Results by models\n\n")
         print_mat(model_results, f, "Model")
