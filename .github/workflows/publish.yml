@@ -29,14 +29,7 @@ jobs:
 
     - name: Extract latest changelog
       id: changelog
-      run: |
-        import re
-        with open("CHANGELOG.md", "r", encoding="utf-8") as f:
-            content = f.read()
-        matches = re.findall(r"(## \[v[\d\.]+\].*?)(?=## \[v|\Z)", content, re.DOTALL)
-        latest = matches[0].strip() if matches else "No changelog entry found."
-        print(f"::set-output name=changelog::{latest}")
-      shell: python
+      run: ./utils/extract_changelog.py
 
     - name: Publish to PyPI
       if: startsWith(github.ref, 'refs/tags/v')
