@@ -272,15 +272,15 @@ class Result:
 
     def replay(self):
         res = f"./tests/{self.suite}.sh -m {self.model}"
-        c = self.config["config"]
-        if c:
-            res += f" -c {c[0]}"
         t = self.config.get("temperature")
         if t is not None:
             res += f" --temperature={t}"
         t = self.config.get("tool_mode")
         if t is not None:
             res += f" --tool-mode={t}"
+        c = self.config["config"]
+        if c:
+            res += f" -c {c[0]}"
         return res
 
 def main():
