@@ -185,6 +185,10 @@ class LLME:
         Etc.
         """
 
+        command = command.strip()
+        if command == "":
+            command = "sh" # assume shell
+
         import shlex
         try:
             cmd = shlex.split(command, posix=True)
