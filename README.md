@@ -30,6 +30,13 @@ brew install llama.cpp
 llama-server -hf unsloth/Qwen3-Coder-30B-A3B-Instruct-GGUF --ctx-size 0 --jinja
 ```
 
+Example with ollama. Look at https://ollama.com/download for other options
+
+```
+curl -fsSL https://ollama.com/install.sh | sh
+ollama pull qwen3-coder:30b
+```
+
 Qwen3-Coder-30b is a nice model.
 Smaller models can can also works.
 See the [benchmark](benchmark.md) for a comparison.
@@ -75,7 +82,8 @@ pip install -r llme/requirements.txt
 ### Run an interactive chat session
 
 ```bash
-llme --base-url "http://localhost:8080/v1"
+llme --base-url "http://localhost:8080/v1" # for default llama-server (llama.cpp)
+llme --base-url "http://localhost:11434/v1" # for default ollama server
 ```
 
 or if you want to a specific model
