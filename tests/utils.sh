@@ -76,7 +76,8 @@ result() {
 		*)
 			color=93;;
 	esac
-	echo -e "\e[${color}m$1\e[0m $2 $LOGDIR/ model=$model msgs=$msgs words=$words"
+	printf "\e[${color}m$1\e[0m "
+	echo "$2 $LOGDIR/ model=$model msgs=$msgs words=$words"
 }
 
 # Check that the llm result matches the pattern $1 on the last line.
