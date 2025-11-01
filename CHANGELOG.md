@@ -10,16 +10,18 @@ All notable changes to this project will be documented in this file.
 - Native tool mode (new default). See --tool-mode
 - Plugin system with --plugin
 - Tool system with user-defined tools (--list-tools)
+- White listed safe commands (cat, ls, etc.)
 - Non-streaming mode for debugging API (--bulk)
 - Better metrics (--export-metrics)
 - Other new flags: --temperature, --version
-- Test tasks `tests/debug_fib.sh` 
+- Test tasks `tests/debug_fib.sh` and `tests/crapto.sh`
 
 ### Changed
 
 - Improved tool handling and error catching
 - Refactored a lot of code
 - Enhanced test suite with better error handling
+- Enhanced tests analysis with better reporting and easier way to rerun tests
 - Improved `tests/run_all_*.sh` helpers
 
 ### Fixed

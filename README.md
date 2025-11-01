@@ -329,7 +329,7 @@ PR are welcome!
   * [x] run Python code
   * [x] user-defined tools
   * [ ] sandboxing
-  * [ ] whitelist/blacklist
+  * [x] whitelist/blacklist
 * User interface & features
   * [x] readline
   * [ ] better prompt & history
@@ -339,7 +339,7 @@ PR are welcome!
   * [x] export metrics/usage/statistics
   * [x] slash commands
   * [x] undo/retry/edit
-  * [ ] better tool reporting
+  * [x] better tool reporting
 * Customization and models
   * [x] config files
   * [x] config with env vars
@@ -348,7 +348,7 @@ PR are welcome!
   * [ ] better tool selection
   * [x] temperature
   * [ ] other hyper parameters
-  * [ ] handle non-conform thinking & tools
+  * [x] handle non-conform thinking & tools
   * [ ] detect model features (is that even possible?)
   * [x] bench system & reporting
 * Code quality
