@@ -470,7 +470,7 @@ class LLME:
 
             #FIXME: this is fragile and ugly.
             if self.config.tool_mode == "markdown":
-                cb = re.search(r"^```run ([^\n]*)\n(.*?)^```$", full_content, re.DOTALL | re.MULTILINE)
+                cb = re.search(r"^```run([^\n]*)\n(.*?)^```$", full_content, re.DOTALL | re.MULTILINE)
                 if not cb:
                     continue
                 arguments = {"command": cb[1], "stdin": cb[2]}
