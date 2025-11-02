@@ -6,6 +6,7 @@ import glob
 import itertools
 import json
 import os
+import re
 import sys
 from tabulate import tabulate
 
@@ -25,13 +26,21 @@ def getlink(what, url):
     if url in linksmap:
         tag = linksmap[url]["tag"]
     else:
-        tag = url.split('/')[-1][0:2]
+        name = url.split('/')[-1]
+        tag = name[0]
+        subname = re.search(r'\W([a-zA-Z]+)', name)
+        if subname:
+            tag = tag + subname[1][0]
+        number = re.search(r'\W(\d+)', name)
+        if number:
+            tag = tag + number[1]
+        tag = tag.lower()
         if tag in linkstag:
             n = linkstag[tag] + 1
             linkstag[tag] = n
+            tag = tag + chr(96 + n)
         else:
             n = linkstag[tag] = 1
-        tag = tag + str(n)
         link = {"tag": tag, "what": what, "url": url}
         links.append(link)
         linksmap[url] = link
