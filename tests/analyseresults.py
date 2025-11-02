@@ -19,43 +19,35 @@ def inccell(rowid, colid, mat):
     else:
         matrow[colid] += 1
 
-links = []
-linksmap = {}
-linkstag = {}
+linksmap = {} # url -> tag
+linkstag = {} # tag -> url
 def getlink(what, url):
     if url in linksmap:
-        tag = linksmap[url]["tag"]
-    else:
-        name = url.split('/')[-1]
-        tag = name[0]
-        subname = re.search(r'\W([a-zA-Z]+)', name)
-        if subname:
-            tag = tag + subname[1][0]
-        number = re.search(r'\W(\d+)', name)
-        if number:
-            tag = tag + number[1]
-        tag = tag.lower()
-        if tag in linkstag:
-            n = linkstag[tag] + 1
-            linkstag[tag] = n
-            tag = tag + chr(96 + n)
-        else:
-            n = linkstag[tag] = 1
-        link = {"tag": tag, "what": what, "url": url}
-        links.append(link)
-        linksmap[url] = link
-    return f"[{what}][{tag}]"
+        what2 = linksmap[url]
+        if what != what2:
+            print(f"warning: {what}: {url} already linked as {waht2}")
+        return f"[{what}]"
+    if what in linkstag:
+        url2 = linkstag[what]
+        if url != url2:
+            print(f"warning: {what}: {url} already linked as {url2}")
+        return f"[{what}]"
+    linksmap[url] = what
+    linkstag[what] = url
+    return f"[{what}]"
 
 def linkmodel(model):
-    conf = ""
+    extra = ""
     if " " in model:
         model, conf = model.split(" ", 1)
-        conf = " " + conf
-    base = model.split(":")[0]
-    if '/' in base:
-        return getlink(model, f"https://huggingface.co/{base}") + conf
+        extra = " " + conf + extra
+    if ":" in model:
+        model, size = model.split(":", 1)
+        extra = ":" + size + extra
+    if '/' in model:
+        return getlink(model, f"https://huggingface.co/{model}") + extra
     else:
-        return getlink(model, f"https://ollama.com/library/{base}") + conf
+        return getlink(model, f"https://ollama.com/library/{model}") + extra
 
 def linksuite(suite):
     return getlink(suite, f"tests/{suite}.sh")
@@ -357,8 +349,8 @@ def main():
         print_mat(task_results, f, "Task")
 
         f.write("\n\n")
-        for link in links:
-            f.write(f"  [{link["tag"]}]: {link["url"]}\n")
+        for link in sorted(linkstag.keys()):
+            f.write(f"  [{link}]: {linkstag[link]}\n")
 
     with open("benchmark_more.md", "w") as f:
         f.write("\n## Error Causes\n\n")
