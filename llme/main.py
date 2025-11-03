@@ -236,7 +236,7 @@ class LLME:
         proc.stdin.close()
 
         content = ''
-        with AnimationManager("light_red", self.config.plain) as am:
+        with Spinner("light_red", self.config.plain) as am:
             while line := proc.stdout.readline():
                 am.stop()
                 print(line, end='', flush=True)
@@ -504,7 +504,7 @@ class LLME:
         self.completion_metrics["chunk_n"] = 0
         self.completion_metrics["message_n"] = 1 # only one
 
-        with AnimationManager("light_blue", self.config.plain):
+        with Spinner("light_blue", self.config.plain):
             response = self.post_chat_completion()
             response.raise_for_status()
 
@@ -768,35 +768,50 @@ class LLME:
         setattr(self.config, opt, val)
 
 
-class AnimationManager:
-    """A simple context manager for a spinner animation."""
-    def __init__(self, color, plain=False):
+class Spinner:
+    """A simple context manager for a spinner animation.
+    It gives the user a feedback on long computation or network request.
+
+    :param color: color of the spinner with termcolor nomenclature.
+    :param disabled: if True, Spinner do nothing. The default is `not sys.stdout.isatty()`. Use False to force the spin.
+    :param sequence: string of characters to animate.
+    :param speed: animation speed in Hz.
+
+    Usage:
+        with Spinner("blue"):
+            do_something()
+    """
+    def __init__(self, color="white", disabled=None, sequence="⠋⠙⠹⠽⠼⠴⠦⠧⠇⠏", speed=10):
         self.color = color
-        self.plain = plain
+        if disabled is None:
+            disabled = not sys.stdout.isatty()
+        self.disabled = disabled
+        self.sequence = sequence
+        self.speed = speed
         self.stop_event = None
         self.animation_thread = None
 
     def _animate(self):
         """Animation loop, run in a thread."""
-        for c in itertools.cycle("⠋⠙⠹⠽⠼⠴⠦⠧⠇⠏"):
+        for c in itertools.cycle(self.sequence):
             if self.stop_event.is_set():
                 break
             sys.stdout.write(f"\r{colored(c, self.color)} ")
             sys.stdout.flush()
-            time.sleep(0.1)
+            time.sleep(1/self.speed)
         sys.stdout.write('\r')
         sys.stdout.flush()
 
     def stop(self):
-        """Manually stop the animation."""
-        if self.plain:
+        """Manually stop the spin."""
+        if self.disabled:
             return
         if not self.stop_event.is_set():
             self.stop_event.set()
             self.animation_thread.join()
 
     def __enter__(self):
-        if not self.plain:
+        if not self.disabled:
             self.stop_event = threading.Event()
             self.animation_thread = threading.Thread(target=self._animate)
             self.animation_thread.start()

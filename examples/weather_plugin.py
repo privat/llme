@@ -20,7 +20,8 @@ def weather(city: str):
     """Return the weather and forecast of a given city"""
     print(f"LLM asked for {city}")
     url = f"http://wttr.in/{urllib.parse.quote(city)}?format=j1"
-    response = requests.get(url=url)
+    with llme.Spinner("red"):
+        response = requests.get(url=url)
     response.raise_for_status()
     return response.text
 
