@@ -153,6 +153,75 @@ def print_model_suites(f):
     f.write(tabulate(table, headers=(titles), tablefmt="pipe"))
     f.write("\n")
 
+def print_model_tokens(f):
+    table = []
+    data = []
+    filter_out = {}
+    for x in keept_results:
+        if x.result == "ERROR":
+            continue
+        if not x.metrics:
+            filter_out[x.model_config] = True
+            continue
+        all_predicted_n = x.metrics["total"].get("completion_tokens", 0)
+        if not all_predicted_n:
+            filter_out[x.model_config] = True
+            continue
+        passed = x.result == "PASS"
+        pass_predicted_n = all_predicted_n if passed else 0
+        data.append((x.model_config, pass_predicted_n, all_predicted_n, passed))
+    data = sorted(data)
+    score = {}
+    for model, results in itertools.groupby(data, key = lambda x: x[0]):
+        if model in filter_out:
+            continue
+        results = list(results)
+        pass_predicted_n = sum(x[1] for x in results)
+        all_predicted_n = sum(x[2] for x in results)
+        pass_n = sum(x[3] for x in results)
+        total_n = len(results)
+        table.append([
+            model_rank[model], linkmodel(model), int(pass_predicted_n / pass_n) if pass_n else None, int(all_predicted_n / total_n), f"{pass_n} / {total_n} ({pass_n/total_n*100:.0f}%)"
+        ])
+    table.sort()
+    table = [x[1:] for x in table]
+    f.write(tabulate(table, headers=["Model", "tokens/passed", "tokens/nonerror", "passed / nonerror"], tablefmt="pipe"))
+    f.write("\n")
+
+def print_model_time(f):
+    table = []
+    data = []
+    filter_out = {}
+    for x in keept_results:
+        if x.result == "ERROR":
+            continue
+        if not x.metrics:
+            filter_out[x.model_config] = True
+            continue
+        all_predicted_n = x.metrics["total"].get("total_ms", 0)
+        if not all_predicted_n:
+            filter_out[x.model_config] = True
+            continue
+        passed = x.result == "PASS"
+        pass_predicted_n = all_predicted_n if passed else 0
+        data.append((x.model_config, pass_predicted_n, all_predicted_n, passed))
+    data = sorted(data)
+    score = {}
+    for model, results in itertools.groupby(data, key = lambda x: x[0]):
+        if model in filter_out:
+            continue
+        results = list(results)
+        pass_predicted_n = sum(x[1] for x in results)
+        all_predicted_n = sum(x[2] for x in results)
+        pass_n = sum(x[3] for x in results)
+        total_n = len(results)
+        table.append([
+            model_rank[model], linkmodel(model), int(pass_predicted_n / pass_n / 1000) if pass_n else None, int(all_predicted_n / total_n / 1000), f"{pass_n} / {total_n} ({pass_n/total_n*100:.0f}%)"
+        ])
+    table.sort()
+    table = [x[1:] for x in table]
+    f.write(tabulate(table, headers=["Model", "s/passed", "s/nonerror", "passed / nonerror"], tablefmt="pipe"))
+    f.write("\n")
 
 def scorerow(row):
     scores = {"PASS": 1000000.0, "ALMOST": 1000.0, "FAIL": 1.0, "ERROR": 0.0, "TIMEOUT": 1.0}
@@ -341,6 +410,16 @@ def main():
     head = results.split(cut, 1)[0]
     print(len(head),len(results))
 
+    message_n = 0
+    prompt_n = 0
+    predicted_n = 0
+    for result in keept_results:
+        if not result.metrics:
+            continue
+        message_n += result.metrics.get("total").get("message_n", 0)
+        prompt_n += result.metrics.get("total").get("prompt_tokens", 0)
+        predicted_n += result.metrics.get("total").get("completion_tokens", 0)
+
     with open("benchmark.md", 'w') as f:
 
         f.write(head)
@@ -351,13 +430,23 @@ def main():
         f.write(f"* {len(model_results)} model configurations\n")
         f.write(f"* {len(suite_results)} task suites\n")
         f.write(f"* {len(task_results)} tasks\n")
-        f.write(f"* {len(keept_results)} results\n")
+        f.write(f"* {len(keept_results)} task executions\n")
+        f.write(f"* {message_n:,} messages\n")
+        f.write(f"* {predicted_n:,} predicted tokens\n")
 
         f.write("\n## Results by models\n\n")
         print_mat(model_results, f, "Model")
 
         f.write("\n## Task suites by models\n\n")
         print_model_suites(f)
+
+        f.write("\n## Predicted tokens by models\n\n")
+        f.write("The average number of predicted tokens per execution that passed (PASS), and per non error execution (!ERROR). Do not compare models that do not share the same tasks. Not all experiments have this information yet.\n\n")
+        print_model_tokens(f)
+
+        f.write("\n## Conversation time by models\n\n")
+        f.write("The average time in requests with the server. Because we used different servers with different GPU, and different load average, do not think too much about the absolute values.\n\n")
+        print_model_time(f)
 
         f.write("\n## Results by task suites\n\n")
         print_mat(suite_results, f, "Task suite")
