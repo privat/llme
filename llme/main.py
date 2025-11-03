@@ -52,7 +52,7 @@ class LLME:
             "/tools        list available tools",
             "/metrics      list current metrics",
             "/history      list condensed conversation history",
-            "/retry        cancel and regenerate the last assistant message",
+            "/redo         cancel and regenerate the last assistant message",
             "/undo         cancel the last user message (and the response)",
             "/edit         run EDITOR on the chat (save,editor,load)",
             "/save FILE    save chat",
@@ -717,9 +717,9 @@ class LLME:
             self.list_models()
         elif cmd in "/history":
             self.list_history()
-        elif cmd in "/retry":
+        elif cmd in "/redo":
             if not self.rollback("assistant"):
-                logger.error("no assistant message to retry")
+                logger.error("no assistant message to redo")
             else:
                 self.list_history()
         elif cmd in "/undo":
