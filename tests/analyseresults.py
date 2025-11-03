@@ -256,9 +256,9 @@ class Result:
             model_config_tasks[self.model_config_task].append(self)
 
     def __repr__(self):
-        return self.model_config_task
+        return self.model_config_task + " " + self.directory
     def __str__(self):
-        return self.model_config_task
+        return self.model_config_task + " " + self.directory
 
     def process(self):
         inc_model_results(self.model_config, self.result)
@@ -293,6 +293,12 @@ class Result:
             res += f" -c {c[0]}"
         return res
 
+keep = {}
+base_models = {}
+keept_results = []
+model_order = None
+model_rank = {}
+
 def main():
     results = []
     for d in glob.glob('logs/*/'):
@@ -306,15 +312,12 @@ def main():
             print(f"{d}: {e}")
             raise e
 
-    keep = {}
     for result in results:
         if result.result == "ERROR":
             continue
         model = result.model_config
         keep[model] = True
 
-    base_models = {}
-    keept_results = []
     for ts, tests in model_config_tasks.items():
         tests.sort(key=lambda x: x.date)
         t = tests[-1]
@@ -325,6 +328,11 @@ def main():
 
     if not has_running:
         status.remove('RUNNING')
+
+    global model_order
+    model_order = list(reversed(sortrow(model_results)))
+    for i, m in enumerate(model_order):
+        model_rank[m] = i
 
     with open("benchmark.md", 'r') as f:
         results = f.read()
