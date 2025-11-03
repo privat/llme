@@ -133,6 +133,11 @@ class LLME:
         return ids
 
 
+    def prompt_prefix(self):
+        """Return the prefix number to use in the prompt"""
+        res = str(len(self.messages))
+        return res
+
     def confirm(self, question):
         """Ask a yes/no confirmation to the user"""
         if self.config.yolo:
@@ -210,7 +215,7 @@ class LLME:
             cprint("$ " + command, color="light_red")
             cprint(stdin)
 
-        if need_confirm and not self.confirm(f"{len(self.messages)} RUN {command}"):
+        if need_confirm and not self.confirm(f"{self.prompt_prefix()} RUN {command}"):
             return None
 
         # hack for unbuffered python
@@ -277,7 +282,7 @@ class LLME:
             if self.warmup:
                 self.warmup.start()
             if self.session:
-                user_input = self.session.prompt([("#00ff00", f"{len(self.messages)}> ")], placeholder=[("#7f7f7f", "A prompt, /h for help, Ctrl-C to interrupt")])
+                user_input = self.session.prompt([("#00ff00", f"{self.prompt_prefix()}> ")], placeholder=[("#7f7f7f", "A prompt, /h for help, Ctrl-C to interrupt")])
             else:
                 user_input = input()
             if self.warmup:
@@ -294,7 +299,7 @@ class LLME:
         if len(self.prompts) > 0:
             user_input = self.prompts.pop(0)
             if not self.config.plain:
-                print(colored(f"{len(self.messages)}>", "light_green"), user_input)
+                print(colored(f"{self.prompt_prefix()}>", "light_green"), user_input)
         elif self.config.batch:
             raise EOFError("end of batch") # ugly
         else:
@@ -514,7 +519,7 @@ class LLME:
         self.completion_metrics["response_ms"] = (response_time - start_time) * 1000.0
 
         if not self.config.plain:
-            cprint(f"{len(self.messages)}< ", "light_blue", end='', flush=True)
+            cprint(f"{self.prompt_prefix()}< ", "light_blue", end='', flush=True)
 
         message = self.receive_chat_completion_message(response)
         message_time = time.perf_counter()
