@@ -6,6 +6,7 @@ export SUITE=$(basename "$0" .sh)
 export TESTDIR=$(dirname "$0")
 export ORIGDIR=`pwd`
 export UTILDATE=${UTILDATE:-`date +%s`} # so all runs from a same initial script share a same utildate
+export UTILID=${UTILID:-$UTILDATE-$$-$RANDOM} # so all runs from a same initial script share a same utilid
 
 # The llme tool to check
 LLME="llme"
@@ -129,7 +130,7 @@ tllme() {
 
 	# Tests results are stored in logs/$id/ where id is a unique identifier
 	id=$SUITE-$task-$(date +%s)-$$
-	export LOGDIR="logs/$id"
+	export LOGDIR="logs/$UTILID/$id"
 	mkdir -p "$LOGDIR"
 	env | grep "^LLME_" > "$LOGDIR/env.txt"
 

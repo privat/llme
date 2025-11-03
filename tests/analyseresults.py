@@ -263,7 +263,7 @@ class Result:
             # Convert old csv format
             pathcsv = f"{directory}/result.csv"
             if not os.path.exists(pathcsv):
-                print(f"{directory}: no result. skip")
+                #print(f"{directory}: no result. skip")
                 return
             with open(pathcsv, 'r') as file:
                 reader = csv.reader(file)
@@ -370,7 +370,7 @@ model_rank = {}
 
 def main():
     results = []
-    for d in glob.glob('logs/*/'):
+    for d in glob.glob('logs/*/') + glob.glob('logs/*/*/'):
         try:
             result = Result(d)
             if result.config:
