@@ -127,7 +127,7 @@ def print_mat(mat, f, name):
             else:
                 tablerow.append("%d (%.0f%%)" % (n, 100.0*n/total))
         tablerow.append(total)
-    headers = ['name'] + status + ['Total']
+    headers = [name] + status + ['Total']
     f.write(tabulate(table, headers=headers, tablefmt="pipe"))
     f.write("\n")
 
@@ -149,7 +149,7 @@ def print_model_suites(f):
                 p = 100.0 * n / t
                 tablerow.append("%s %d/%d (%.0f%%)" % (color(p), n, t, p))
     titles = [linksuite(s) for s in suites]
-    titles.insert(0, "Models")
+    titles.insert(0, "Model")
     f.write(tabulate(table, headers=(titles), tablefmt="pipe"))
     f.write("\n")
 
@@ -343,7 +343,7 @@ def main():
         print_model_suites(f)
 
         f.write("\n## Results by task suites\n\n")
-        print_mat(suite_results, f, "Task suites")
+        print_mat(suite_results, f, "Task suite")
 
         f.write("\n## Results by tasks\n\n")
         print_mat(task_results, f, "Task")
