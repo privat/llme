@@ -57,6 +57,7 @@ class LLME:
             "/edit         run EDITOR on the chat (save,editor,load)",
             "/save FILE    save chat",
             "/load FILE    load chat",
+            "/clear        clear the conversation history",
             "/config       list configuration options",
             "/set OPT=VAL  change a config option",
             "/quit         exit the program",
@@ -733,6 +734,8 @@ class LLME:
             self.save_chat(arg)
         elif cmd in "/load":
             self.load_chat(arg)
+        elif cmd in "/clear":
+            self.reset_messages([self.prepare_system_prompt()])
         elif cmd in "/metrics":
             for k, v in self.metrics.total.items():
                 print(f"{k}: {repr(v)}")
