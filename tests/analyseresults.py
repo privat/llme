@@ -183,6 +183,7 @@ class Result:
         self.result = None
         self.config = None
         self.cause = None
+        self.metrics = None
         pathjson = f"{directory}/result.json"
         if os.path.exists(pathjson):
             with open(pathjson, 'r') as file:
@@ -222,6 +223,10 @@ class Result:
                 else:
                     cause = "???"
             self.cause = cause
+        pathmetrics = f"{self.directory}/metrics.json"
+        if os.path.exists(pathmetrics):
+            with open(pathmetrics, 'r') as f:
+                self.metrics = json.load(f)
 
         self.date = datetime.datetime.fromtimestamp(self.date)
 
@@ -270,6 +275,10 @@ class Result:
                 errors[self.cause].append(self)
             else:
                 errors[self.cause] = [self]
+        if self.metrics:
+            total = self.metrics.get("total")
+            prompt_ms = total.get("prompt_ms", 0)
+            prompt_n = total.get("prompt_n", 0)
 
     def replay(self):
         res = f"./tests/{self.suite}.sh -m {self.model}"
