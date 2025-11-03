@@ -51,6 +51,7 @@ class LLME:
             "/models       list available models",
             "/tools        list available tools",
             "/metrics      list current metrics",
+            "/history      list condensed conversation history",
             "/retry        cancel and regenerate the last assistant message",
             "/undo         cancel the last user message (and the response)",
             "/edit         run EDITOR on the chat (save,editor,load)",
@@ -275,7 +276,7 @@ class LLME:
             if self.warmup:
                 self.warmup.start()
             if self.session:
-                user_input = self.session.prompt([("#00ff00", "> ")], placeholder=[("#7f7f7f", "A prompt, /h for help, Ctrl-C to interrupt")])
+                user_input = self.session.prompt([("#00ff00", f"{len(self.messages)}> ")], placeholder=[("#7f7f7f", "A prompt, /h for help, Ctrl-C to interrupt")])
             else:
                 user_input = input()
             if self.warmup:
@@ -683,6 +684,24 @@ class LLME:
             print(f"{sel}{m}")
         return models
 
+    def list_history(self):
+        "Print the history of messages"
+        for i, message in enumerate(self.messages):
+            role = message["role"]
+            colors = {"system": "light_yellow", "user": "light_green", "assistant": "light_blue", "tool": "light_red"}
+            content = message["content"]
+            tools = message.get("tool_calls")
+            if tools:
+                content += f"[tools: {', '.join(t['function']['name']+str(t['function']['arguments']) for t in tools)}]"
+            content = re.sub(r"\s+", " ", content).strip()
+            import shutil
+            size = shutil.get_terminal_size()
+            prefix = f"{i:2d} {role}:"
+            width = size.columns - len(prefix) - 5
+            if len(content) > width:
+                content = content[:width].rstrip() + "..."
+            print(colored(prefix, colors[role]), content)
+
     def slash_command(self, user_input):
         "Execute a slash command"
         #FIXME too much hardcoded
@@ -696,12 +715,18 @@ class LLME:
                 print(f"{k}: {repr(v)}")
         elif cmd in "/models":
             self.list_models()
+        elif cmd in "/history":
+            self.list_history()
         elif cmd in "/retry":
             if not self.rollback("assistant"):
                 logger.error("no assistant message to retry")
+            else:
+                self.list_history()
         elif cmd in "/undo":
             if not self.rollback("user"):
                 logger.error("no user message to undo")
+            else:
+                self.list_history()
         elif cmd in "/edit":
             self.edit()
         elif cmd in "/save":
