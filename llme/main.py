@@ -37,6 +37,7 @@ from termcolor import colored, cprint
 # The global logger of the module
 logger = logging.getLogger(__name__)
 
+
 class LLME:
     """The God class of the application."""
 
@@ -46,12 +47,17 @@ class LLME:
         self.prompts = config.prompts # Initial prompts to process
         self.messages = [] # the sequence of messages with the LLM
         self.raw_messages = [] # the sequence of messages really communicated with the LLM server to work-around their various API limitations
+        self.history = [] # A parallel history of messages with generations information
+        self.generations = [] # the messages causing new generations (forks). They are the non-first children of messages
+        self.roots = [] # The first system messages (roots without parent)
+        self.current_generation = 0 # The generation number of the current conversation (for prompt prefix)
 
         self.slash_commands = [
             "/models       list available models",
             "/tools        list available tools",
             "/metrics      list current metrics",
             "/history      list condensed conversation history",
+            "/full-history list hierarchical conversation history (with forks)",
             "/redo         cancel and regenerate the last assistant message",
             "/undo         cancel the last user message (and the response)",
             "/edit         run EDITOR on the chat (save,editor,load)",
@@ -86,6 +92,34 @@ class LLME:
 
         return prompt_toolkit.completion.WordCompleter(words, sentence=True)
 
+    def build_message_object(self, message):
+        """Add a message to the history"""
+
+        n = len(self.messages)
+        if n > 0:
+            parent = self.history[n-1]
+            gen = parent.generation
+            sibling = parent.children
+        else:
+            gen = 0
+            sibling = self.roots
+
+        if sibling:
+            for s in sibling:
+                if s.data == message:
+                    # Already known, reuse it
+                    self.history.append(s)
+                    self.current_generation = s.generation
+                    return
+            # Need a new generation number
+            self.generations.append(message)
+            gen = len(self.generations)
+
+        self.current_generation = gen
+        message_obj = Message(message, n, gen)
+        sibling.append(message_obj)
+        self.history.append(message_obj)
+
     def add_message(self, message):
         """
         Append a new message.
@@ -93,6 +127,7 @@ class LLME:
         """
 
         logger.debug("Add %s message: %s", message['role'], message)
+        self.build_message_object(message)
         self.messages.append(message)
 
         # Special filtering for some models/servers
@@ -136,6 +171,8 @@ class LLME:
     def prompt_prefix(self):
         """Return the prefix number to use in the prompt"""
         res = str(len(self.messages))
+        if len(self.generations) > 1:
+            res += base26ish(self.current_generation)
         return res
 
     def confirm(self, question):
@@ -671,6 +708,7 @@ class LLME:
 
     def reset_messages(self, messages):
         self.messages.clear()
+        self.history.clear()
         self.raw_messages.clear()
         for message in messages:
             self.add_message(message)
@@ -690,11 +728,13 @@ class LLME:
             print(f"{sel}{m}")
         return models
 
-    def list_history(self):
-        "Print the history of messages"
-        for i, message in enumerate(self.messages):
+    def print_message(self, i, message, before=""):
             role = message["role"]
-            colors = {"system": "light_yellow", "user": "light_green", "assistant": "light_blue", "tool": "light_red"}
+            if before:
+                colors = {"system": "yellow", "user": "green", "assistant": "blue", "tool": "red"}
+            else:
+                colors = {"system": "light_yellow", "user": "light_green", "assistant": "light_blue", "tool": "light_red"}
+            color = colors[role]
             content = message["content"]
             tools = message.get("tool_calls")
             if tools:
@@ -702,11 +742,33 @@ class LLME:
             content = re.sub(r"\s+", " ", content).strip()
             import shutil
             size = shutil.get_terminal_size()
-            prefix = f"{i:2d} {role}:"
-            width = size.columns - len(prefix) - 5
+            prefix = f"{i} {role}: "
+            width = size.columns - len(prefix) - 5 - len(before)
             if len(content) > width:
                 content = content[:width].rstrip() + "..."
-            print(colored(prefix, colors[role]), content)
+            if before != "":
+                content = colored(content, "light_grey")
+            print(before + colored(prefix, color) + content)
+
+
+    def list_history(self):
+        "Print the history of messages"
+        for i, message in enumerate(self.messages):
+            self.print_message(i, message)
+
+    def list_full_history(self):
+        "Print the full history with nice indentation."
+        print(self.roots)
+        self.print_tree(self.roots)
+
+    def print_tree(self, messages, prefix=""):
+        if not messages:
+            return
+        last = len(messages) - 1
+        for i, child in enumerate(messages):
+            cid = child.prefix()
+            self.print_message(cid, child.data, prefix + ("├─" if i != last else ""))
+            self.print_tree(child.children, prefix + ("│ " if i != last else ""))
 
     def slash_command(self, user_input):
         "Execute a slash command"
@@ -723,6 +785,8 @@ class LLME:
             self.list_models()
         elif cmd in "/history":
             self.list_history()
+        elif cmd in "/full-history":
+            self.list_full_history()
         elif cmd in "/redo":
             if not self.rollback("assistant"):
                 logger.error("no assistant message to redo")
@@ -852,6 +916,34 @@ class Spinner:
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
         self.stop()
+
+
+def base26ish(n):
+    """Convert an integer to a base26ish string. Used to name generations.
+    0 is 'a', 25 is 'z', 26 is 'aa', 27 is 'ab', etc.
+    In genuine base26, 26 should be 'ba' since a stands for 0 and b for 1.
+    """
+    result = ""
+    while n >= 0:
+        result = chr(ord('a') + (n % 26)) + result
+        n //= 26
+        n -= 1
+    return result
+
+class Message:
+    """A message in the conversation full history. This class is used to track message generations and children."""
+    def __init__(self, data, n, gen):
+        self.data = data # The raw json data for the openai API
+        self.number = n # The message number in the conversation
+        self.generation = gen # The generation number of the message
+        self.children = [] # The children messages of this message
+
+    def prefix(self):
+        """Return the prefix for the message"""
+        return f"{self.number}{base26ish(self.generation)}"
+
+    def __repr__(self):
+        return self.prefix()
 
 
 def add_in_dict(total, delta):
