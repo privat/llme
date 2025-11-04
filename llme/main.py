@@ -760,26 +760,26 @@ class LLME:
         return models
 
     def print_message(self, i, message, before=""):
-            role = message["role"]
-            if before:
-                colors = {"system": "yellow", "user": "green", "assistant": "blue", "tool": "red"}
-            else:
-                colors = {"system": "light_yellow", "user": "light_green", "assistant": "light_blue", "tool": "light_red"}
-            color = colors[role]
-            content = message["content"]
-            tools = message.get("tool_calls")
-            if tools:
-                content += f"[tools: {', '.join(t['function']['name']+str(t['function']['arguments']) for t in tools)}]"
-            content = re.sub(r"\s+", " ", content).strip()
-            import shutil
-            size = shutil.get_terminal_size()
-            prefix = f"{i} {role}: "
-            width = size.columns - len(prefix) - 5 - len(before)
-            if len(content) > width:
-                content = content[:width].rstrip() + "..."
-            if before != "":
-                content = colored(content, "light_grey")
-            print(before + colored(prefix, color) + content)
+        role = message["role"]
+        if before:
+            colors = {"system": "yellow", "user": "green", "assistant": "blue", "tool": "red"}
+        else:
+            colors = {"system": "light_yellow", "user": "light_green", "assistant": "light_blue", "tool": "light_red"}
+        color = colors[role]
+        content = message["content"]
+        tools = message.get("tool_calls")
+        if tools:
+            content += f"[tools: {', '.join(t['function']['name']+str(t['function']['arguments']) for t in tools)}]"
+        content = re.sub(r"\s+", " ", content).strip()
+        import shutil
+        size = shutil.get_terminal_size()
+        prefix = f"{i} {role}: "
+        width = size.columns - len(prefix) - 5 - len(before)
+        if len(content) > width:
+            content = content[:width].rstrip() + "..."
+        if before != "":
+            content = colored(content, "light_grey")
+        print(before + colored(prefix, color) + content)
 
 
     def list_history(self):
