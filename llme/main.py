@@ -186,16 +186,12 @@ class LLME:
             raise EOFError("No confirmation in batch mode") # ugly
         try:
             if self.session:
-                x = prompt_toolkit.prompt([("#ff0000", f"{question} [Yn]? ")]).strip()
+                x = self.session.prompt([("#ff0000", f"{question}? ")], placeholder=[("#7f7f7f", "Enter to confirm, or give a prompt to cancel")])
             else:
-                x = input(f"{question} [Yn]? ").strip()
-            if x in ['', 'y', 'Y']:
+                x = input(f"{question}? ")
+            if x == "":
                 return True
-            if len(x) > 3:
-                # the user is writing to much.
-                # they may have missed this is a confirmation prompt.
-                # but we are nice and store the message
-                self.prompts.insert(0, x)
+            self.prompts.insert(0, x)
             return False
         except KeyboardInterrupt:
             raise EOFError("Confirmation interrupted") # ugly
