@@ -787,7 +787,10 @@ class LLME:
         args = user_input.split(None, 1)
         cmd = args.pop(0)
         arg = args[0].strip() if args else None
-        if cmd in "/tools":
+        if cmd in "/help" or cmd in "/?":
+            for h in self.slash_commands:
+                print(h)
+        elif cmd in "/tools":
             list_tools()
         elif cmd in "/config":
             for k, v in vars(self.config).items():
@@ -829,9 +832,6 @@ class LLME:
                 self.set_config(*args)
         elif cmd in "/quit":
             raise EOFError("/quit")
-        elif cmd in "/help":
-            for h in self.slash_commands:
-                print(h)
         else:
             print(f"Unknown {user_input}. Use /help for help.")
 
