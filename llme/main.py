@@ -64,7 +64,7 @@ class LLME:
             "/save FILE    save chat",
             "/load FILE    load chat",
             "/clear        clear the conversation history",
-            "/goto N       jump to message N (e.g /goto 5c)",
+            "/goto M       jump after message M (e.g /goto 5c)",
             "/config       list configuration options",
             "/set OPT=VAL  change a config option",
             "/quit         exit the program",
@@ -856,6 +856,7 @@ class LLME:
             self.load_chat(tmp.name)
 
     def reset_to_history(self, message):
+        """Reset the conversation to after a message in the full history"""
         self.current_generation = message.generation
         messages = []
         while message:
@@ -863,34 +864,37 @@ class LLME:
             message = message.parent
         self.reset_messages(messages)
 
-    def goto(self, n):
-        """Jump to a message in the conversation, including forks"""
+    def find_label_in_history(self, n):
+        """Return a labeled message from the full history"""
         match = re.match(r"(\d+)\s*([a-z]*)", n)
         if not match:
             print(f"Invalid message number {n}")
-            return
+            return None
         num = int(match.group(1))
         if not match.group(2):
             # no gen, look in the local history first
             if num < len(self.history):
                 message = self.history[num]
                 logger.debug("goto %d -> %r", num, message)
-                self.reset_to_history(message)
-                return
+                return message
             gen = self.current_generation
         else:
             gen = unbase26ish(match.group(2))
 
         message = self.find_in_history(num, gen)
         logger.debug("goto %s -> %d %d -> %r", n, num, gen, message)
+        return message
 
+    def goto(self, n):
+        """Jump after a message in the full history"""
+        message = self.find_label_in_history(n)
         if not message:
             print(f"Message {n} not found")
             return
-
         self.reset_to_history(message)
 
     def find_in_history(self, num, gen, messages = None):
+        """Search a message in the full history with its number and generation."""
         if messages is None:
             messages = self.roots
         for message in messages:
