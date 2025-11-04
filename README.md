@@ -1,5 +1,7 @@
 # llme, a CLI assistant for OpenAI-compatible chat servers
 
+→ [Alternative README](README.vibe.md)
+
 A simple, single-file command-line chat client compatible with the OpenAI API.
 
 *(or "I just want to quickly test my model hosted with llama.cpp but don't want to spin up openwebui")*
@@ -38,7 +40,7 @@ ollama pull qwen3-coder:30b
 ```
 
 Qwen3-Coder-30b is a nice model.
-Smaller models can can also works.
+Smaller models can also works.
 See the [benchmark](benchmark.md) for a comparison.
 
 
@@ -264,7 +266,7 @@ $ llme /help /quit
 /save FILE    save chat
 /load FILE    load chat
 /clear        clear the conversation history
-/goto N       jump to message N (e.g /goto 5c)
+/goto M       jump after message M (e.g /goto 5c)
 /config       list configuration options
 /set OPT=VAL  change a config option
 /quit         exit the program
