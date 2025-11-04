@@ -64,6 +64,7 @@ class LLME:
             "/save FILE    save chat",
             "/load FILE    load chat",
             "/clear        clear the conversation history",
+            "/goto N       jump to message N (e.g /goto 5c)",
             "/config       list configuration options",
             "/set OPT=VAL  change a config option",
             "/quit         exit the program",
@@ -101,6 +102,7 @@ class LLME:
             gen = parent.generation
             sibling = parent.children
         else:
+            parent = None
             gen = 0
             sibling = self.roots
 
@@ -116,7 +118,7 @@ class LLME:
             gen = len(self.generations)
 
         self.current_generation = gen
-        message_obj = Message(message, n, gen)
+        message_obj = Message(message, parent, n, gen)
         sibling.append(message_obj)
         self.history.append(message_obj)
 
@@ -758,14 +760,23 @@ class LLME:
 
     def list_full_history(self):
         "Print the full history with nice indentation."
-        print(self.roots)
-        self.print_tree(self.roots)
+        siblings = self.roots
+        for message in self.history:
+            self.print_tree(siblings, "", message)
+            self.print_message(message.prefix(), message.data)
+            siblings = message.children # next siblings
+        self.print_tree(siblings, "", True)
 
-    def print_tree(self, messages, prefix=""):
+    def print_tree(self, messages, prefix="", special=None):
         if not messages:
             return
-        last = len(messages) - 1
+        if special:
+            last = -1
+        else:
+            last = len(messages) - 1
         for i, child in enumerate(messages):
+            if child == special:
+                continue
             cid = child.prefix()
             self.print_message(cid, child.data, prefix + ("├─" if i != last else ""))
             self.print_tree(child.children, prefix + ("│ " if i != last else ""))
@@ -805,6 +816,8 @@ class LLME:
             self.load_chat(arg)
         elif cmd in "/clear":
             self.reset_messages([self.prepare_system_prompt()])
+        elif cmd in "/goto":
+            self.goto(arg)
         elif cmd in "/metrics":
             for k, v in self.metrics.total.items():
                 print(f"{k}: {repr(v)}")
@@ -841,6 +854,52 @@ class LLME:
             editor = os.environ.get("EDITOR", "editor")
             subprocess.run([editor, tmp.name], check=True)
             self.load_chat(tmp.name)
+
+    def reset_to_history(self, message):
+        self.current_generation = message.generation
+        messages = []
+        while message:
+            messages.insert(0, message.data)
+            message = message.parent
+        self.reset_messages(messages)
+
+    def goto(self, n):
+        """Jump to a message in the conversation, including forks"""
+        match = re.match(r"(\d+)\s*([a-z]*)", n)
+        if not match:
+            print(f"Invalid message number {n}")
+            return
+        num = int(match.group(1))
+        if not match.group(2):
+            # no gen, look in the local history first
+            if num < len(self.history):
+                message = self.history[num]
+                logger.debug("goto %d -> %r", num, message)
+                self.reset_to_history(message)
+                return
+            gen = self.current_generation
+        else:
+            gen = unbase26ish(match.group(2))
+
+        message = self.find_in_history(num, gen)
+        logger.debug("goto %s -> %d %d -> %r", n, num, gen, message)
+
+        if not message:
+            print(f"Message {n} not found")
+            return
+
+        self.reset_to_history(message)
+
+    def find_in_history(self, num, gen, messages = None):
+        if messages is None:
+            messages = self.roots
+        for message in messages:
+            if message.number == num and message.generation == gen:
+                return message
+            found = self.find_in_history(num, gen, message.children)
+            if found:
+                return found
+        return None
 
 
     def set_config(self, opt, val):
@@ -930,10 +989,18 @@ def base26ish(n):
         n -= 1
     return result
 
+def unbase26ish(s):
+    """Convert a base26ish string to an integer. Inverse of base26ish()."""
+    result = 0
+    for c in s:
+        result = result * 26 + (ord(c) - ord('a')) + 1
+    return result - 1
+
 class Message:
     """A message in the conversation full history. This class is used to track message generations and children."""
-    def __init__(self, data, n, gen):
+    def __init__(self, data, parent, n, gen):
         self.data = data # The raw json data for the openai API
+        self.parent = parent # The parent message in the conversation tree
         self.number = n # The message number in the conversation
         self.generation = gen # The generation number of the message
         self.children = [] # The children messages of this message
