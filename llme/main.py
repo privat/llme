@@ -354,13 +354,11 @@ class LLME:
         while file := self.next_asset():
             files.append(file)
 
-        while True:
-            user_input = self.next_input()
+        user_input = self.next_input()
 
-            if user_input == '':
-                return None
-            if user_input[0] != '/':
-                break
+        if user_input == '':
+            return None
+        if user_input[0] == '/':
             try:
                 self.slash_command(user_input)
             except EOFError as e:
@@ -369,6 +367,7 @@ class LLME:
             except Exception as e:
                 # Allow the user to recover from errors
                 logger.error("%s", e)
+            return None
 
         while file := self.next_asset():
             files.append(file)
@@ -563,49 +562,8 @@ class LLME:
         message = self.receive_chat_completion_message(response)
         message_time = time.perf_counter()
         self.completion_metrics["total_ms"] = (message_time - start_time) * 1000.0
-
         self.update_metrics()
-
-        self.add_message(message)
-
-        full_tool_calls = message.get("tool_calls")
-        if full_tool_calls:
-            for tool_call in full_tool_calls:
-                function = tool_call["function"]
-                tool = all_tools.get(function["name"])
-                if not tool:
-                    logger.error("Unknown tool %s", function["name"])
-                    message = {"role": "tool", "content": f"Error: unknown tool {function["name"]}. Available tools: {", ".join(all_tools)}", "tool_call_id": tool_call["id"]}
-                    self.add_message(message)
-                    continue
-                try:
-                    args = json.loads(function["arguments"])
-                except json.JSONDecodeError as e:
-                    logger.error("Bad tool arguments %s: %s", e, function["arguments"])
-                    message = {"role": "tool", "content": f"Error: bad tool arguments {function["name"]}. {e}", "tool_call_id": tool_call["id"]}
-                    self.add_message(message)
-                    continue
-                logger.info(f"CALL %s(%s)", tool.name, args)
-                if tool.need_self:
-                    args = {"self": self} | args
-                try:
-                    result = tool.fun(**args)
-                except EOFError as e:
-                    # was likely ^C or --batch
-                    raise e
-                except Exception as e:
-                    cprint(f"Exception {e}", color="red")
-                    message = {"role": "tool", "content": f"Error: bad tool usage {function["name"]}. {e}", "tool_call_id": tool_call["id"]}
-                    # TODO: think about something better than this. Catching any errors hide real llme bugs.
-                    raise e
-                    self.add_message(message)
-                    continue
-                if result is None:
-                    return None
-                message = {"role": "tool", "content": str(result), "tool_call_id": tool_call["id"]}
-                self.add_message(message)
-            return True
-        return None
+        return message
 
 
     def update_metrics(self):
@@ -624,15 +582,85 @@ class LLME:
                 json.dump({"total": self.metrics.total, "history": self.metrics.history}, file, indent=2)
 
 
+    def do_user(self):
+        """Add the user prompt to the conversation"""
+        prompt = self.next_prompt()
+        if prompt:
+            self.add_message(prompt)
+
+    def do_assisant(self):
+        """Add the assistant response to the conversation"""
+        message = self.chat_completion()
+        if message:
+            self.add_message(message)
+
+    def run_tool(self, tool_call):
+        """Run a tool and return the result as a message"""
+        function = tool_call["function"]
+        tool = all_tools.get(function["name"])
+        if not tool:
+            logger.error("Unknown tool %s", function["name"])
+            message = {"role": "tool", "content": f"Error: unknown tool {function["name"]}. Available tools: {", ".join(all_tools)}", "tool_call_id": tool_call["id"]}
+            return message
+        try:
+            args = json.loads(function["arguments"])
+        except json.JSONDecodeError as e:
+            logger.error("Bad tool arguments %s: %s", e, function["arguments"])
+            message = {"role": "tool", "content": f"Error: bad tool arguments {function["name"]}. {e}", "tool_call_id": tool_call["id"]}
+            return message
+        logger.info(f"CALL %s(%s)", tool.name, args)
+        if tool.need_self:
+            args = {"self": self} | args
+        try:
+            result = tool.fun(**args)
+        except EOFError as e:
+            # was likely ^C or --batch
+            raise e
+        except Exception as e:
+            cprint(f"Exception {e}", color="red")
+            message = {"role": "tool", "content": f"Error: bad tool usage {function["name"]}. {e}", "tool_call_id": tool_call["id"]}
+            # TODO: think about something better than this. Catching any errors hide real llme bugs.
+            raise e
+            self.add_message(message)
+            return
+        if result is None:
+            return None
+        message = {"role": "tool", "content": str(result), "tool_call_id": tool_call["id"]}
+        return message
+
+    def do_tools(self, tool_calls):
+        """Run all the tools in the list, and add results to the conversation"""
+        for tool_call in tool_calls:
+            message = self.run_tool(tool_call)
+            if message:
+                self.add_message(message)
+            else:
+                # The user cancelled the tool execution. Let they answer instead of the tool
+                self.do_user()
+
+    def do_role(self):
+        """Process the next role (user, assistant, tool...)"""
+        if not self.messages:
+            return self.do_user()
+
+        previous_message = self.messages[-1]
+        previous_role = previous_message.get("role")
+        if previous_role == "user" or previous_role == "tool":
+            return self.do_assisant()
+        elif previous_role == "system":
+            return self.do_user()
+        elif previous_role == "assistant":
+            tool_calls = previous_message.get("tool_calls")
+            if tool_calls:
+                return self.do_tools(tool_calls)
+            else:
+                return self.do_user()
+
     def loop(self):
         """The main ping-pong loop between the user and the assistant"""
         while True:
             try:
-                prompt = self.next_prompt()
-                if prompt:
-                    self.add_message(prompt)
-                while self.chat_completion():
-                    pass
+                self.do_role()
             except requests.exceptions.RequestException as e:
                 logger.error(extract_requests_error(e))
                 sys.exit(1)
@@ -640,8 +668,9 @@ class LLME:
                 logger.warning("Interrupted by user.")
                 if self.config.batch:
                     break
+                self.rollback("user")
             except EOFError as e:
-                logger.info("Quiting: %s", str(e))
+                logger.info("Quitting: %s", str(e))
                 break
 
 
