@@ -46,7 +46,7 @@ See the [benchmark](benchmark.md) for a comparison.
 
 Chose your preferred installation or execution method.
 
-Install from PyPI (possibily an old version)
+Install from PyPI (possibly an old version)
 
 ```bash
 pipx install llme-cli
@@ -86,8 +86,7 @@ llme --base-url "http://localhost:8080/v1" # for default llama-server (llama.cpp
 llme --base-url "http://localhost:11434/v1" # for default ollama server
 ```
 
-or if you want to a specific model
-
+or if you want a specific model:
 
 ```bash
 llme --base-url "http://localhost:8080/v1" --model "unsloth/Mistral-Small-3.2-24B-Instruct-2506-GGUF"
@@ -100,12 +99,12 @@ Ctrl-C to interrupt a response (or exit).
 
 Edit `~/.config/llme/config.toml`
 Look at [config.toml](llme/config.toml) for an example.
-More about options and configs bellow.
+More about options and configs below.
 
 I assume, from now, that there is a config file...
 
 
-### Run one-shots queries
+### Run one-shot queries
 
 Each prompt is run in order in the same chat session.
 
@@ -257,11 +256,15 @@ $ llme /help /quit
 /models       list available models
 /tools        list available tools
 /metrics      list current metrics
-/retry        cancel and regenerate the last assistant message
+/history      list condensed conversation history
+/full-history list hierarchical conversation history (with forks)
+/redo         cancel and regenerate the last assistant message
 /undo         cancel the last user message (and the response)
 /edit         run EDITOR on the chat (save,editor,load)
 /save FILE    save chat
 /load FILE    load chat
+/clear        clear the conversation history
+/goto N       jump to message N (e.g /goto 5c)
 /config       list configuration options
 /set OPT=VAL  change a config option
 /quit         exit the program
