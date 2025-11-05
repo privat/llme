@@ -267,7 +267,7 @@ class LLME:
 
         if self.message_index is not None:
             need_confirm = True # Always confirm when replaying a specific message
-            prompt = f"{self.message_index}* RUN {command}"
+            prompt = f"{self.message_index}/{self.prompt_prefix()} RUN {command}"
             message = self.messages[self.message_index]
             if message["role"] == "user":
                 default = message["content"]
@@ -345,7 +345,7 @@ class LLME:
                 self.warmup.start()
             if self.session:
                 if self.message_index is not None:
-                    prompt = [("#00ff00", f"{self.message_index}*> ")]
+                    prompt = [("#00ff00", f"{self.message_index}/{self.prompt_prefix()}> ")]
                     default = self.messages[self.message_index]["content"]
                 else:
                     prompt = [("#00ff00", f"{self.prompt_prefix()}> ")]
