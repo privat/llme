@@ -60,8 +60,8 @@ class LLME:
             "/history      list condensed conversation history",
             "/full-history list hierarchical conversation history (with forks)",
             "/redo         cancel and regenerate the last assistant message",
-            "/undo         cancel the last user message (and the response)",
-            "/pass         go forward in history (cancel /undo)",
+            "/undo         cancel the last user message (and the response) [PageUp]",
+            "/pass         go forward in history (cancel /undo) [PageDown]",
             "/edit         run EDITOR on the chat (save,editor,load)",
             "/save FILE    save chat",
             "/load FILE    load chat",
@@ -77,13 +77,34 @@ class LLME:
         if self.config.batch:
             self.session = None
         else:
-            self.session = prompt_toolkit.PromptSession(complete_while_typing=True)
+            kb = prompt_toolkit.key_binding.KeyBindings()
+            kb.add("pageup")(self.on_pageup)
+            kb.add("pagedown")(self.on_pagedown)
+            self.session = prompt_toolkit.PromptSession(complete_while_typing=True, key_bindings=kb)
 
         self.api_headers = {} # additional headers for the server
         if self.config.api_key:
             self.api_headers["Authorization"] = f"Bearer {self.config.api_key}"
 
         self.metrics = Metrics()
+
+    def cancel_prompt(self):
+        """Cancel the current prompt and go back to the main loop"""
+        app = prompt_toolkit.application.current.get_app()
+        app.erase_when_done = True
+        app.exit(exception=CancelEvent())
+
+    def on_pageup(self, event):
+        """Keybinding for /undo"""
+        if not self.rollback("user"):
+            return
+        self.cancel_prompt()
+
+    def on_pagedown(self, event):
+        """Keybinding for /pass"""
+        if not self.rollforward("user"):
+            return
+        self.cancel_prompt()
 
     def slash_completer(self):
         """Return a completer for slash commands"""
@@ -702,6 +723,9 @@ class LLME:
             except requests.exceptions.RequestException as e:
                 logger.error(extract_requests_error(e))
                 sys.exit(1)
+            except CancelEvent:
+                self.session.app.erase_when_done = False
+                logger.debug("Cancelled")
             except KeyboardInterrupt:
                 logger.warning("Interrupted by user.")
                 if self.config.batch:
@@ -1019,6 +1043,11 @@ class LLME:
         logger.info("set %s: %r", opt, val)
         # TODO convert types. but don't duplicate argparse
         setattr(self.config, opt, val)
+
+
+class CancelEvent(Exception):
+    """Raised when the prompt is cancelled."""
+    pass
 
 
 class Spinner:
