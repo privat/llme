@@ -61,6 +61,7 @@ class LLME:
             "/full-history list hierarchical conversation history (with forks)",
             "/redo         cancel and regenerate the last assistant message",
             "/undo         cancel the last user message (and the response)",
+            "/pass         go forward in history (cancel /undo)",
             "/edit         run EDITOR on the chat (save,editor,load)",
             "/save FILE    save chat",
             "/load FILE    load chat",
@@ -882,6 +883,11 @@ class LLME:
                 logger.error("no user message to undo")
             else:
                 self.list_history()
+        elif cmd in "/pass":
+            if not self.rollforward("user"):
+                logger.error("already at latest message")
+            else:
+                self.list_history()
         elif cmd in "/edit":
             self.edit()
         elif cmd in "/save":
@@ -907,7 +913,7 @@ class LLME:
             print(f"Unknown {user_input}. Use /help for help.")
 
     def rollback(self, role):
-        "Erase the last message of role, return True on success"
+        "Move message_index to the previous message of role, return the message on success"
         candidate = None
         for i, message in enumerate(self.messages):
             if self.message_index and i >= self.message_index:
@@ -918,6 +924,18 @@ class LLME:
             return None
         self.message_index = candidate
         return self.messages[candidate]
+
+    def rollforward(self, role):
+        "Move message_index to the next message of role, return the message on success"
+        if self.message_index is None:
+            return None
+        for i, message in enumerate(self.messages[self.message_index+1:]):
+            if message.get("role") == role:
+                self.message_index = i + self.message_index + 1
+                return message
+        self.message_index = None
+        return "x"
+
 
     def edit(self):
         "Save the chat in a tmpfile, edit it, and load it back"
