@@ -51,6 +51,7 @@ class LLME:
         self.generations = [] # the messages causing new generations (forks). They are the non-first children of messages
         self.roots = [] # The first system messages (roots without parent)
         self.current_generation = 0 # The generation number of the current conversation (for prompt prefix)
+        self.message_index = None # The current message in the history (for /undo and history navigation)
 
         self.slash_commands = [
             "/models       list available models",
@@ -128,6 +129,8 @@ class LLME:
         Add it as is in message but transform it in raw_messages.
         """
 
+        self.fork_if_required()
+
         logger.debug("Add %s message: %s", message['role'], message)
         self.build_message_object(message)
         self.messages.append(message)
@@ -154,6 +157,17 @@ class LLME:
 
         self.raw_messages.append(message)
 
+    def fork_if_required(self):
+        """Fork the conversation to a new generation, if required.
+        This will reset the conversation history"""
+        if self.message_index is None:
+            return
+        # Here we need to reset the current conversation to fork it
+        # And replace the "message_index" wit a new one
+        self.reset_messages(self.messages[:self.message_index])
+        logger.debug(f"Fork performed. New history: %s", self.history)
+
+
     def get_models(self):
         """List the available models"""
         if self.config.dummy:
@@ -179,7 +193,7 @@ class LLME:
             res += base26ish(self.current_generation)
         return res
 
-    def confirm(self, question):
+    def confirm(self, question, default=""):
         """Ask a yes/no confirmation to the user"""
         if self.config.yolo:
             cprint(f"{question}: YOLO!", color="light_red")
@@ -188,7 +202,7 @@ class LLME:
             raise EOFError("No confirmation in batch mode") # ugly
         try:
             if self.session:
-                x = self.session.prompt([("#ff0000", f"{question}? ")], placeholder=[("#7f7f7f", "Enter to confirm, or give a prompt to cancel")])
+                x = self.session.prompt([("#ff0000", f"{question}? ")], placeholder=[("#7f7f7f", "Enter to confirm, or give a prompt to cancel")], default=default)
             else:
                 x = input(f"{question}? ")
             if x == "":
@@ -252,7 +266,19 @@ class LLME:
             cprint("$ " + command, color="light_red")
             cprint(stdin)
 
-        if need_confirm and not self.confirm(f"{self.prompt_prefix()} RUN {command}"):
+        if self.message_index is not None:
+            need_confirm = True # Always confirm when replaying a specific message
+            prompt = f"{self.message_index}* RUN {command}"
+            message = self.messages[self.message_index]
+            if message["role"] == "user":
+                default = message["content"]
+            else:
+                default = ""
+        else:
+            prompt = f"{self.prompt_prefix()} RUN {command}"
+            default = ""
+
+        if need_confirm and not self.confirm(prompt, default=default):
             return None
 
         # hack for unbuffered python
@@ -319,7 +345,13 @@ class LLME:
             if self.warmup:
                 self.warmup.start()
             if self.session:
-                user_input = self.session.prompt([("#00ff00", f"{self.prompt_prefix()}> ")], placeholder=[("#7f7f7f", "A prompt, /h for help, Ctrl-C to interrupt")])
+                if self.message_index is not None:
+                    prompt = [("#00ff00", f"{self.message_index}*> ")]
+                    default = self.messages[self.message_index]["content"]
+                else:
+                    prompt = [("#00ff00", f"{self.prompt_prefix()}> ")]
+                    default = ""
+                user_input = self.session.prompt(prompt, default=default, placeholder=[("#7f7f7f", "A prompt, /h for help, Ctrl-C to interrupt")])
             else:
                 user_input = input()
             if self.warmup:
@@ -593,6 +625,7 @@ class LLME:
             self.add_message({"role": "assistant", "content": content})
             return
         """Add the assistant response to the conversation"""
+        self.fork_if_required()
         message = self.chat_completion()
         if message:
             self.add_message(message)
@@ -646,7 +679,10 @@ class LLME:
         if not self.messages:
             return self.do_user()
 
-        previous_message = self.messages[-1]
+        if self.message_index:
+            previous_message = self.messages[self.message_index-1]
+        else:
+            previous_message = self.messages[-1]
         previous_role = previous_message.get("role")
         if previous_role == "user" or previous_role == "tool":
             return self.do_assisant()
@@ -741,6 +777,7 @@ class LLME:
             self.reset_messages(json.load(f))
 
     def reset_messages(self, messages):
+        self.message_index = None
         self.messages.clear()
         self.history.clear()
         self.raw_messages.clear()
@@ -788,12 +825,16 @@ class LLME:
     def list_history(self):
         "Print the history of messages"
         for i, message in enumerate(self.messages):
+            if self.message_index and i >= self.message_index:
+                break
             self.print_message(i, message)
 
     def list_full_history(self):
         "Print the full history with nice indentation."
         siblings = self.roots
-        for message in self.history:
+        for i, message in enumerate(self.history):
+            if self.message_index and i >= self.message_index:
+                break
             self.print_tree(siblings, "", message)
             self.print_message(message.prefix(), message.data)
             siblings = message.children # next siblings
@@ -871,12 +912,14 @@ class LLME:
         "Erase the last message of role, return True on success"
         candidate = None
         for i, message in enumerate(self.messages):
+            if self.message_index and i >= self.message_index:
+                break
             if message.get("role") == role:
                 candidate = i
         if not candidate:
-            return False
-        self.reset_messages(self.messages[:candidate])
-        return True
+            return None
+        self.message_index = candidate
+        return self.messages[candidate]
 
     def edit(self):
         "Save the chat in a tmpfile, edit it, and load it back"
@@ -923,7 +966,9 @@ class LLME:
         if not message:
             print(f"Message {n} not found")
             return
-        self.reset_to_history(message)
+        if message not in self.history:
+            self.reset_to_history(message)
+        self.message_index = message.number
 
     def find_in_history(self, num, gen, messages = None):
         """Search a message in the full history with its number and generation."""
