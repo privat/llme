@@ -189,8 +189,6 @@ class LLME:
     def prompt_prefix(self):
         """Return the prefix number to use in the prompt"""
         res = str(len(self.messages))
-        if len(self.generations) > 1:
-            res += base26ish(self.current_generation)
         return res
 
     def confirm(self, question, default=""):
