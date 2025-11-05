@@ -156,6 +156,8 @@ class LLME:
 
     def get_models(self):
         """List the available models"""
+        if self.config.dummy:
+            return ['dummy']
         url = f"{self.config.base_url}/models"
         logger.info("Get models from %s", url)
         try:
@@ -585,6 +587,11 @@ class LLME:
             self.add_message(prompt)
 
     def do_assisant(self):
+        if self.config.dummy:
+            content = "I'm assistant."
+            print(colored(f"{self.prompt_prefix()}<", "light_blue"), content)
+            self.add_message({"role": "assistant", "content": content})
+            return
         """Add the assistant response to the conversation"""
         message = self.chat_completion()
         if message:
@@ -712,7 +719,7 @@ class LLME:
                 # No prompts, so use stdin as prompt
                 self.prompts = [sys.stdin.read()]
 
-        if len(self.prompts) == 0:
+        if len(self.prompts) == 0 and not self.config.dummy:
             if not models:
                 self.get_models()
             self.warmup = Warmup(self)
@@ -1456,6 +1463,7 @@ def process_args():
     parser.add_argument("-v", "--verbose", default=0, action="count", help="Increase verbosity level (can be used multiple times)")
     parser.add_argument("-Y", "--yolo", default=None, action="store_true", help="UNSAFE: Do not ask for confirmation before running tools. Combine with --batch to reach the singularity.")
     parser.add_argument(      "--version", action="store_true", help="Display version information and quit")
+    parser.add_argument(      "--dummy", action="store_true", help=argparse.SUPPRESS) # Disable LLM for testing the UI alone
     parser.add_argument("prompts", nargs='*', help="An initial list of prompts")
 
     args = parser.parse_intermixed_args()
