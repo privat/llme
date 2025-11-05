@@ -1,97 +1,95 @@
-# 🚀 llme: The Neural CLI Assistant for OpenAI-Compatible LLMs
+# 🚀 llme: The Ultimate CLI Vibe Assistant for OpenAI-Compatible LLMs
 
-> [!NOTE]
-> **A hyper-intelligent, single-file command-line chat client that speaks the language of LLMs and vibes.**
+> _"I just want to quickly test my model hosted with llama.cpp but don't want to spin up openwebui"_
 
-## 🔥 What's This? (TL;DR)
+## 🌟 The Next-Gen Chat Experience That Speaks Your Language
 
-- 🧠 **Neural Network Ready**: Works with any self-hosted LLM platform that supports OpenAI chat completions API.
-- 💻 **Zero Installation Required**: Single file, no setup hassle.
-- 🤖 **CLI Powerhouse**: Run from the terminal like a true hacker.
-- ⚡ **Yolo Tools Included**: Ask it to act on your file system and edit files (yolo).
+🚀 **llme** is a *next-level*, single-file command-line chat client that speaks the universal language of OpenAI API-compatible LLMs.
 
-> "I just want to quickly test my model hosted with llama.cpp but don't want to spin up openwebui"
+✨ *One file. Zero dependencies. Maximum vibe.*
 
-## 🌟 Core Features (Mega-Bucks Edition)
+### 🔥 Core Features That Make It Stand Out
 
-| Feature | Description |
-|--------|-------------|
-| 🎯 **OpenAI API Compatible** | Works with any self-hosted LLM platform that supports OpenAI chat completions API. |
-| 🔥 **Extremely Simple** | Single file, no installation required (but installation is still available). |
-| 🖥️ **Command-line Interface** | Run it from the terminal. |
-| 💥 **Tools Included** | Ask it to act on your file system and edit files (yolo). |
+#### 🧠 **Neural Network Native Compatibility**
+- **OpenAI API Compatible:** Works with any self-hosted LLM platform that supports OpenAI chat completions API.
+- **Ultra-Simple Architecture:** Single file, no installation required (but installation is still available).
+- **Terminal-First Interface:** Run it from the terminal like a true digital artisan.
 
-> "The basic idea is that LLMs are trained on code and OS configuration and already (machine) learnt to select the probable tools to use and actions to take. Therefore, there is no need to teach them to use made-up function and tools with bad json schemas. Just give them a shell, a python interpreter, and let you (only) live (once)."
+#### 🛠️ **Tools Included**
+- **FileSystem Mastery:** Ask it to act on your file system and edit files with the precision of a master craftsman.
+- **Shell Command Execution:** Direct access to your shell (with user confirmation for safety).
+- **Python Interpreter Integration:** Execute Python code directly from your CLI assistant.
 
-## 🚀 Installation Methods (Choose Your Destiny)
+> _"The basic idea is that LLMs are trained on code and OS configuration and already (machine) learnt to select the probable tools to use and actions to take."_
 
-### Quick-start a local LLM server if you don't have one already
+🧠 **You're just living once. Let your AI assist you with the power of Unix.**
 
-#### With llama.cpp (Homebrew)
+## 🛠️ Installation: The Vibe Way
+
+### 🚀 Quick-Start a Local LLM Server
+
+#### 🐧 With llama.cpp (Homebrew)
 ```bash
 brew install llama.cpp
 llama-server -hf unsloth/Qwen3-Coder-30B-A3B-Instruct-GGUF --ctx-size 0 --jinja
 ```
 
-#### With ollama
+#### 🐳 With Ollama
 ```bash
 
 curl -fsSL https://ollama.com/install.sh | sh
 ollama pull qwen3-coder:30b
 ```
 
-> **Qwen3-Coder-30b** is a nice model. Smaller models can also works.
+### 💻 llme Installation Options
 
-### 🧪 llme Installation (Choose Your Path)
-
-#### PyPI (Old School)
+#### 📦 From PyPI (Maybe Old Version)
 ```bash
 pipx install llme-cli
 llme --help
 ```
 
-#### GitHub Direct (Latest Dev)
+#### 🌐 Direct GitHub Installation (Latest Dev)
 ```bash
 pipx install -f git+https://github.com/privat/llme.git
 llme --help
 ```
 
-#### Clone & Develop
+#### 🧪 Clone & Dev Mode
 ```bash
+
 git clone https://github.com/privat/llme.git
 pipx install -e ./llme
 llme --help
 ```
 
-#### Run From Source (No Installation)
+#### 📁 Clone & Run From Source (No Install)
 ```bash
+
 git clone https://github.com/privat/llme.git
 pip install -r llme/requirements.txt
 ./llme/llme/main.py --help
 ```
 
-## 💬 Usage (Interactive Vibe Mode)
+## 💬 Usage: The Interactive Vibe
 
-### Start an Interactive Chat Session
-
+### 🗣️ Run an Interactive Chat Session
 ```bash
 llme --base-url "http://localhost:8080/v1" # for default llama-server (llama.cpp)
 llme --base-url "http://localhost:11434/v1" # for default ollama server
 ```
 
-#### With Specific Model
-```bash
-llme --base-url "http://localhost:8080/v1" --model "unsloth/Mistral-Small-3.2-24B-Instruct-2506-GGUF"
-```
-
-> 🚨 Ctrl-C to interrupt a response (or exit).
-
-### Setup Config (Optional, but Recommended)
-
+### 🔧 Set Up Configuration (Optional But Recommended)
 Edit `~/.config/llme/config.toml`
 Look at [config.toml](llme/config.toml) for an example.
 
-## 🔥 One-Shot Queries (Single Command Power)
+## 🧪 Prompt Engineering: The Art of Vibe Control
+
+The REPL interface allows you to navigate in the conversation history, fork it, and even edit it.
+
+🧠 **Replay token generation**, try different prompts, update parameters, or gaslight the assistant.
+
+## ⚡ One-Shot Queries: Quick Vibe Sessions
 
 Each prompt is run in order in the same chat session.
 
@@ -103,59 +101,47 @@ llme "What is the capital of France?" \
   "What is the weather at Tokyo right now?"
 ```
 
-#### Or with Pipe
+### 📥 Piped Queries
 ```bash
 echo "What is the capital of France?" | llme
 ```
 
-> 🧠 Interactive sessions are often better because, if needed, the model is loaded at the start of the command, so is loading while you type. Also no issues with escaping `"` or `'`
-
-## ⚙️ Tools Included (Vibe Edition)
+## 🔧 Tools: The Power That Comes With Responsibility
 
 The LLM has direct access to your shell (and files) and a python interpreter.
 
-> ⚠️ The user is **asked for confirmation** before executing any command.
+⚠️ **User Confirmation Required:** Before executing any command. 
 
-> 🔥 **Beware**: Some LLMs might be very **persistent** and **persuasive** in running **dangerous** commands. Do **not trust** the LLM blindly!
+🧠 **Beware, some LLMs might be very persistent and persuasive in running dangerous commands. Do not trust the LLM blindly!**
 
-> 🎯 If you chose to not execute a command, it will be skipped, and you can provide an explanation to the LLM or asks for a better command.
-
-## 📁 File Inspection (Content Explorer)
-
-```bash
-ps aux | llme "Which process consumes the most memory?"
-```
-
-#### With File Paths as Assets
-```bash
-llme "how many regular users and regular groups are there in these files?" /etc/passwd /etc/group
-```
-
-> 🔍 Note: the file content and the path will be given to the LLM.
-
-## 🖼️ Image Inspection (Multimodal Magic)
-
-Same as for files, but with images — duh, images are files!
-
-```bash
-llme "What is in this image?" < image.png
-```
-
-#### With Paths
-```bash
-llme "What is in this image?" image.png
-```
-
-## 💣 Yolo Mode (Extreme Vibe)
-
-> ⚠️ **No warranty**, yada yada, etc.
-> llme can just **kill** your **OS** and **cats**.
+> **Yolo Mode:** No warranty, yada yada, etc.
 
 ```bash
 sudo llme --batch --yolo "Distupgrade the system. You are root! Do as you wish."
 ```
 
-## 🛠️ Options & Config (Ultimate Control)
+## 🧪 Inspect Content: File System Intelligence
+
+### 🔍 File Inspection
+```bash
+ps aux | llme "Which process consumes the most memory?"
+```
+
+### 📁 Path-Based Assets
+```bash
+llme "how many regular users and regular groups are there in these files?" /etc/passwd /etc/group
+```
+
+## 🖼️ Image Inspection: Multimodal Vibe
+
+Same as for files, but with images — duh!
+
+```bash
+llme "What is in this image?" < image.png
+llme "What is in this image?" image.png
+```
+
+## ⚙️ Options & Configuration
 
 <!--help-->
 ```console
@@ -200,25 +186,22 @@ options:
                         [plugins]
   -v, --verbose         Increase verbosity level (can be used multiple times)
   -Y, --yolo            UNSAFE: Do not ask for confirmation before running
-tools. Combine with --batch to reach the singularity.
+                        tools. Combine with --batch to reach the singularity.
   --version             Display version information and quit
 ```
 <!--/help-->
 
-> 📝 Note: Run a fresh `--help` in case I forgot to update this README.
+### 🔁 Configuration Precedence Order
 
-### 🔁 Config Precedence (Priority Order)
+1. **Explicit Command Line Options** (Highest)
+2. **Explicit Config Files** (Reverse Order - Last Wins)
+3. **Environment Variables** (`LLME_SOMETHING`)
+4. **User Configuration File** (`~/.config/llme/config.toml`)
+5. **System Configuration** (Lowest Precedence)
 
-1. The explicit option in the command line (the higher precedence)
-2. The explicit config files (given by `--config`) in reverse order (last wins)
-3. The environment variables (`LLME_SOMETHING`)
-4. The user configuration file (`~/.config/llme/config.toml`)
-5. The system configuration file provided by the package (the lowest precedence)
-
-## 🧭 Slash Commands (Vibe Control)
+## 🧭 Slash Commands: The Interactive Vibe Controls
 
 Special commands can be executed during the chat.
-Those starts with a `/` and can be used when a prompt is expected (interactively or in the command line).
 
 <!--slash-help-->
 ```console
@@ -229,7 +212,8 @@ $ llme /help /quit
 /history      list condensed conversation history
 /full-history list hierarchical conversation history (with forks)
 /redo         cancel and regenerate the last assistant message
-/undo         cancel the last user message (and the response)
+/undo         cancel the last user message (and the response) [PageUp]
+/pass         go forward in history (cancel /undo) [PageDown]
 /edit         run EDITOR on the chat (save,editor,load)
 /save FILE    save chat
 /load FILE    load chat
@@ -242,46 +226,37 @@ $ llme /help /quit
 ```
 <!--/slash-help-->
 
-> 📝 Note: Run a fresh `/help` in case I forgot to update this README.
+## 🧩 Library & Plugin System: Custom Vibe Enhancement
 
-## 🧩 Library & Plugin System (Customization Power)
+LLME is usable as a library for those who crave customization.
 
-### ⚡ Important: The API is far from stable.
+### 🛠️ Custom Tool Integration
 
-LLME is usable as a library, so you can use its features. The main advantage for now to import `llme` is to add new custom tools usable by LLMs.
+Transform a python function into a tool with the annotation `@llme.tool`.
 
-#### Transform Python Function Into Tool
-```python
-@llme.tool
-def my_function():
-    # Your code here
-    pass
-```
-
-### 🧪 Usage Examples
-
-#### Run Weather Plugin as Standalone Program
+#### 🔌 Example Usage
 ```bash
+# Run weather plugin as standalone
 ./examples/weather_plugin.py 'Will it rains tomorrow at Paris?'
-```
 
-#### Use With Plugin Option
-```bash
+# Use with --plugin option
 llme --plugin examples/weather_plugin.py 'Will it rains tomorrow at Paris?'
-```
 
-#### Whole Directory Usage
-```bash
+# Or whole directories!
 llme --plugin examples 'Will it rains tomorrow at Paris?'
 ```
 
-## 🧠 Development (For Vibe Coders)
+## 🧠 Development: The Art of Simplicity
 
-> I do not like Python, nor LLMs, but I needed something simple to test things quickly and play around.
+I do not like Python, nor LLMs, but I needed something simple to test things quickly and play around.
 
-### 📋 TODO List (Future Vision)
+### 🔮 Vision Statement
 
-#### OpenAI API Features
+**Keep it minimal. Keep it manageable. Keep it single-file.**
+
+## 📋 TODO: The Roadmap of Vibe
+
+### 🧠 OpenAI API Features
 - [x] API token (untested)
 - [x] list models
 - [x] stream mode
@@ -292,7 +267,7 @@ llme --plugin examples 'Will it rains tomorrow at Paris?'
 - [x] attached images
 - [ ] ?
 
-#### Tools
+### 🛠️ Tools
 - [x] markdown tools
 - [x] native tools
 - [x] run shell command
@@ -301,9 +276,9 @@ llme --plugin examples 'Will it rains tomorrow at Paris?'
 - [ ] sandboxing
 - [x] whitelist/blacklist
 
-#### User Interface & Features
+### 🎨 User Interface & Features
 - [x] readline
-- [ ] better prompt & history
+- [x] better prompt & history
 - [x] braille spinner
 - [x] model warmup
 - [x] save/load conversation
@@ -311,8 +286,9 @@ llme --plugin examples 'Will it rains tomorrow at Paris?'
 - [x] slash commands
 - [x] undo/retry/edit
 - [x] better tool reporting
+- [ ] ?
 
-#### Customization and Models
+### 🔧 Customization and Models
 - [x] config files
 - [x] config with env vars
 - [ ] type check / conversion
@@ -324,7 +300,7 @@ llme --plugin examples 'Will it rains tomorrow at Paris?'
 - [ ] detect model features (is that even possible?)
 - [x] bench system & reporting
 
-#### Code Quality
+### 🧪 Code Quality
 - [x] docstring and comments
 - [x] small code base
 - [x] small methods
@@ -333,36 +309,30 @@ llme --plugin examples 'Will it rains tomorrow at Paris?'
 - [ ] better separation of CLI and LLM
 - [ ] better libification
 
-#### Misc
+### 🌐 Misc
 - [x] README
+- [x] Vibe README
 - [x] TODO list :p
 - [x] build file
 - [x] PyPI [package](https://pypi.org/project/llme-cli/)
 - [x] plugin example
 - [ ] ?
 
-### 🌐 OpenAI API Integration (Core Protocol)
+## 🚨 Issues: The Real Talk
 
-The two HTML routes used by llme are:
+- Various OpenAI compatible servers and models implement different subsets. Compatibility is worked on.
+- Models are sensitive to prompts and system prompts - but you can create a custom config file for each.
+- Messages are structured in a way that's currently hardcoded (not ideal, but functional).
 
-- `$base_url/models` (<https://platform.openai.com/docs/api-reference/models>) for `--list-models` (and to get a default model when `--model` is empty)
-- `$base_url/chat/completions` (<https://platform.openai.com/docs/api-reference/chat>) for the main job. Streaming (<https://platform.openai.com/docs/api-reference/chat-streaming>) is used by default.
-It can be disabled with `--bulk`, mainly for debugging weird APIs.
+## 💖 Thanks: The Vibe Community
 
-Images are uploaded as content parts, for multimodal models.
+* [openwebui](https://github.com/open-webui/open-webui) for inspiration
+* [gptme](https://github.com/gptme/gptme) for another source of inspiration
+* [openai-cli](https://github.com/doryiii/openai-cli) for a simpler approach I built on top of
+* [llama.cpp](https://github.com/ggerganov/llama.cpp), [nexa-sdk](https://github.com/NexaAI/nexa-sdk/) and others for their great work
 
-Tools are integrated with either `--tool-mode=native` for the native function API (<https://platform.openai.com/docs/guides/function-calling>), or with `--tool-mode=markdown` a custom approach intended for models that does not support it (or performs poorly with it).
-Custom tools can be profited, see the `--plugin` option.
+## 🚀 The Final Vibe
 
-### ⚠️ Known Issues & Limitations
+**llme** doesn't just chat - it *lives* in your terminal, speaks with your code, and works seamlessly with the LLM ecosystem you love.
 
-- The various OpenAI compatible servers and models implement different subsets. Compatibility is worked on and there is less random 4xx or 5xx responses. Major local LLM servers and servers were tested. See the [benchmark](benchmark.md)
-- Models are really sensitive to prompts and system prompts, but you can create a custom config file for each.
-- Models are really sensitive to how the messages are structured, unfortunately that is currently hardcoded in the program. I do not want to hard-code many tweaks and workarounds. :(
-
-## 🙏 Thanks (Vibe Appreciation)
-
-- [openwebui](https://github.com/open-webui/open-webui) for an inspiration, but too complex and web oriented.
-- [gptme](https://github.com/gptme/gptme) for another inspiration, but also too complex and targets too much non-local LLMs.
-- [openai-cli](https://github.com/doryiii/openai-cli) for a simpler approach I built on top of.
-- [llama.cpp](https://github.com/ggerganov/llama.cpp), [nexa-sdk](https://github.com/NexaAI/nexa-sdk/) and others for your great work.
+🧠 **Terminal. Intelligence. Vibe.**

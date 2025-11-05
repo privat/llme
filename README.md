@@ -106,6 +106,12 @@ More about options and configs below.
 I assume, from now, that there is a config file...
 
 
+### Prompt engineered
+
+The REPL interface allows you to navigate in the conversation history, fork it, and even edit it.
+It's easy to replay token generation, try different prompts, update parameters, or gaslight the assistant.
+
+
 ### Run one-shot queries
 
 Each prompt is run in order in the same chat session.
@@ -261,7 +267,8 @@ $ llme /help /quit
 /history      list condensed conversation history
 /full-history list hierarchical conversation history (with forks)
 /redo         cancel and regenerate the last assistant message
-/undo         cancel the last user message (and the response)
+/undo         cancel the last user message (and the response) [PageUp]
+/pass         go forward in history (cancel /undo) [PageDown]
 /edit         run EDITOR on the chat (save,editor,load)
 /save FILE    save chat
 /load FILE    load chat
@@ -337,7 +344,7 @@ PR are welcome!
   * [x] whitelist/blacklist
 * User interface & features
   * [x] readline
-  * [ ] better prompt & history
+  * [x] better prompt & history
   * [x] braille spinner
   * [x] model warmup
   * [x] save/load conversation
@@ -345,6 +352,7 @@ PR are welcome!
   * [x] slash commands
   * [x] undo/retry/edit
   * [x] better tool reporting
+  * [ ] ?
 * Customization and models
   * [x] config files
   * [x] config with env vars
@@ -366,11 +374,13 @@ PR are welcome!
   * [ ] better libification
 * Misc
   * [x] README
+  * [x] Vibe README
   * [x] TODO list :p
   * [x] build file
   * [x] PyPI [package](https://pypi.org/project/llme-cli/)
   * [x] plugin example
   * [ ] ?
+
 
 ### OpenAI API
 
