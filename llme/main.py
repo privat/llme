@@ -222,7 +222,7 @@ class LLME:
             cprint(f"{question}: YOLO!", color="light_red")
             return True
         if self.config.batch:
-            raise EOFError("No confirmation in batch mode") # ugly
+            raise AppError("Confirmation unavailable in batch mode")
         try:
             if self.session:
                 x = self.session.prompt([("#ff0000", f"{question}? ")], placeholder=[("#7f7f7f", "Enter to confirm, or give a prompt to cancel")], default=default)
