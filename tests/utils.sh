@@ -126,13 +126,9 @@ runllme() {
 	) 2> >(tee -a "$LOGDIR/err.txt" > "$out") > >(tee -a "$LOGDIR/log.txt" > "$out")
 }
 
-# Run a test with the llme tool
-# Usage: tllme taskname [llme args...] (use "$@" for args)
-#
-# define '$V' for verbose
-# define '$F' to filter tests
-# define '$KEEPWORKDIR' to reuse the workdir in subsequent tests
-tllme() {
+# Create LOGDIR and WORKDIR.
+# And initialize other env variables
+prepare() {
 	task=$1
 	shift
 
@@ -143,7 +139,7 @@ tllme() {
 	cd "$ORIGDIR"
 
 	# Tests results are stored in logs/$id/ where id is a unique identifier
-	id=$SUITE-$task-$(date +%s)-$$
+	id=$SUITE-$task-$(date +%s)
 	export LOGDIR="logs/$UTILID/$id"
 	mkdir -p "$LOGDIR"
 	env | grep "^LLME_" > "$LOGDIR/env.txt"
@@ -161,6 +157,17 @@ tllme() {
 
 	setup
 
+# Run a test with the llme tool
+# Usage: tllme taskname [llme args...] (use "$@" for args)
+#
+# define '$V' for verbose
+# define '$F' to filter tests
+# define '$KEEPWORKDIR' to reuse the workdir in subsequent tests
+tllme() {
+	prepare "$@" || return
+	shift
+
+	setup
 
 	if ! "$LLME" "$@" --dump-config > "$LOGDIR/config.json"; then
 		result "ERROR" "can't get config"
