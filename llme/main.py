@@ -1413,6 +1413,11 @@ def extract_requests_error(e):
         if "message" in data:
             text = data["message"]
 
+    text = re.sub(r"<[^>]*>", "", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    if len(text) > 80:
+        text = text[:80] + "..."
+
     message = f"{text.strip()} ({e.response.status_code} {e.response.request.url})"
     return message
 
