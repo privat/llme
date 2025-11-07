@@ -203,8 +203,7 @@ class LLME:
             response = requests.get(url, headers=self.api_headers, timeout=10)
             response.raise_for_status()
         except requests.exceptions.RequestException as e:
-            logger.error(extract_requests_error(e))
-            sys.exit(1)
+            raise AppError(extract_requests_error(e))
         models = response.json()
         ids = [m["id"] for m in models["data"]]
         logger.info("Available models: %s", ids)
@@ -625,8 +624,11 @@ class LLME:
         cprint(self.metrics.infoline(data), "light_grey")
 
         if self.config.export_metrics:
-            with open(self.config.export_metrics, "w") as file:
-                json.dump({"total": self.metrics.total, "history": self.metrics.history}, file, indent=2)
+            try:
+                with open(self.config.export_metrics, "w") as file:
+                    json.dump({"total": self.metrics.total, "history": self.metrics.history}, file, indent=2)
+            except OSError as e:
+                raise AppError(f"Can't save metrics to {self.config.export_metrics}") from e
 
 
     def do_user(self):
@@ -714,22 +716,27 @@ class LLME:
         while True:
             try:
                 self.do_role()
+                continue
             except requests.exceptions.RequestException as e:
-                logger.error("Server error: %s", extract_requests_error(e))
                 if self.config.batch:
-                    break
+                    raise
+                logger.error("Server error: %s", extract_requests_error(e))
                 self.rollback("user")
             except CancelEvent:
                 self.session.app.erase_when_done = False
                 logger.debug("Cancelled")
+                continue
             except KeyboardInterrupt:
                 logger.warning("Interrupted by user.")
-                if self.config.batch:
-                    break
                 self.rollback("user")
             except EOFError as e:
                 logger.info("Quitting: %s", str(e))
                 break
+            except AppError as e:
+                # We got wrapped error to show.
+                if self.config.batch:
+                    raise
+                logger.error("%s", e)
             except Exception as e:
                 # catch-all in interactive session
                 # it's not supposed to happen
@@ -741,6 +748,8 @@ class LLME:
                 traceback.print_exc()
                 logger.error("Unexpected and uncatched exception: %s\nllme might be now, proceed with caution.", e)
                 self.rollback("user")
+            if self.config.batch:
+                break
 
 
     def prepare_system_prompt(self):
@@ -803,8 +812,11 @@ class LLME:
 
     def load_chat(self, file):
         logger.info("Loading conversation from %s", file)
-        with open(file, "r") as f:
-            self.reset_messages(json.load(f))
+        try:
+            with open(file, "r") as f:
+                self.reset_messages(json.load(f))
+        except OSError as e:
+            raise AppError(f"Can't load chat from {file}") from e
 
     def reset_messages(self, messages):
         self.message_index = None
@@ -817,8 +829,11 @@ class LLME:
 
     def save_chat(self, file):
         logger.info("Dumping conversation to %s", file)
-        with open(file, "w") as f:
-            json.dump(self.messages, f, indent=2)
+        try:
+            with open(file, "w") as f:
+                json.dump(self.messages, f, indent=2)
+        except OSError as e:
+            raise AppError(f"Can't save chat to {file}") from e
 
     def list_models(self):
         "Print the list of models"
@@ -906,42 +921,47 @@ class LLME:
             self.list_full_history()
         elif cmd in "/redo":
             if not self.rollback("assistant"):
-                logger.error("no assistant message to redo")
-            else:
-                self.list_history()
+                raise AppError("/redo: No assistant message to redo")
+            self.list_history()
         elif cmd in "/undo":
             if not self.rollback("user"):
-                logger.error("no user message to undo")
-            else:
-                self.list_history()
+                raise AppError("/undo: No user message to undo")
+            self.list_history()
         elif cmd in "/pass":
             if not self.rollforward("user"):
-                logger.error("already at latest message")
-            else:
-                self.list_history()
+                raise AppError("/pass: Already at latest message")
+            self.list_history()
         elif cmd in "/edit":
             self.edit()
         elif cmd in "/save":
+            if not arg:
+                raise AppError("/save: Missing filename")
             self.save_chat(arg)
         elif cmd in "/load":
+            if not arg:
+                raise AppError("/load: Missing filename")
             self.load_chat(arg)
         elif cmd in "/clear":
             self.reset_messages([self.prepare_system_prompt()])
         elif cmd in "/goto":
+            if not arg:
+                raise AppError("/goto: Missing message label")
             self.goto(arg)
         elif cmd in "/metrics":
             for k, v in self.metrics.total.items():
                 print(f"{k}: {repr(v)}")
         elif cmd in "/set":
+            if not arg:
+                raise AppError("/set: Missing setting")
             args = arg.split('=', 1)
             if len(args) != 2:
-                print("set: syntax error")
+                raise AppError("/set: Syntax error, expected name=value")
             else:
                 self.set_config(*args)
         elif cmd in "/quit":
             raise EOFError("/quit")
         else:
-            print(f"Unknown {user_input}. Use /help for help.")
+            raise AppError(f"{user_input}: Unknown slash command. Use /help for help.")
 
     def rollback(self, role):
         "Move message_index to the previous message of role, return the message on success"
@@ -972,10 +992,20 @@ class LLME:
         "Save the chat in a tmpfile, edit it, and load it back"
         import tempfile
         with tempfile.NamedTemporaryFile(mode='w', delete=True) as tmp:
+            import shlex
             self.save_chat(tmp.name)
             editor = os.environ.get("EDITOR", "editor")
-            subprocess.run([editor, tmp.name], check=True)
+            try:
+                cmd = shlex.split(editor) + [tmp.name]
+            except ValueError as e:
+                raise AppError("Invalid editor command %s" % editor) from e
+            logger.info( "Running %s", cmd)
+            try:
+                subprocess.run(cmd, check=True)
+            except Exception as e:
+                raise AppError("/edit") from e
             self.load_chat(tmp.name)
+
 
     def reset_to_history(self, message):
         """Reset the conversation to after a message in the full history"""
@@ -990,8 +1020,7 @@ class LLME:
         """Return a labeled message from the full history"""
         match = re.match(r"(\d+)\s*([a-z]*)", n)
         if not match:
-            print(f"Invalid message number {n}")
-            return None
+            raise AppError(f"Invalid message label {n}")
         num = int(match.group(1))
         if not match.group(2):
             # no gen, look in the local history first
@@ -1011,8 +1040,7 @@ class LLME:
         """Jump after a message in the full history"""
         message = self.find_label_in_history(n)
         if not message:
-            print(f"Message {n} not found")
-            return
+            raise AppError(f"Message {n} not found")
         if message not in self.history:
             self.reset_to_history(message)
         self.message_index = message.number
@@ -1037,9 +1065,9 @@ class LLME:
         config = vars(self.config)
         opts = [ k for k in config  if k.startswith(opt)]
         if not opts:
-            raise KeyError(f"unknown option: {opt}")
+            raise AppError(f"Unknown setting: {opt}")
         if len(opts) > 1:
-            raise KeyError(f"ambiguous option: {opt} could match {", ".join(opts)}")
+            raise AppError(f"Ambiguous setting: {opt} could match {", ".join(opts)}")
         opt = opts[0]
 
         if opt == "verbose":
@@ -1374,8 +1402,16 @@ class Asset:
     "A loaded file"
     def __init__(self, path):
         self.path = path
-        with open(path, 'rb') as f:
-            self.raw_content = f.read()
+        try:
+            with open(path, 'rb') as f:
+                self.raw_content = f.read()
+        except OSError as e:
+            logger.error("Can't load file %s: %s", path, e)
+            sys.exit(1) # Make it better
+        if len(self.raw_content) == 0:
+            logger.info("Empty file %s", path)
+            self.mime_type = "inode/x-empty"
+            return
         import magic
         self.mime_type = magic.from_buffer(self.raw_content, mime=True)
         logger.info("File %s is %s", path, self.mime_type)
@@ -1391,6 +1427,13 @@ class Asset:
             data = base64.b64encode(self.raw_content).decode()
             return {"type": "file", "file": {"file_data": data, "filename": self.path}}
 
+class AppError(Exception):
+    """Application error to give feedback to the user."""
+    def __str__(self):
+        if self.__cause__:
+            return f"{super().__str__()}: {self.__cause__}"
+        else:
+            return super().__str__()
 
 def extract_requests_error(e):
     """Common handling of requests error"""
@@ -1458,8 +1501,13 @@ def apply_env(args):
 def load_config_file(path):
     """Load a TOML config file."""
     logger.debug("Loading config from %s", path)
-    with open(path, "rb") as f:
-        return tomllib.load(f)
+    try:
+        with open(path, "rb") as f:
+            return tomllib.load(f)
+    except OSError as e:
+        raise AppError(f"Can't load config file {path}") from e
+    except tomllib.TOMLDecodeError as e:
+        raise AppError(f"Invalid config file {path}") from e
 
 def resolve_config(args):
     """Compute config in order of precedence"""
@@ -1501,7 +1549,10 @@ def load_module(path):
     import importlib.machinery
     basename = os.path.basename(path)
     name, ext = os.path.splitext(basename)
-    return importlib.machinery.SourceFileLoader(name, path).load_module()
+    try:
+        return importlib.machinery.SourceFileLoader(name, path).load_module()
+    except OSError as e:
+        raise AppError(f"Can't load plugin {path}") from e
 
 def load_plugin(path):
     """Load a single python module, or all python modules of a directory."""
@@ -1603,9 +1654,17 @@ def process_args():
 
 def main():
     """The main CLI entry point."""
-    config = process_args()
-    llme = LLME(config)
-    llme.start()
+    try:
+        config = process_args()
+        llme = LLME(config)
+
+        llme.start()
+    except AppError as e:
+        logger.error("%s", e)
+        sys.exit(1)
+    except requests.exceptions.RequestException as e:
+        logger.error("Server error: %s", extract_requests_error(e))
+        sys.exit(1)
 
 
 if __name__ == "__main__":
