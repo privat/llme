@@ -99,11 +99,13 @@ answer() {
 
 # Check that the llm result talk about a pattern
 smoke() {
-	if grep --color=always -i "$1" "$LOGDIR/log.txt" > >(head); then
-		result "PASS"
-	else
-		result "FAIL"
-	fi
+	for re in "$@"; do
+		if ! grep --color=always -i "$re" "$LOGDIR/log.txt" > >(head); then
+			result "FAIL"
+			return 1
+		fi
+	done
+	result "PASS"
 }
 
 # Run llme in its workdir with a fresh python environment
