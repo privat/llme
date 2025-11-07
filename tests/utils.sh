@@ -41,8 +41,13 @@ jsonescape() {
 # Register a test result
 result() {
 	config="$ORIGDIR/$LOGDIR/config.json"
-	url=`jq -r .base_url "$config"`
-	model=`jq -r .model "$config"`
+	if [ -f "$config" ]; then
+		url=`jq -r .base_url "$config"`
+		model=`jq -r .model "$config"`
+	else
+		url=
+		model=
+	fi
 	chat="$ORIGDIR/$LOGDIR/chat.json"
 	if [ -f "$chat" ]; then
 		msgs=`jq '.|length' "$chat"`
