@@ -1609,6 +1609,8 @@ def show_version():
 
 def set_verbose(level):
     "Assign a global verbose level (in number of -v)"
+    if level is None:
+        level = 0
     consolehandler = logging.StreamHandler(sys.stderr)
     consolehandler.setFormatter(ColorFormatter())
     logger.addHandler(consolehandler)
@@ -1644,31 +1646,38 @@ def process_args():
     parser = argparse.ArgumentParser(
         usage='%(prog)s [options...] [prompts...]',
         description="OpenAI-compatible chat CLI.",
+        epilog="Boolean flags can be negated with `--no-`. Example `--no-plain` to force colors in a non TTY",
     )
-    parser.add_argument("-u", "--base-url", help="API base URL [base_url]")
-    parser.add_argument("-m", "--model", help="Model name [model]")
-    parser.add_argument("--list-models", action="store_true", help="List available models then exit")
-    parser.add_argument("--api-key", help="The API key [api_key]")
-    parser.add_argument("-b", "--batch", default=None, action="store_true", help="Run non-interactively. Implicit if stdin is not a tty [batch]")
-    parser.add_argument("-p", "--plain", default=None, action="store_true", help="No colors or tty fanciness. Implicit if stdout is not a tty [plain]")
-    parser.add_argument(      "--bulk", default=None, action="store_true", help="Disable stream-mode. Not that useful but it helps debugging APIs [bulk]")
-    parser.add_argument("-o", "--chat-output", help="Export the full raw conversation in json")
-    parser.add_argument("-i", "--chat-input", help="Continue a previous (exported) conversation")
-    parser.add_argument(      "--export-metrics", help="Export metrics, usage, etc. in json")
+    # Trick: "store_true" options are defaulted to None, so we can distinguish between explicit --foo (True), --no-foo (False) and unset (None)
+    parser.add_argument("-u", "--base-url", metavar="URL", help="API base URL [base_url]")
+    parser.add_argument("-m", "--model", metavar="NAME", help="Model name or identifier [model]")
+    parser.add_argument(      "--list-models", action="store_true", default=None, help="List available models then exit")
+    parser.add_argument(      "--api-key", metavar="SECRET", help="The API key [api_key]")
+    parser.add_argument("-b", "--batch", action="store_true", default=None, help="Run non-interactively. Implicit if stdin is not a tty [batch]")
+    parser.add_argument("-p", "--plain", action="store_true", default=None, help="No colors or tty fanciness. Implicit if stdout is not a tty [plain]")
+    parser.add_argument(      "--bulk", action="store_true", default=None, help="Disable stream-mode. Not that useful but it helps debugging APIs [bulk]")
+    parser.add_argument("-o", "--chat-output", metavar="FILE", help="Export the full raw conversation in json")
+    parser.add_argument("-i", "--chat-input", metavar="FILE", help="Continue a previous (exported) conversation")
+    parser.add_argument(      "--export-metrics", metavar="FILE", help="Export metrics, usage, etc. in json")
     parser.add_argument("-s", "--system", dest="system_prompt", help="System prompt [system_prompt]")
-    parser.add_argument(      "--temperature", default=None, type=float, help="Temperature of predictions [temperature]")
-    parser.add_argument(      "--tool-mode", default=None, choices=["markdown", "native"], help="How tools and functions are given to the LLM [tool_mode]")
-
-    parser.add_argument("-c", "--config", action="append", help="Custom configuration files")
-    parser.add_argument(      "--list-tools", action="store_true", help="List available tools then exit")
-    parser.add_argument(      "--dump-config", action="store_true", help="Print the effective config and quit")
-    parser.add_argument(      "--plugin", action="append", dest="plugins", help="Add additional tool (python file or directory) [plugins]")
-    parser.add_argument("-v", "--verbose", default=0, action="count", help="Increase verbosity level (can be used multiple times)")
-    parser.add_argument(      "--log-file", help="Write logs to a file [log_file]")
-    parser.add_argument("-Y", "--yolo", default=None, action="store_true", help="UNSAFE: Do not ask for confirmation before running tools. Combine with --batch to reach the singularity.")
-    parser.add_argument(      "--version", action="store_true", help="Display version information and quit")
-    parser.add_argument(      "--dummy", action="store_true", help=argparse.SUPPRESS) # Disable LLM for testing the UI alone
+    parser.add_argument(      "--temperature", type=float, help="Temperature of predictions [temperature]")
+    parser.add_argument(      "--tool-mode", choices=["markdown", "native"], help="How tools and functions are given to the LLM [tool_mode]")
+    parser.add_argument("-c", "--config", metavar="FILE", action="append", help="Custom configuration files")
+    parser.add_argument(      "--list-tools", action="store_true", default=None, help="List available tools then exit")
+    parser.add_argument(      "--dump-config", action="store_true", default=None, help="Print the effective config and quit")
+    parser.add_argument(      "--plugin", metavar="PATH", action="append", dest="plugins", help="Add additional tool (python file or directory) [plugins]")
+    parser.add_argument("-v", "--verbose", action="count", help="Increase verbosity level (can be used multiple times)")
+    parser.add_argument(      "--log-file", metavar="FILE", help="Write logs to a file [log_file]")
+    parser.add_argument("-Y", "--yolo", action="store_true", default=None, help="UNSAFE: Do not ask for confirmation before running tools. Combine with --batch to reach the singularity.")
+    parser.add_argument(      "--version", action="store_true", default=None, help="Display version information and quit")
+    parser.add_argument(      "--dummy", action="store_true", default=None, help=argparse.SUPPRESS) # Disable LLM for testing the UI alone
     parser.add_argument("prompts", nargs='*', help="An initial list of prompts")
+    # Trick: iterate on store_true options to add the --no- variants
+    for action in parser._actions:
+        if action.const is True:
+            for name in action.option_strings:
+                if name.startswith("--") and not name.startswith("--no-"):
+                    x=parser.add_argument("--no" + name[1:], dest=action.dest, action="store_false", help=argparse.SUPPRESS)
 
     args = parser.parse_intermixed_args()
     if args.version:
