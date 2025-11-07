@@ -652,22 +652,24 @@ class LLME:
         function = tool_call["function"]
         tool = all_tools.get(function["name"])
         if not tool:
-            logger.error("Unknown tool %s", function["name"])
+            cprint(f"Unknown tool {function["name"]}", color="red")
             message = {"role": "tool", "content": f"Error: unknown tool {function["name"]}. Available tools: {", ".join(all_tools)}", "tool_call_id": tool_call["id"]}
             return message
         try:
             args = json.loads(function["arguments"])
         except json.JSONDecodeError as e:
-            logger.error("Bad tool arguments %s: %s", e, function["arguments"])
+            logger.debug("Tool arguments error: %r", e)
+            cprint(f"{self.prompt_prefix}: Bad tool arguments for {function["name"]}: {e}", color="red")
             message = {"role": "tool", "content": f"Error: bad tool arguments {function["name"]}. {e}", "tool_call_id": tool_call["id"]}
             return message
         logger.info(f"CALL %s(%s)", tool.name, args)
         try:
             result = tool.fun(**args)
         except ToolError as e:
-            cprint(f"Exception {e}", color="red")
+            logger.debug("Tool error: %r", e)
             if e.__cause__:
                 e = e.__cause__
+            cprint(f"Error during {function["name"]}: {e}", color="red")
             message = {"role": "tool", "content": f"Error during {function["name"]}: {e}", "tool_call_id": tool_call["id"]}
             self.add_message(message)
             return
