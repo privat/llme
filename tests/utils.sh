@@ -122,7 +122,7 @@ runllme() {
 	cd "$WORKDIR"
 	python3 -m venv venv
 	. venv/bin/activate
-	setsid timeout -v -f -sINT 180 "$LLME" "$@"
+	setsid timeout -v -f -sINT 180 "$@"
 	) 2> >(tee -a "$LOGDIR/err.txt" > "$out") > >(tee -a "$LOGDIR/log.txt" > "$out")
 }
 
@@ -177,7 +177,7 @@ tllme() {
 	echo
 	result "RUNNING"
 
-	runllme "$@" 2> >(tee "$LOGDIR/err.txt" > "$out") > >(tee "$LOGDIR/log.txt" > "$out")
+	runllme "$LLME" "$@"
 	err=$?
 
 	teardown
