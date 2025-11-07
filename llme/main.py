@@ -782,23 +782,18 @@ class LLME:
             self.add_message(self.prepare_system_prompt())
 
         stdinfile = None
-        if not sys.stdin.isatty():
+        if self.config.batch:
             if len(self.prompts) > 0:
-                # There is prompts, so use stdin as data for the first prompt
-                import tempfile
-                stdinfile = tempfile.NamedTemporaryFile(mode='wb', delete=False)
-                with stdinfile as f:
-                    f.write(sys.stdin.buffer.read())
-
-                self.prompts.insert(0, stdinfile.name)
-            elif self.config.batch:
-                # No prompts, so use stdin as prompt.
-                # In batch mode, the whole stdin is a single prompt
-                self.prompts = [sys.stdin.read()]
+                if not sys.stdin.isatty():
+                    # There are prompts, so use stdin as data for the first prompt
+                    import tempfile
+                    stdinfile = tempfile.NamedTemporaryFile(mode='wb', delete=False)
+                    with stdinfile as f:
+                        f.write(sys.stdin.buffer.read())
+                    self.prompts.insert(0, stdinfile.name)
             else:
-                # In non-batch mode but not tty, we process prompts line by line
-                # We rely on input(), nothing to do here
-                pass
+                # No prompts, so use whole stdin as single prompt.
+                self.prompts = [sys.stdin.read()]
 
         if len(self.prompts) == 0 and not self.config.dummy:
             if not models:
