@@ -669,14 +669,11 @@ class LLME:
         logger.info(f"CALL %s(%s)", tool.name, args)
         try:
             result = tool.fun(**args)
-        except EOFError as e:
-            # was likely ^C or --batch
-            raise e
-        except Exception as e:
+        except ToolError as e:
             cprint(f"Exception {e}", color="red")
-            message = {"role": "tool", "content": f"Error: bad tool usage {function["name"]}. {e}", "tool_call_id": tool_call["id"]}
-            # TODO: think about something better than this. Catching any errors hide real llme bugs.
-            raise e
+            if e.__cause__:
+                e = e.__cause__
+            message = {"role": "tool", "content": f"Error during {function["name"]}: {e}", "tool_call_id": tool_call["id"]}
             self.add_message(message)
             return
         if result is None:
@@ -1353,6 +1350,14 @@ def tool(fun):
     tool = Tool(fun)
     return fun
 
+class ToolError(Exception):
+    """Exception raised by tools intended to the assistant.
+    Other exceptions raised by tools are send-back to the user.
+    You can wrap an existing exception e for the assistant with:
+
+        raise ToolError() from e
+    """
+    pass
 
 
 class Asset:
