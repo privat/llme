@@ -2,7 +2,40 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [v0.1.4] - 2025-11-07
+
+This release is more about the user experience and robustness.
+
+### Added
+
+- /history and /full-history commands
+- /clear to start a new conversation
+- /goto to navigate in the histories
+- /pass to cancel undo
+- pageup and pagedown keybindings for history navigation
+- color for the logger
+- --log-file
+- --no-foo options for all boolean options
+- --dummy
+- vibe README
+
+### Changed
+
+- tool confimation: enter=ok, something=cancel
+- better batch/nonbatch tty/nontty handling
+- better tool calls in markdown mode
+- better benchmark reporting with token and time metrics
+- libified Spinner
+- renamed /retry to /redo
+- better main loop
+- better exception and error handling
+- really improved the command line test suite
+- refactorized test/utils.sh
+
+### Fixed
+
+- Not that much bugs in fact, things are chill now.
+
 
 ## [v0.1.3] - 2025-10-31
 
