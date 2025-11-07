@@ -133,6 +133,8 @@ echo "What is the capital of France?" | llme
 Note that interactive sessions are often better because, if needed, the model is loaded at the start of the command, so is loading while you type.
 Also no issues with escaping `"` or `'`
 
+See below for more detailed information about interactive and batch modes.
+
 
 ### Tools included
 
@@ -202,22 +204,21 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
-  -u, --base-url BASE_URL
-                        API base URL [base_url]
-  -m, --model MODEL     Model name [model]
+  -u, --base-url URL    API base URL [base_url]
+  -m, --model NAME      Model name or identifier [model]
   --list-models         List available models then exit
-  --api-key API_KEY     The API key [api_key]
+  --api-key SECRET      The API key [api_key]
   -b, --batch           Run non-interactively. Implicit if stdin is not a tty
                         [batch]
   -p, --plain           No colors or tty fanciness. Implicit if stdout is not
                         a tty [plain]
   --bulk                Disable stream-mode. Not that useful but it helps
                         debugging APIs [bulk]
-  -o, --chat-output CHAT_OUTPUT
+  -o, --chat-output FILE
                         Export the full raw conversation in json
-  -i, --chat-input CHAT_INPUT
+  -i, --chat-input FILE
                         Continue a previous (exported) conversation
-  --export-metrics EXPORT_METRICS
+  --export-metrics FILE
                         Export metrics, usage, etc. in json
   -s, --system SYSTEM_PROMPT
                         System prompt [system_prompt]
@@ -226,15 +227,19 @@ options:
   --tool-mode {markdown,native}
                         How tools and functions are given to the LLM
                         [tool_mode]
-  -c, --config CONFIG   Custom configuration files
+  -c, --config FILE     Custom configuration files
   --list-tools          List available tools then exit
   --dump-config         Print the effective config and quit
-  --plugin PLUGINS      Add additional tool (python file or directory)
+  --plugin PATH         Add additional tool (python file or directory)
                         [plugins]
   -v, --verbose         Increase verbosity level (can be used multiple times)
+  --log-file FILE       Write logs to a file [log_file]
   -Y, --yolo            UNSAFE: Do not ask for confirmation before running
                         tools. Combine with --batch to reach the singularity.
   --version             Display version information and quit
+
+Boolean flags can be negated with `--no-`. Example `--no-plain` to force
+colors in a non TTY
 ```
 <!--/help-->
 
@@ -315,6 +320,33 @@ llme --plugin examples 'Will it rains tomorrow at Paris?'
 ```
 
 
+### Batch mode
+
+llme can be used in batch or in interactive mode.
+
+The batch mode, with `--batch`, is the default when stdin is not a tty.
+
+If there are no prompts on the command line, then the stdin is read and used as a single big prompt and the program terminates.
+
+Otherwise, each prompt from the command line is used one after the other and the program terminates.
+If stdin is not a tty, it is read and used as attached data (text or image) send with the first prompt of the command line.
+
+Tools can be used by the assistant in batch mode, but if a confirmation is required, the program will exit with an error (unless `--yolo` is used).
+
+
+### Interactive mode
+
+The interactive mode, with `--no-batch`, is the default when stdin is a tty.
+
+When both stdin and stdout are tty, the rich terminal interface with [`prompt_toolkit`](https://github.com/prompt-toolkit/python-prompt-toolkit) is used and provide completion, history, keybindings, etc.
+Otherwise, it falls back to a simple `input()` interface that process each line as a prompt.
+
+As with the batch mode, the prompts of the command line are used first, one after the other, then the user can provide prompts interactively.
+
+Tools can be used by the assistant in interactive mode, and the user might be asked for confirmation.
+
+Also, most errors are not fatal in interactive mode.
+
 ## Development
 
 I do not like Python, nor LLMs, but I needed something simple to test things quickly and play around.
@@ -350,8 +382,13 @@ PR are welcome!
   * [x] save/load conversation
   * [x] export metrics/usage/statistics
   * [x] slash commands
+  * [x] completion for slash commands
   * [x] undo/retry/edit
+  * [x] error recovery
   * [x] better tool reporting
+  * [x] Usable in pipelines or without a TTY
+  * [ ] post-processing output
+  * [ ] attach files in interactive mode
   * [ ] ?
 * Customization and models
   * [x] config files
@@ -364,12 +401,15 @@ PR are welcome!
   * [x] handle non-conform thinking & tools
   * [ ] detect model features (is that even possible?)
   * [x] bench system & reporting
+  * [ ] user-defined additional data
+  * [ ] user-defined filters
 * Code quality
   * [x] docstring and comments
   * [x] small code base
   * [x] small methods
-  * [x] logging
+  * [x] better logging
   * [x] tests suites
+  * [x] robustness and error handling
   * [ ] better separation of CLI and LLM
   * [ ] better libification
 * Misc
