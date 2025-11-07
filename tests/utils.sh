@@ -147,6 +147,7 @@ prepare() {
 
 	export LLME_CHAT_OUTPUT=$ORIGDIR/$LOGDIR/chat.json
 	export LLME_EXPORT_METRICS=$ORIGDIR/$LOGDIR/metrics.json
+	export LLME_LOG_FILE=$ORIGDIR/$LOGDIR/log.txt
 	export LLME_BATCH=true
 	export LLME_YOLO=true
 
