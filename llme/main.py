@@ -81,6 +81,7 @@ class LLME:
             kb.add("pageup")(self.on_pageup)
             kb.add("pagedown")(self.on_pagedown)
             self.session = prompt_toolkit.PromptSession(complete_while_typing=True, key_bindings=kb)
+        self.failsafe = False # when True, its mean we are failing. this variable helps to prevent a loop of failure on the catch-all error handling
 
         self.api_headers = {} # additional headers for the server
         if self.config.api_key:
@@ -227,6 +228,7 @@ class LLME:
                 x = self.session.prompt([("#ff0000", f"{question}? ")], placeholder=[("#7f7f7f", "Enter to confirm, or give a prompt to cancel")], default=default)
             else:
                 x = input(f"{question}? ")
+            self.failsafe = False # user input still alive
             if x == "":
                 return True
             self.prompts.insert(0, x)
@@ -376,6 +378,7 @@ class LLME:
                 user_input = self.session.prompt(prompt, default=default, placeholder=[("#7f7f7f", "A prompt, /h for help, Ctrl-C to interrupt")])
             else:
                 user_input = input()
+            self.failsafe = False
             if self.warmup:
                 self.warmup.stop()
                 # No more needed. We are on our own
@@ -734,8 +737,9 @@ class LLME:
                 # catch-all in interactive session
                 # it's not supposed to happen
                 # but, at least, it allows the user to recover its work.
-                if self.config.batch:
+                if self.config.batch or self.failsafe:
                     raise e
+                self.failsafe = True
                 import traceback
                 traceback.print_exc()
                 logger.error("Unexpected and uncatched exception: %s\nllme might be now, proceed with caution.", e)
