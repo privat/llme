@@ -416,9 +416,6 @@ class LLME:
             except EOFError as e:
                 # was likely /quit
                 raise e
-            except Exception as e:
-                # Allow the user to recover from errors
-                logger.error("%s", e)
             return None
 
         while file := self.next_asset():
@@ -718,8 +715,10 @@ class LLME:
             try:
                 self.do_role()
             except requests.exceptions.RequestException as e:
-                logger.error(extract_requests_error(e))
-                sys.exit(1)
+                logger.error("Server error: %s", extract_requests_error(e))
+                if self.config.batch:
+                    break
+                self.rollback("user")
             except CancelEvent:
                 self.session.app.erase_when_done = False
                 logger.debug("Cancelled")
@@ -731,6 +730,16 @@ class LLME:
             except EOFError as e:
                 logger.info("Quitting: %s", str(e))
                 break
+            except Exception as e:
+                # catch-all in interactive session
+                # it's not supposed to happen
+                # but, at least, it allows the user to recover its work.
+                if self.config.batch:
+                    raise e
+                import traceback
+                traceback.print_exc()
+                logger.error("Unexpected and uncatched exception: %s\nllme might be now, proceed with caution.", e)
+                self.rollback("user")
 
 
     def prepare_system_prompt(self):
