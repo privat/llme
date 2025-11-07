@@ -147,6 +147,8 @@ t key2 llme --api-key '' hello "$@" &&
 #  -p, --plain           No colors or tty fanciness. Implicit if stdout is not a tty [plain]
 t plain1 llme -p hello "$@" &&
 	validate_chat system hello assistant
+t plain2 llme --no-plain hello "$@" &&
+	smoke $'\e\\[0m'
 
 #  --bulk                Disable stream-mode. Not that useful but it helps debugging APIs [bulk]
 t bulk1 llme --bulk hello "$@" &&
@@ -313,6 +315,8 @@ t args1 llme --verbo hello "$@" &&
 	validate_err "level set to INFO"
 et args2 llme --bad hello "$@" &&
 	validate_err "unrecognized argument"
+t args3 llme --no-version hello "$@" &&
+	validate_chat system hello assistant
 et s-set1 llme '/set bad=bad' hello "$@" &&
 	validate_err "Unknown setting"
 et s-set2 llme '/set bad' hello "$@" &&
