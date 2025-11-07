@@ -622,7 +622,7 @@ class LLME:
         data["last_token_ms"] = data["total_ms"] - data["first_token_ms"] - data["response_ms"]
         self.metrics.update(data)
 
-        cprint(self.metrics.infoline(data), "light_grey")
+        cprint(self.metrics.infoline(data), "light_grey", file=sys.stderr)
 
         if self.config.export_metrics:
             try:
@@ -814,7 +814,7 @@ class LLME:
                 os.unlink(stdinfile.name)
 
         if self.metrics.total:
-            cprint(f"Total: {self.metrics.infoline(self.metrics.total)}", "light_grey")
+            cprint(f"Total: {self.metrics.infoline(self.metrics.total)}", "light_grey", file=sys.stderr)
 
     def load_chat(self, file):
         logger.info("Loading conversation from %s", file)
