@@ -80,7 +80,12 @@ class LLME:
             kb = prompt_toolkit.key_binding.KeyBindings()
             kb.add("pageup")(self.on_pageup)
             kb.add("pagedown")(self.on_pagedown)
-            self.session = prompt_toolkit.PromptSession(complete_while_typing=True, key_bindings=kb)
+            self.session = prompt_toolkit.PromptSession(
+                    complete_while_typing=True,
+                    key_bindings=kb,
+                    completer=SlashCompleter(self),
+                    complete_style=prompt_toolkit.shortcuts.CompleteStyle.MULTI_COLUMN,
+            )
         self.failsafe = False # when True, its mean we are failing. this variable helps to prevent a loop of failure on the catch-all error handling
 
         self.api_headers = {} # additional headers for the server
@@ -108,16 +113,6 @@ class LLME:
         if not self.rollforward("user"):
             return
         self.cancel_prompt()
-
-    def slash_completer(self):
-        """Return a completer for slash commands"""
-        words = [word.split()[0] for word in self.slash_commands]
-        notsettable = ["config", "plugins", "version", "dump_config", "list_tools", "list_models", "prompts"]
-        for c in vars(self.config):
-            if c not in notsettable:
-                words.append(f"/set {c}=")
-
-        return prompt_toolkit.completion.WordCompleter(words, sentence=True)
 
     def build_message_object(self, message):
         """Add a message to the history"""
@@ -1434,6 +1429,32 @@ class AppError(Exception):
             return f"{super().__str__()}: {self.__cause__}"
         else:
             return super().__str__()
+
+class SlashCompleter(prompt_toolkit.completion.Completer):
+    """A completer for slash commands.
+    For some reasons, the provided completers do not like 'words' with / at the beginning"""
+    def __init__(self, llme):
+        self.llme = llme # Strongly coupled, I allow it
+        self.nesting = {}
+        for command in self.llme.slash_commands:
+            words = command.split()
+            command = words[0][1:]
+            if words[1] == "FILE":
+                self.nesting[command] = prompt_toolkit.completion.PathCompleter(expanduser=True)
+            else:
+                self.nesting[command] = None
+        notsettable = ["config", "plugins", "version", "dump_config", "list_tools", "list_models", "prompts"]
+        settings = {x + "=" for x in vars(self.llme.config) if x not in notsettable}
+        self.nesting["set"] = settings
+
+        self.completer = prompt_toolkit.completion.NestedCompleter.from_nested_dict(self.nesting)
+
+    def get_completions(self, document, complete_event):
+        if not document.text.startswith("/"):
+            return
+        new_document = prompt_toolkit.document.Document(text=document.text[1:], cursor_position=len(document.text)-1)
+        yield from self.completer.get_completions(new_document, complete_event)
+
 
 def extract_requests_error(e):
     """Common handling of requests error"""
