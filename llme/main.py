@@ -1643,6 +1643,7 @@ def process_args():
     parser.add_argument(      "--dump-config", action="store_true", help="Print the effective config and quit")
     parser.add_argument(      "--plugin", action="append", dest="plugins", help="Add additional tool (python file or directory) [plugins]")
     parser.add_argument("-v", "--verbose", default=0, action="count", help="Increase verbosity level (can be used multiple times)")
+    parser.add_argument(      "--log-file", help="Write logs to a file [log_file]")
     parser.add_argument("-Y", "--yolo", default=None, action="store_true", help="UNSAFE: Do not ask for confirmation before running tools. Combine with --batch to reach the singularity.")
     parser.add_argument(      "--version", action="store_true", help="Display version information and quit")
     parser.add_argument(      "--dummy", action="store_true", help=argparse.SUPPRESS) # Disable LLM for testing the UI alone
@@ -1655,6 +1656,15 @@ def process_args():
 
     set_verbose(args.verbose)
     logger.debug("Given arguments %s", vars(args))
+    if args.log_file:
+        try:
+            filehandler = logging.FileHandler(args.log_file)
+        except OSError as e:
+            raise AppError(f"Can't open log file {args.log_file}") from e
+        filehandler.setLevel(logging.DEBUG)
+        logger.setLevel(logging.DEBUG)
+        filehandler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+        logger.addHandler(filehandler)
 
     resolve_config(args)
 
