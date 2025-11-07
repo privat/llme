@@ -245,7 +245,6 @@ class LLME:
         with open(file, "r") as f:
             old = f.readlines()
         new = stdin.splitlines(keepends=True)
-        print(f"file exists")
         for line in difflib.unified_diff(old, new, file, file):
             if line[0] == '+':
                 color = "green"
