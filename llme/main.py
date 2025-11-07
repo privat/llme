@@ -1645,9 +1645,9 @@ def process_args():
         list_tools()
         sys.exit(0)
 
-    if args.base_url is None:
-        print("Error: --base-url required and not definied the config file.", file=sys.stderr)
-        sys.exit(1)
+    if not args.base_url:
+        logger.error("Error: --base-url required and not defined the config file.")
+        sys.exit(2)
 
     return args
 
