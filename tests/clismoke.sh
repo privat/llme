@@ -145,14 +145,18 @@ t key2 llme --api-key '' hello "$@" &&
 	validate_chat system hello assistant
 
 #  -b, --batch           Run non-interactively. Implicit if stdin is not a tty [batch]
+# batch+no prompts = stdin is big prompt
 t batch1 llme -b "$@" <<<$'hello\nworld\n' &&
 	validate_chat system 'hello.*world' assistant
+# no batch+no prompts = stdin lines are prompts
 t batch2 llme --no-batch "$@" <<<$'hello\nworld\n' &&
 	validate_chat system hello assistant world assistant
-# It there are command line prompts, stdin is data
-t batch3 llme --no-batch "$@" goodbye <<<$'hello\nworld\n' &&
+# batch+prompts = stdin is data
+t batch3 llme -b goodbye "$@" <<<$'hello\nworld\n' &&
 	validate_chat system "goodbye.*file" assistant tool assistant
-
+# no batch+prompts = stdin are more prompts
+t batch4 llme --no-batch goodbye "$@" <<<$'hello\nworld\n' &&
+	validate_chat system goodbye assistant hello assistant world assistant
 
 #  -p, --plain           No colors or tty fanciness. Implicit if stdout is not a tty [plain]
 t plain1 llme -p hello "$@" &&
@@ -318,7 +322,7 @@ t dummy3 llme -u bad --dummy hello "$@" &&
 	validate_chat system hello "I'm assistant."
 
 # args
-t args0 llme "$@" &&
+t args0 llme "$@" < /dev/null &&
 	pass
 # prefix
 t args1 llme --verbo hello "$@" &&
