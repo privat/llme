@@ -525,7 +525,7 @@ class LLME:
                         full_tool_calls.append(None)
                     if "name" in f:
                         full_tool_calls[idx] = tool_call
-                        cprint(f["name"], color="red")
+                        cprint(f["name"], color="red", end='', flush=True)
                         cprint(f["arguments"], color="red", end='', flush=True)
                     else:
                         full_tool_calls[idx]["function"]["arguments"] += f["arguments"]
