@@ -90,7 +90,7 @@ result() {
 answer() {
 	if jq -r '.[-1].content' "$LOGDIR/chat.json" | sed '/^$/d' | tail -n1 | grep -x "$1"; then
 		result "PASS"
-	elif grep --color=always -i "$1" "$LOGDIR/log.txt" > >(head); then
+	elif grep --color=always -i "$1" "$LOGDIR/out.txt" > >(head); then
 		result "ALMOST"
 	else
 		result "FAIL"
@@ -100,7 +100,7 @@ answer() {
 # Check that the llm result talk about a pattern
 smoke() {
 	for re in "$@"; do
-		if ! grep --color=always -i "$re" "$LOGDIR/log.txt" > >(head); then
+		if ! grep --color=always -i "$re" "$LOGDIR/out.txt" > >(head); then
 			result "FAIL"
 			return 1
 		fi
@@ -124,7 +124,7 @@ runllme() {
 		. venv/bin/activate
 	fi
 	setsid timeout -v -f -sINT 180 "$@"
-	) 2> >(tee -a "$LOGDIR/err.txt" > "$out") > >(tee -a "$LOGDIR/log.txt" > "$out")
+	) 2> >(tee -a "$LOGDIR/err.txt" > "$out") > >(tee -a "$LOGDIR/out.txt" > "$out")
 }
 
 # Create LOGDIR and WORKDIR.
@@ -170,7 +170,7 @@ checkerr() {
 		result "TIMEOUT"
 		return 124
 	elif [ "$err" -ne 0 ]; then
-		grep --color -i error "$LOGDIR/log.txt"
+		grep --color -i error "$LOGDIR/out.txt"
 		result "ERROR" "$(tail -n 1 "$LOGDIR/err.txt")"
 		return $err
 	fi
@@ -295,7 +295,7 @@ tllme() {
 		result "TIMEOUT"
 		return 124
 	elif [ "$err" -ne 0 ]; then
-		grep --color -i error "$LOGDIR/log.txt"
+		grep --color -i error "$LOGDIR/out.txt"
 		result "ERROR" "$(tail -n 1 "$LOGDIR/err.txt")"
 		return $err
 	fi
