@@ -154,8 +154,114 @@ prepare() {
 		WORKDIR=`mktemp --tmpdir -d llme-XXXXX`
 	fi
 	ln -s "$WORKDIR" "$LOGDIR/workdir"
+}
 
+# Shortcut for result PASS
+pass() {
+	result PASS
+}
+
+# Shortcut for result ERROR/TIMEOUT.
+# $1 the error code
+checkerr() {
+	err=$1
+	if [ "$err" -eq 124 ]; then
+		result "TIMEOUT"
+		return 124
+	elif [ "$err" -ne 0 ]; then
+		grep --color -i error "$LOGDIR/log.txt"
+		result "ERROR" "$(tail -n 1 "$LOGDIR/err.txt")"
+		return $err
+	fi
+}
+
+# Run a basic test with a command
+# Usage: t taskname [cmd args]...
+t() {
+	prepare "$@" || return
+	shift
 	setup
+	echo
+	result "RUNNING"
+	runllme "$@"
+	err=$?
+	teardown
+	checkerr "$err"
+}
+
+# test a command that should error
+et() {
+	prepare "$@" || return
+	shift
+	setup
+	echo
+	result "RUNNING"
+	runllme "$@"
+	err=$?
+	teardown
+	if [ "$err" -eq 124 ]; then
+		result "TIMEOUT"
+		return 124
+	elif [ "$err" -eq 0 ]; then
+		result "FAIL" "unexpected success"
+		return 1
+	fi
+	# we good
+	return 0
+}
+
+
+# validate each message content in the chat with PCRE
+validate_chat() {
+	i=0
+	for re in "$@"; do
+		if ! content=$(jq -c ".[$i]" "$LOGDIR/chat.json"); then
+			result FAIL "bad jq"
+			return 1
+		fi
+		if ! echo "$content" | grep -qP "$re"; then
+			echo "$content"
+			result FAIL "at $i no $re"
+			return 1
+		fi
+		((i++))
+	done
+	if ! content=$(jq "length" "$LOGDIR/chat.json"); then
+		result ALMOST "bad jq"
+		return 1
+	fi
+	if [ "$content" -ne "$i" ]; then
+		result ALMOST "expected length $i, got $content"
+		return 1
+	fi
+	result PASS
+}
+
+# Vadidate if specific regex are found in the err.txt file
+validate_err() {
+	for re in "$@"; do
+		if ! grep -q -P "$re" "$LOGDIR/err.txt"; then
+			result FAIL "$re not found"
+			return 1
+		fi
+	done
+	if grep -q "Traceback (most recent call last):" "$LOGDIR/err.txt"; then
+		result ALMOST "exception raised"
+		return 1
+	fi
+	pass
+}
+
+# Run "$@", the result code decide PASS or FAIL
+validate_with() {
+	if res="$("$@" 2>&1)"; then
+		result PASS
+	else
+		result FAIL "$res"
+		return 1
+	fi
+}
+
 
 # Run a test with the llme tool
 # Usage: tllme taskname [llme args...] (use "$@" for args)
