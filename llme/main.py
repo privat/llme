@@ -78,7 +78,9 @@ class LLME:
         ]
 
         self.warmup = None
-        if self.config.batch:
+        if self.config.batch or not sys.stdin.isatty() or not sys.stdout.isatty():
+            # prompt_toolkit is disabled in batch mode
+            # and need a tty
             self.session = None
         else:
             kb = prompt_toolkit.key_binding.KeyBindings()
@@ -225,7 +227,7 @@ class LLME:
             if self.session:
                 x = self.session.prompt([("#ff0000", f"{question}? ")], placeholder=[("#7f7f7f", "Enter to confirm, or give a prompt to cancel")], default=default)
             else:
-                x = input(f"{question}? ")
+                x = input(colored(f"{question}? ", "light_red"))
             self.failsafe = False # user input still alive
             if x == "":
                 return True
@@ -365,16 +367,16 @@ class LLME:
         try:
             if self.warmup:
                 self.warmup.start()
-            if self.session:
-                if self.message_index is not None:
-                    prompt = [("#00ff00", f"{self.message_index}/{self.prompt_prefix()}> ")]
-                    default = self.messages[self.message_index]["content"]
-                else:
-                    prompt = [("#00ff00", f"{self.prompt_prefix()}> ")]
-                    default = ""
-                user_input = self.session.prompt(prompt, default=default, placeholder=[("#7f7f7f", "A prompt, /h for help, Ctrl-C to interrupt")])
+            if self.message_index is not None:
+                prompt = f"{self.message_index}/{self.prompt_prefix()}> "
+                default = self.messages[self.message_index]["content"]
             else:
-                user_input = input()
+                prompt = f"{self.prompt_prefix()}> "
+                default = ""
+            if self.session:
+                user_input = self.session.prompt([("#00ff00", prompt)], default=default, placeholder=[("#7f7f7f", "A prompt, /h for help, Ctrl-C to interrupt")])
+            else:
+                user_input = input(colored(prompt, "light_green"))
             self.failsafe = False
             if self.warmup:
                 self.warmup.stop()
@@ -789,9 +791,14 @@ class LLME:
                     f.write(sys.stdin.buffer.read())
 
                 self.prompts.insert(0, stdinfile.name)
-            else:
-                # No prompts, so use stdin as prompt
+            elif self.config.batch:
+                # No prompts, so use stdin as prompt.
+                # In batch mode, the whole stdin is a single prompt
                 self.prompts = [sys.stdin.read()]
+            else:
+                # In non-batch mode but not tty, we process prompts line by line
+                # We rely on input(), nothing to do here
+                pass
 
         if len(self.prompts) == 0 and not self.config.dummy:
             if not models:
