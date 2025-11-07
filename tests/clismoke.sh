@@ -279,6 +279,12 @@ t verbose3 llme -vvv hello "$@" &&
 	validate_err "level set to DEBUG"
 t ss-verbose1 llme '/set verbose=1' hello "$@"
 
+#  --log-file LOG_FILE   Write logs to a file [log_file]
+t log-file1 llme --log-file tmp.log hello "$@" &&
+	validate_with grep -q 'llme - DEBUG' "$WORKDIR/tmp.log"
+et log-file2 llme --log-file /bad/file hello "$@" &&
+	validate_err "No such file"
+
 #  -Y, --yolo            UNSAFE: Do not ask for confirmation before running tools. Combine with --batch to reach the singularity.
 t yolo1 llme --yolo hello "$@" &&
 	validate_chat system hello assistant
