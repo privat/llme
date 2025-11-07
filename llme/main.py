@@ -414,11 +414,7 @@ class LLME:
         if user_input == '':
             return None
         if user_input[0] == '/':
-            try:
-                self.slash_command(user_input)
-            except EOFError as e:
-                # was likely /quit
-                raise e
+            self.slash_command(user_input)
             return None
 
         while file := self.next_asset():
@@ -738,7 +734,7 @@ class LLME:
                 # it's not supposed to happen
                 # but, at least, it allows the user to recover its work.
                 if self.config.batch or self.failsafe:
-                    raise e
+                    raise
                 self.failsafe = True
                 import traceback
                 traceback.print_exc()
