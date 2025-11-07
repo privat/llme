@@ -110,13 +110,20 @@ smoke() {
 
 # Run llme in its workdir with a fresh python environment
 runllme() {
+	# verbose mode
+	if [ -z "$V" ]; then
+		out=/dev/null
+	else
+		out=/dev/stdout
+	fi
+
 	(
 	set -e
 	cd "$WORKDIR"
 	python3 -m venv venv
 	. venv/bin/activate
 	setsid timeout -v -f -sINT 180 "$LLME" "$@"
-)
+	) 2> >(tee -a "$LOGDIR/err.txt" > "$out") > >(tee -a "$LOGDIR/log.txt" > "$out")
 }
 
 # Run a test with the llme tool
@@ -154,11 +161,6 @@ tllme() {
 
 	setup
 
-	if [ -z "$V" ]; then
-		out=/dev/null
-	else
-		out=/dev/stdout
-	fi
 
 	if ! "$LLME" "$@" --dump-config > "$LOGDIR/config.json"; then
 		result "ERROR" "can't get config"
