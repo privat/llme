@@ -33,6 +33,10 @@ import tomllib
 import prompt_toolkit
 import requests
 from termcolor import colored, cprint
+try:
+    from termcolor import can_colorize # Exported since v3.2.0
+except ImportError:
+    from termcolor.termcolor import _can_do_colour as can_colorize # Was private before v3.2.0
 
 # The global logger of the module
 logger = logging.getLogger('llme')
@@ -1559,8 +1563,6 @@ def resolve_config(args):
         args.tool_mode = "native"
     if args.batch is None and not sys.stdin.isatty():
         args.batch = True
-    if args.plain is None and not sys.stdout.isatty():
-        args.plain = True
 
     logger.debug("Final config: %s", vars(args))
 
@@ -1683,6 +1685,17 @@ def process_args():
     if args.version:
         show_version()
         sys.exit(0)
+
+    # We need to that first because `can_colorize()` is cached.
+    # So we need to "guess" the environment before printing anything, including logs
+    if args.plain is None:
+        args.plain = not can_colorize()
+    elif args.plain:
+        # For termcolor and subprocesses
+        os.environ["NO_COLOR"] = "True" # https://no-color.org/
+    else:
+        # For termcolor and subprocesses
+        os.environ["FORCE_COLOR"] = "True" # https://force-color.org/
 
     set_verbose(args.verbose)
     logger.debug("Given arguments %s", vars(args))
