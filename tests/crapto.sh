@@ -1,6 +1,5 @@
 #!/bin/bash
 
-KEEPWORKDIR=true
 . "$(dirname "$0")/utils.sh"
 
 FLAG="FLAG{FriSt@tHeSc0r3b04rdz}"

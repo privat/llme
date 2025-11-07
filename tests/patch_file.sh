@@ -1,6 +1,6 @@
 #!/bin/bash
 
-. "$(dirname "$0")/utils.sh" &&
+. "$(dirname "$0")/utils.sh"
 
 setup() {
 	copy README.md pyproject.toml
