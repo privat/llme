@@ -1641,10 +1641,6 @@ def process_args():
         for plugin in args.plugins:
             load_plugin(plugin)
 
-    if args.list_tools:
-        list_tools()
-        sys.exit(0)
-
     if not args.base_url:
         logger.error("Error: --base-url required and not defined the config file.")
         sys.exit(2)
@@ -1657,6 +1653,9 @@ def main():
     try:
         config = process_args()
         llme = LLME(config)
+        if config.list_tools:
+            list_tools()
+            sys.exit(0)
 
         llme.start()
     except AppError as e:
