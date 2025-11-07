@@ -88,6 +88,8 @@ class LLME:
 
         self.metrics = Metrics()
 
+        tool(self.run_command)
+
     def cancel_prompt(self):
         """Cancel the current prompt and go back to the main loop"""
         app = prompt_toolkit.application.current.get_app()
@@ -665,8 +667,6 @@ class LLME:
             message = {"role": "tool", "content": f"Error: bad tool arguments {function["name"]}. {e}", "tool_call_id": tool_call["id"]}
             return message
         logger.info(f"CALL %s(%s)", tool.name, args)
-        if tool.need_self:
-            args = {"self": self} | args
         try:
             result = tool.fun(**args)
         except EOFError as e:
@@ -1315,7 +1315,6 @@ class Tool:
         self.name = fun.__name__
         self.fun = fun
         self.doc = fun.__doc__
-        self.need_self = False
         all_tools[self.name] = self
         self.build_schema()
 
@@ -1327,9 +1326,6 @@ class Tool:
         params = {}
         reqs = []
         for n, p in signature.parameters.items():
-            if n == "self":
-                self.need_self = True
-                continue
             res = {}
             params[n] = res
             if p.annotation != inspect._empty:
@@ -1357,7 +1353,6 @@ def tool(fun):
     tool = Tool(fun)
     return fun
 
-tool(getattr(LLME,"run_command"))
 
 
 class Asset:
