@@ -136,7 +136,7 @@ tllme() {
 	task=$1
 	shift
 
-	if [ -n "$F" ] && ! echo "$task" | grep "$F"; then
+	if [ -n "$F" ] && echo "$task" | grep -qv "$F"; then
 		return 1
 	fi
 
