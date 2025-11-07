@@ -108,7 +108,7 @@ smoke() {
 	result "PASS"
 }
 
-# Run llme in its workdir with a fresh python environment
+# Run a command in its workdir with a fresh python environment if available.
 runllme() {
 	# verbose mode
 	if [ -z "$V" ]; then
@@ -120,8 +120,9 @@ runllme() {
 	(
 	set -e
 	cd "$WORKDIR"
-	python3 -m venv venv
-	. venv/bin/activate
+	if [ -f venv ]; then
+		. venv/bin/activate
+	fi
 	setsid timeout -v -f -sINT 180 "$@"
 	) 2> >(tee -a "$LOGDIR/err.txt" > "$out") > >(tee -a "$LOGDIR/log.txt" > "$out")
 }
@@ -279,6 +280,8 @@ tllme() {
 		result "ERROR" "can't get config"
 		return 1
 	fi
+
+	(cd "$WORKDIR" && python3 -m venv venv)
 
 	echo
 	result "RUNNING"
