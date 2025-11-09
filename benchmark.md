@@ -71,6 +71,7 @@ The larger is not always the better.
 | 🟠 [unsloth/Qwen3-4B-Thinking-2507-GGUF]:F16 mode=markdown                           | 27 (51%) | 0        | 15 (28%) | 3 (6%)   | 8 (15%)   |      53 |
 | 🟠 [unsloth/Qwen3-Coder-30B-A3B-Instruct-GGUF]:Q4_K_M mode=native                    | 26 (49%) | 3 (6%)   | 20 (38%) | 3 (6%)   | 1 (2%)    |      53 |
 | 🟠 [unsloth/Qwen3-30B-A3B-GGUF]:BF16 mode=native                                     | 26 (49%) | 2 (4%)   | 19 (36%) | 4 (8%)   | 2 (4%)    |      53 |
+| 🟠 [unsloth/Kimi-K2-Instruct-GGUF]:TQ1_0 mode=markdown                               | 26 (49%) | 1 (2%)   | 18 (34%) | 4 (8%)   | 4 (8%)    |      53 |
 | 🟠 [unsloth/Qwen3-235B-A22B-GGUF]:Q4_K_M mode=markdown                               | 26 (49%) | 1 (2%)   | 13 (25%) | 4 (8%)   | 9 (17%)   |      53 |
 | 🟠 [unsloth/Qwen3-4B-Thinking-2507-GGUF]:Q4_K_M mode=native                          | 26 (49%) | 0        | 18 (34%) | 4 (8%)   | 5 (9%)    |      53 |
 | 🟠 [unsloth/cogito-v2-preview-llama-405B-GGUF]:Q4_K_M mode=markdown                  | 25 (47%) | 2 (4%)   | 5 (9%)   | 3 (6%)   | 18 (34%)  |      53 |
@@ -112,6 +113,7 @@ The larger is not always the better.
 | 🔴 [qwen3]:30b mode=markdown                                                         | 17 (32%) | 1 (2%)   | 27 (51%) | 0        | 8 (15%)   |      53 |
 | 🔴 [qwen3]:14b mode=markdown                                                         | 17 (32%) | 1 (2%)   | 30 (57%) | 0        | 5 (9%)    |      53 |
 | 🔴 [unsloth/Magistral-Small-2509-GGUF]:UD-Q4_K_XL mode=native                        | 16 (30%) | 4 (8%)   | 28 (53%) | 1 (2%)   | 4 (8%)    |      53 |
+| 🔴 [unsloth/Kimi-K2-Thinking-GGUF]:TQ1_0 mode=native                                 | 16 (30%) | 3 (6%)   | 30 (57%) | 3 (6%)   | 1 (2%)    |      53 |
 | 🔴 [ibm-granite/granite-4.0-h-micro-GGUF]:Q4_K_M mode=native                         | 16 (30%) | 3 (6%)   | 30 (57%) | 4 (8%)   | 0         |      53 |
 | 🔴 [unsloth/Qwen3-4B-Instruct-2507-GGUF]:F16 mode=native                             | 16 (30%) | 2 (4%)   | 13 (25%) | 22 (42%) | 0         |      53 |
 | 🔴 [qwen3]:32b mode=markdown                                                         | 16 (30%) | 1 (2%)   | 23 (43%) | 0        | 13 (25%)  |      53 |
@@ -140,8 +142,10 @@ The larger is not always the better.
 | 🔴 [llama3.2-vision]:latest mode=markdown                                            | 11 (21%) | 1 (2%)   | 41 (77%) | 0        | 0         |      53 |
 | 🔴 [unsloth/granite-4.0-h-small-GGUF]:Q4_K_M mode=markdown                           | 11 (21%) | 1 (2%)   | 36 (68%) | 4 (8%)   | 1 (2%)    |      53 |
 | 🔴 [NexaAI/qwen3vl-8B-Instruct-4bit-mlx]:4BIT mode=native                            | 11 (21%) | 0        | 42 (79%) | 0        | 0         |      53 |
+| 🔴 [unsloth/Kimi-K2-Instruct-GGUF]:TQ1_0 mode=native                                 | 11 (21%) | 0        | 39 (74%) | 3 (6%)   | 0         |      53 |
 | 🔴 [NexaAI/Qwen3-4B-4bit-MLX] mode=markdown                                          | 8 (21%)  | 4 (10%)  | 26 (67%) | 0        | 1 (3%)    |      39 |
 | 🔴 [qwen3]:0.6b mode=native                                                          | 10 (19%) | 4 (8%)   | 39 (74%) | 0        | 0         |      53 |
+| 🔴 [unsloth/Kimi-K2-Thinking-GGUF]:TQ1_0 mode=markdown                               | 10 (19%) | 4 (8%)   | 32 (60%) | 3 (6%)   | 4 (8%)    |      53 |
 | 🔴 [unsloth/granite-4.0-h-tiny-GGUF]:Q4_K_M mode=markdown                            | 10 (19%) | 4 (8%)   | 17 (32%) | 4 (8%)   | 18 (34%)  |      53 |
 | 🔴 [gemma3]:27b mode=markdown                                                        | 10 (19%) | 3 (6%)   | 40 (75%) | 0        | 0         |      53 |
 | 🔴 [NexaAI/qwen3vl-4B-Thinking-4bit-mlx]:4BIT mode=native                            | 10 (19%) | 3 (6%)   | 38 (72%) | 2 (4%)   | 0         |      53 |
@@ -227,6 +231,7 @@ The larger is not always the better.
 | [unsloth/Qwen3-4B-Thinking-2507-GGUF]:F16 mode=markdown                           | 💎 13/13 (100%) | 💎 4/4 (100%) | 💎 5/5 (100%)     | 💀 0/6        | 💀 0/5          | 🟠 3/8 (38%) | 🔴 2/12 (17%)  |
 | [unsloth/Qwen3-Coder-30B-A3B-Instruct-GGUF]:Q4_K_M mode=native                    | 🟢 12/13 (92%)  | 💎 4/4 (100%) | 🟠 2/5 (40%)      | 🔴 2/6 (33%)  | 💀 0/5          | 🔴 2/8 (25%) | 🔴 4/12 (33%)  |
 | [unsloth/Qwen3-30B-A3B-GGUF]:BF16 mode=native                                     | 🟢 12/13 (92%)  | 🟡 3/4 (75%)  | 🟠 3/5 (60%)      | 🟡 4/6 (67%)  | 🔴 1/5 (20%)    | 🟠 3/8 (38%) | 💀 0/12        |
+| [unsloth/Kimi-K2-Instruct-GGUF]:TQ1_0 mode=markdown                               | 🟢 12/13 (92%)  | 🟠 2/4 (50%)  | 🟠 2/5 (40%)      | 🟡 4/6 (67%)  | 💀 0/5          | 💀 0/8       | 🟠 6/12 (50%)  |
 | [unsloth/Qwen3-235B-A22B-GGUF]:Q4_K_M mode=markdown                               | 🟡 11/13 (85%)  | 💎 4/4 (100%) | 🟠 3/5 (60%)      | 🔴 2/6 (33%)  | 💀 0/5          | 🔴 2/8 (25%) | 🔴 4/12 (33%)  |
 | [unsloth/Qwen3-4B-Thinking-2507-GGUF]:Q4_K_M mode=native                          | 🟡 11/13 (85%)  | 🟠 2/4 (50%)  | 💎 5/5 (100%)     | 🟠 3/6 (50%)  | 💀 0/5          | 🟠 3/8 (38%) | 🔴 2/12 (17%)  |
 | [unsloth/cogito-v2-preview-llama-405B-GGUF]:Q4_K_M mode=markdown                  | 🟡 10/13 (77%)  | 🟡 3/4 (75%)  | 🟠 3/5 (60%)      | 💀 0/6        | 💀 0/5          | 🟠 3/8 (38%) | 🟠 6/12 (50%)  |
@@ -268,6 +273,7 @@ The larger is not always the better.
 | [qwen3]:30b mode=markdown                                                         | 🟠 8/13 (62%)   | 🟠 2/4 (50%)  | 🟠 2/5 (40%)      | 💀 0/6        | 🔴 1/5 (20%)    | 🔥 1/8 (12%) | 🔴 3/12 (25%)  |
 | [qwen3]:14b mode=markdown                                                         | 🟡 11/13 (85%)  | 💀 0/4        | 🟠 3/5 (60%)      | 🔴 1/6 (17%)  | 💀 0/5          | 💀 0/8       | 🔴 2/12 (17%)  |
 | [unsloth/Magistral-Small-2509-GGUF]:UD-Q4_K_XL mode=native                        | 🟠 8/13 (62%)   | 🟠 2/4 (50%)  | 🔴 1/5 (20%)      | 🔴 1/6 (17%)  | 🟠 2/5 (40%)    | 🔴 2/8 (25%) | 💀 0/12        |
+| [unsloth/Kimi-K2-Thinking-GGUF]:TQ1_0 mode=native                                 | 🟡 11/13 (85%)  | 🟠 2/4 (50%)  | 🟠 2/5 (40%)      | 💀 0/6        | 💀 0/5          | 💀 0/8       | 🔥 1/12 (8%)   |
 | [ibm-granite/granite-4.0-h-micro-GGUF]:Q4_K_M mode=native                         | 🟢 12/13 (92%)  | 🟡 3/4 (75%)  | 💀 0/5            | 🔴 1/6 (17%)  | 💀 0/5          | 💀 0/8       | 💀 0/12        |
 | [unsloth/Qwen3-4B-Instruct-2507-GGUF]:F16 mode=native                             | 🟢 12/13 (92%)  | 💀 0/4        | 🟠 3/5 (60%)      | 💀 0/6        | 💀 0/5          | 💀 0/8       | 🔥 1/12 (8%)   |
 | [qwen3]:32b mode=markdown                                                         | 🟡 10/13 (77%)  | 💀 0/4        | 🟠 3/5 (60%)      | 💀 0/6        | 💀 0/5          | 🔴 2/8 (25%) | 🔥 1/12 (8%)   |
@@ -296,8 +302,10 @@ The larger is not always the better.
 | [llama3.2-vision]:latest mode=markdown                                            | 🟠 7/13 (54%)   | 💀 0/4        | 🔴 1/5 (20%)      | 💀 0/6        | 🟠 3/5 (60%)    | 💀 0/8       | 💀 0/12        |
 | [unsloth/granite-4.0-h-small-GGUF]:Q4_K_M mode=markdown                           | 🟠 7/13 (54%)   | 🟠 2/4 (50%)  | 🔴 1/5 (20%)      | 💀 0/6        | 💀 0/5          | 💀 0/8       | 🔥 1/12 (8%)   |
 | [NexaAI/qwen3vl-8B-Instruct-4bit-mlx]:4BIT mode=native                            | 🟠 8/13 (62%)   | 💀 0/4        | 🟠 2/5 (40%)      | 💀 0/6        | 🔴 1/5 (20%)    | 💀 0/8       | 💀 0/12        |
+| [unsloth/Kimi-K2-Instruct-GGUF]:TQ1_0 mode=native                                 | 🟡 9/13 (69%)   | 💀 0/4        | 🟠 2/5 (40%)      | 💀 0/6        | 💀 0/5          | 💀 0/8       | 💀 0/12        |
 | [NexaAI/Qwen3-4B-4bit-MLX] mode=markdown                                          | 🟠 7/13 (54%)   | 💀 0/4        | 🔴 1/5 (20%)      |               | 💀 0/5          |              | 💀 0/12        |
 | [qwen3]:0.6b mode=native                                                          | 🟠 8/13 (62%)   | 🔴 1/4 (25%)  | 💀 0/5            | 💀 0/6        | 🔴 1/5 (20%)    | 💀 0/8       | 💀 0/12        |
+| [unsloth/Kimi-K2-Thinking-GGUF]:TQ1_0 mode=markdown                               | 🟠 8/13 (62%)   | 💀 0/4        | 💀 0/5            | 💀 0/6        | 🔴 1/5 (20%)    | 🔥 1/8 (12%) | 💀 0/12        |
 | [unsloth/granite-4.0-h-tiny-GGUF]:Q4_K_M mode=markdown                            | 🟡 10/13 (77%)  | 💀 0/4        | 💀 0/5            | 💀 0/6        | 💀 0/5          | 💀 0/8       | 💀 0/12        |
 | [gemma3]:27b mode=markdown                                                        | 🟠 7/13 (54%)   | 💀 0/4        | 🔴 1/5 (20%)      | 💀 0/6        | 🟠 2/5 (40%)    | 💀 0/8       | 💀 0/12        |
 | [NexaAI/qwen3vl-4B-Thinking-4bit-mlx]:4BIT mode=native                            | 🟠 8/13 (62%)   | 💀 0/4        | 🔴 1/5 (20%)      | 💀 0/6        | 🔴 1/5 (20%)    | 💀 0/8       | 💀 0/12        |
@@ -381,11 +389,13 @@ The average number of predicted tokens per execution that passed (PASS), and per
 | [unsloth/MiniMax-M2-GGUF]:Q4_K_M mode=native                          |            1016 |              2305 | 21 / 50 (42%)       |
 | [unsloth/GLM-4.6-GGUF]:Q4_K_M mode=markdown                           |             157 |               306 | 19 / 50 (38%)       |
 | [NexaAI/qwen3vl-4B-Instruct-4bit-mlx]:4BIT mode=markdown              |             238 |               201 | 18 / 35 (51%)       |
+| [unsloth/Kimi-K2-Thinking-GGUF]:TQ1_0 mode=native                     |             135 |               140 | 16 / 50 (32%)       |
 | [unsloth/Qwen3-4B-Instruct-2507-GGUF]:F16 mode=native                 |             129 |               278 | 16 / 31 (52%)       |
 | [granite4]:3b mode=native                                             |             159 |               268 | 15 / 49 (31%)       |
 | [unsloth/Qwen3-4B-Instruct-2507-GGUF]:Q4_K_M mode=markdown            |              53 |                62 | 14 / 49 (29%)       |
 | [NexaAI/qwen3vl-8B-Thinking-4bit-mlx]:4BIT mode=native                |            1488 |              1874 | 11 / 52 (21%)       |
 | [NexaAI/qwen3vl-8B-Instruct-4bit-mlx]:4BIT mode=native                |              73 |               235 | 11 / 53 (21%)       |
+| [unsloth/Kimi-K2-Instruct-GGUF]:TQ1_0 mode=native                     |              66 |                71 | 11 / 50 (22%)       |
 | [NexaAI/qwen3vl-4B-Thinking-4bit-mlx]:4BIT mode=native                |            2057 |              2019 | 10 / 51 (20%)       |
 | [llama3.1]:70b mode=markdown                                          |             199 |                97 | 10 / 53 (19%)       |
 | [NexaAI/qwen3vl-4B-Thinking-4bit-mlx]:4BIT mode=markdown              |            1793 |              2060 | 9 / 41 (22%)        |
@@ -433,6 +443,7 @@ The average time in requests with the server. Because we used different servers 
 | [unsloth/Qwen3-235B-A22B-GGUF]:Q4_K_M mode=native                           |         34 |           50 | 28 / 49 (57%)       |
 | [unsloth/Qwen3-4B-Thinking-2507-GGUF]:F16 mode=markdown                     |         30 |           60 | 27 / 50 (54%)       |
 | [unsloth/Qwen3-30B-A3B-GGUF]:BF16 mode=native                               |         11 |           18 | 26 / 49 (53%)       |
+| [unsloth/Kimi-K2-Instruct-GGUF]:TQ1_0 mode=markdown                         |         20 |           26 | 26 / 49 (53%)       |
 | [unsloth/Qwen3-30B-A3B-GGUF]:Q4_K_M mode=native                             |         21 |           31 | 25 / 47 (53%)       |
 | [qwen3-coder]:30b t=1.0 mode=native                                         |          6 |           14 | 25 / 53 (47%)       |
 | [unsloth/Qwen3-4B-Thinking-2507-GGUF]:Q4_K_M mode=markdown                  |         37 |           55 | 24 / 49 (49%)       |
@@ -447,6 +458,7 @@ The average time in requests with the server. Because we used different servers 
 | [unsloth/GLM-4.6-GGUF]:Q4_K_M mode=markdown                                 |         13 |           17 | 19 / 50 (38%)       |
 | [NexaAI/qwen3vl-4B-Instruct-4bit-mlx]:4BIT mode=markdown                    |          8 |            6 | 18 / 35 (51%)       |
 | [qwen3-vl]:30b mode=native                                                  |         51 |           72 | 17 / 53 (32%)       |
+| [unsloth/Kimi-K2-Thinking-GGUF]:TQ1_0 mode=native                           |         10 |            7 | 16 / 50 (32%)       |
 | [unsloth/Qwen3-4B-Instruct-2507-GGUF]:F16 mode=native                       |          0 |            1 | 16 / 31 (52%)       |
 | [NexaAI/qwen3vl-8B-Instruct-4bit-mlx]:4BIT mode=markdown                    |          4 |           22 | 16 / 29 (55%)       |
 | [granite4]:3b mode=native                                                   |          3 |            4 | 15 / 49 (31%)       |
@@ -457,6 +469,8 @@ The average time in requests with the server. Because we used different servers 
 | [NexaAI/qwen3vl-8B-Thinking-4bit-mlx]:4BIT mode=native                      |         26 |           31 | 11 / 52 (21%)       |
 | [unsloth/granite-4.0-h-small-GGUF]:Q4_K_M mode=markdown                     |          6 |           15 | 11 / 49 (22%)       |
 | [NexaAI/qwen3vl-8B-Instruct-4bit-mlx]:4BIT mode=native                      |          2 |            4 | 11 / 53 (21%)       |
+| [unsloth/Kimi-K2-Instruct-GGUF]:TQ1_0 mode=native                           |          4 |            3 | 11 / 50 (22%)       |
+| [unsloth/Kimi-K2-Thinking-GGUF]:TQ1_0 mode=markdown                         |         41 |           26 | 10 / 50 (20%)       |
 | [NexaAI/qwen3vl-4B-Thinking-4bit-mlx]:4BIT mode=native                      |         25 |           23 | 10 / 51 (20%)       |
 | [llama3.1]:70b mode=markdown                                                |         28 |           21 | 10 / 53 (19%)       |
 | [unsloth/Mistral-Small-3.2-24B-Instruct-2506-GGUF]:UD-Q4_K_XL mode=markdown |          2 |            3 | 9 / 53 (17%)        |
@@ -485,71 +499,71 @@ The average time in requests with the server. Because we used different servers 
 
 | Task suite         | PASS       | ALMOST    | FAIL       | ERROR     | TIMEOUT   |   Total |
 |:-------------------|:-----------|:----------|:-----------|:----------|:----------|--------:|
-| 🟡 [smoketest]     | 1381 (70%) | 0         | 459 (23%)  | 47 (2%)   | 76 (4%)   |    1963 |
-| 🟠 [hello]         | 229 (38%)  | 0         | 323 (53%)  | 14 (2%)   | 38 (6%)   |     604 |
-| 🔴 [basic_answers] | 242 (32%)  | 245 (33%) | 231 (31%)  | 2 (0%)    | 31 (4%)   |     751 |
-| 🔴 [debug_fib]     | 141 (16%)  | 0         | 631 (72%)  | 32 (4%)   | 78 (9%)   |     882 |
-| 🔥 [smokeimages]   | 111 (15%)  | 0         | 385 (51%)  | 226 (30%) | 33 (4%)   |     755 |
-| 🔥 [crapto]        | 155 (13%)  | 0         | 851 (72%)  | 40 (3%)   | 130 (11%) |    1176 |
-| 🔥 [patch_file]    | 211 (12%)  | 0         | 1388 (77%) | 29 (2%)   | 184 (10%) |    1812 |
+| 🟡 [smoketest]     | 1421 (71%) | 0         | 468 (23%)  | 48 (2%)   | 78 (4%)   |    2015 |
+| 🟠 [hello]         | 233 (38%)  | 0         | 334 (54%)  | 14 (2%)   | 39 (6%)   |     620 |
+| 🔴 [basic_answers] | 248 (32%)  | 253 (33%) | 236 (31%)  | 2 (0%)    | 32 (4%)   |     771 |
+| 🔴 [debug_fib]     | 145 (16%)  | 0         | 650 (72%)  | 32 (4%)   | 79 (9%)   |     906 |
+| 🔥 [smokeimages]   | 112 (14%)  | 0         | 392 (51%)  | 238 (31%) | 33 (4%)   |     775 |
+| 🔥 [crapto]        | 156 (13%)  | 0         | 882 (73%)  | 40 (3%)   | 130 (11%) |    1208 |
+| 🔥 [patch_file]    | 218 (12%)  | 0         | 1425 (77%) | 29 (2%)   | 188 (10%) |    1860 |
 
 ## Results by tasks
 
 | Task                                | PASS      | ALMOST   | FAIL      | ERROR    | TIMEOUT   |   Total |
 |:------------------------------------|:----------|:---------|:----------|:---------|:----------|--------:|
-| 🟢 [smoketest] 03                   | 140 (93%) | 0        | 5 (3%)    | 4 (3%)   | 2 (1%)    |     151 |
-| 🟢 [smoketest] 05                   | 136 (90%) | 0        | 6 (4%)    | 1 (1%)   | 8 (5%)    |     151 |
-| 🟢 [smoketest] 33                   | 135 (89%) | 0        | 12 (8%)   | 0        | 4 (3%)    |     151 |
-| 🟢 [smoketest] 04                   | 130 (86%) | 0        | 18 (12%)  | 3 (2%)   | 0         |     151 |
-| 🟡 [smoketest] 32                   | 128 (85%) | 0        | 16 (11%)  | 0        | 7 (5%)    |     151 |
-| 🟡 [smoketest] 06                   | 124 (82%) | 0        | 15 (10%)  | 5 (3%)   | 7 (5%)    |     151 |
-| 🟡 [smoketest] 01                   | 122 (81%) | 0        | 16 (11%)  | 4 (3%)   | 9 (6%)    |     151 |
-| 🟠 [smoketest] 02                   | 94 (62%)  | 0        | 29 (19%)  | 11 (7%)  | 17 (11%)  |     151 |
-| 🟠 [basic_answers] 0.paris          | 87 (58%)  | 46 (31%) | 9 (6%)    | 0        | 8 (5%)    |     150 |
-| 🟠 [smoketest] 12                   | 84 (56%)  | 0        | 60 (40%)  | 5 (3%)   | 2 (1%)    |     151 |
-| 🟠 [smoketest] 13                   | 76 (50%)  | 0        | 69 (46%)  | 3 (2%)   | 3 (2%)    |     151 |
-| 🟠 [smoketest] 11                   | 76 (50%)  | 0        | 70 (46%)  | 4 (3%)   | 1 (1%)    |     151 |
-| 🟠 [basic_answers] 4.fact           | 74 (49%)  | 11 (7%)  | 62 (41%)  | 0        | 4 (3%)    |     151 |
-| 🟠 [smoketest] 10                   | 72 (48%)  | 0        | 71 (47%)  | 3 (2%)   | 5 (3%)    |     151 |
-| 🟠 [hello] 03git                    | 68 (45%)  | 0        | 73 (48%)  | 2 (1%)   | 8 (5%)    |     151 |
-| 🟠 [smoketest] 31                   | 64 (42%)  | 0        | 72 (48%)  | 4 (3%)   | 11 (7%)   |     151 |
-| 🟠 [hello] 01world                  | 60 (40%)  | 0        | 84 (56%)  | 4 (3%)   | 3 (2%)    |     151 |
-| 🟠 [hello] 02name                   | 57 (38%)  | 0        | 80 (53%)  | 3 (2%)   | 11 (7%)   |     151 |
-| 🔴 [crapto] 10-base64               | 50 (34%)  | 0        | 89 (61%)  | 5 (3%)   | 3 (2%)    |     147 |
-| 🔴 [smokeimages] 4                  | 49 (32%)  | 0        | 28 (19%)  | 64 (42%) | 10 (7%)   |     151 |
-| 🔴 [hello] 04gitignore              | 44 (29%)  | 0        | 86 (57%)  | 5 (3%)   | 16 (11%)  |     151 |
-| 🔴 [patch_file] 04ed                | 41 (27%)  | 0        | 94 (62%)  | 1 (1%)   | 15 (10%)  |     151 |
-| 🔴 [crapto] 40-xor                  | 39 (27%)  | 0        | 90 (61%)  | 3 (2%)   | 15 (10%)  |     147 |
-| 🔴 [crapto] 41-xor-nohint           | 38 (26%)  | 0        | 92 (63%)  | 5 (3%)   | 12 (8%)   |     147 |
-| 🔴 [patch_file] 05python            | 38 (25%)  | 0        | 109 (72%) | 1 (1%)   | 3 (2%)    |     151 |
-| 🔴 [basic_answers] 1.llme           | 33 (22%)  | 54 (36%) | 55 (37%)  | 0        | 8 (5%)    |     150 |
-| 🔴 [patch_file] 00free              | 33 (22%)  | 0        | 111 (74%) | 1 (1%)   | 6 (4%)    |     151 |
-| 🔴 [debug_fib] 01                   | 31 (21%)  | 0        | 103 (70%) | 2 (1%)   | 11 (7%)   |     147 |
-| 🔴 [debug_fib] 04                   | 31 (21%)  | 0        | 107 (73%) | 4 (3%)   | 5 (3%)    |     147 |
-| 🔴 [patch_file] 03patch             | 30 (20%)  | 0        | 102 (68%) | 4 (3%)   | 15 (10%)  |     151 |
-| 🔴 [debug_fib] 02b                  | 28 (19%)  | 0        | 102 (69%) | 4 (3%)   | 13 (9%)   |     147 |
-| 🔴 [debug_fib] 02                   | 25 (17%)  | 0        | 80 (54%)  | 13 (9%)  | 29 (20%)  |     147 |
-| 🔴 [basic_answers] 3.llme           | 25 (17%)  | 66 (44%) | 54 (36%)  | 1 (1%)   | 4 (3%)    |     150 |
-| 🔴 [basic_answers] 2.llme           | 23 (15%)  | 68 (45%) | 51 (34%)  | 1 (1%)   | 7 (5%)    |     150 |
-| 🔥 [crapto] 20-b64-hex              | 21 (14%)  | 0        | 111 (76%) | 5 (3%)   | 10 (7%)   |     147 |
-| 🔥 [smokeimages] 2                  | 19 (13%)  | 0        | 67 (44%)  | 63 (42%) | 2 (1%)    |     151 |
-| 🔥 [debug_fib] 03                   | 18 (12%)  | 0        | 111 (76%) | 5 (3%)   | 13 (9%)   |     147 |
-| 🔥 [patch_file] 11cat               | 18 (12%)  | 0        | 110 (73%) | 3 (2%)   | 20 (13%)  |     151 |
-| 🔥 [smokeimages] 0                  | 18 (12%)  | 0        | 68 (45%)  | 63 (42%) | 2 (1%)    |     151 |
-| 🔥 [smokeimages] 1                  | 16 (11%)  | 0        | 96 (64%)  | 35 (23%) | 4 (3%)    |     151 |
-| 🔥 [patch_file] 02sed               | 14 (9%)   | 0        | 131 (87%) | 2 (1%)   | 4 (3%)    |     151 |
-| 🔥 [patch_file] 01cat               | 10 (7%)   | 0        | 130 (86%) | 2 (1%)   | 9 (6%)    |     151 |
-| 🔥 [smokeimages] 3                  | 9 (6%)    | 0        | 126 (83%) | 1 (1%)   | 15 (10%)  |     151 |
-| 🔥 [patch_file] 13patch             | 9 (6%)    | 0        | 111 (74%) | 3 (2%)   | 28 (19%)  |     151 |
-| 🔥 [debug_fib] 05                   | 8 (5%)    | 0        | 128 (87%) | 4 (3%)   | 7 (5%)    |     147 |
-| 🔥 [patch_file] 10free              | 8 (5%)    | 0        | 120 (79%) | 3 (2%)   | 20 (13%)  |     151 |
-| 🔥 [patch_file] 15python            | 6 (4%)    | 0        | 131 (87%) | 1 (1%)   | 13 (9%)   |     151 |
-| 🔥 [crapto] 42-xor-nokey            | 3 (2%)    | 0        | 102 (69%) | 6 (4%)   | 36 (24%)  |     147 |
-| 🔥 [crapto] 31-rot13-b64-hex-nohint | 2 (1%)    | 0        | 129 (88%) | 4 (3%)   | 12 (8%)   |     147 |
-| 🔥 [crapto] 30-rot13-b64-hex        | 2 (1%)    | 0        | 123 (84%) | 6 (4%)   | 16 (11%)  |     147 |
-| 🔥 [patch_file] 14ed                | 2 (1%)    | 0        | 115 (76%) | 4 (3%)   | 30 (20%)  |     151 |
-| 🔥 [patch_file] 12sed               | 2 (1%)    | 0        | 124 (82%) | 4 (3%)   | 21 (14%)  |     151 |
-| 💀 [crapto] 43-xor-nokey-nohint     | 0         | 0        | 115 (78%) | 6 (4%)   | 26 (18%)  |     147 |
+| 🟢 [smoketest] 03                   | 144 (93%) | 0        | 5 (3%)    | 4 (3%)   | 2 (1%)    |     155 |
+| 🟢 [smoketest] 05                   | 140 (90%) | 0        | 6 (4%)    | 1 (1%)   | 8 (5%)    |     155 |
+| 🟢 [smoketest] 33                   | 139 (90%) | 0        | 12 (8%)   | 0        | 4 (3%)    |     155 |
+| 🟢 [smoketest] 04                   | 134 (86%) | 0        | 18 (12%)  | 3 (2%)   | 0         |     155 |
+| 🟢 [smoketest] 32                   | 132 (85%) | 0        | 16 (10%)  | 0        | 7 (5%)    |     155 |
+| 🟡 [smoketest] 06                   | 128 (83%) | 0        | 15 (10%)  | 5 (3%)   | 7 (5%)    |     155 |
+| 🟡 [smoketest] 01                   | 126 (81%) | 0        | 16 (10%)  | 4 (3%)   | 9 (6%)    |     155 |
+| 🟠 [smoketest] 02                   | 97 (63%)  | 0        | 29 (19%)  | 12 (8%)  | 17 (11%)  |     155 |
+| 🟠 [basic_answers] 0.paris          | 90 (58%)  | 47 (31%) | 9 (6%)    | 0        | 8 (5%)    |     154 |
+| 🟠 [smoketest] 12                   | 86 (55%)  | 0        | 61 (39%)  | 5 (3%)   | 3 (2%)    |     155 |
+| 🟠 [smoketest] 13                   | 78 (50%)  | 0        | 71 (46%)  | 3 (2%)   | 3 (2%)    |     155 |
+| 🟠 [smoketest] 11                   | 77 (50%)  | 0        | 73 (47%)  | 4 (3%)   | 1 (1%)    |     155 |
+| 🟠 [basic_answers] 4.fact           | 76 (49%)  | 12 (8%)  | 63 (41%)  | 0        | 4 (3%)    |     155 |
+| 🟠 [smoketest] 10                   | 74 (48%)  | 0        | 73 (47%)  | 3 (2%)   | 5 (3%)    |     155 |
+| 🟠 [hello] 03git                    | 69 (45%)  | 0        | 76 (49%)  | 2 (1%)   | 8 (5%)    |     155 |
+| 🟠 [smoketest] 31                   | 66 (43%)  | 0        | 73 (47%)  | 4 (3%)   | 12 (8%)   |     155 |
+| 🟠 [hello] 01world                  | 62 (40%)  | 0        | 86 (55%)  | 4 (3%)   | 3 (2%)    |     155 |
+| 🟠 [hello] 02name                   | 58 (37%)  | 0        | 83 (54%)  | 3 (2%)   | 11 (7%)   |     155 |
+| 🔴 [crapto] 10-base64               | 50 (33%)  | 0        | 93 (62%)  | 5 (3%)   | 3 (2%)    |     151 |
+| 🔴 [smokeimages] 4                  | 49 (32%)  | 0        | 28 (18%)  | 68 (44%) | 10 (6%)   |     155 |
+| 🔴 [hello] 04gitignore              | 44 (28%)  | 0        | 89 (57%)  | 5 (3%)   | 17 (11%)  |     155 |
+| 🔴 [patch_file] 04ed                | 41 (26%)  | 0        | 98 (63%)  | 1 (1%)   | 15 (10%)  |     155 |
+| 🔴 [crapto] 40-xor                  | 39 (26%)  | 0        | 94 (62%)  | 3 (2%)   | 15 (10%)  |     151 |
+| 🔴 [crapto] 41-xor-nohint           | 38 (25%)  | 0        | 96 (64%)  | 5 (3%)   | 12 (8%)   |     151 |
+| 🔴 [patch_file] 05python            | 38 (25%)  | 0        | 113 (73%) | 1 (1%)   | 3 (2%)    |     155 |
+| 🔴 [patch_file] 00free              | 34 (22%)  | 0        | 114 (74%) | 1 (1%)   | 6 (4%)    |     155 |
+| 🔴 [basic_answers] 1.llme           | 33 (21%)  | 57 (37%) | 56 (36%)  | 0        | 8 (5%)    |     154 |
+| 🔴 [debug_fib] 01                   | 32 (21%)  | 0        | 106 (70%) | 2 (1%)   | 11 (7%)   |     151 |
+| 🔴 [debug_fib] 04                   | 32 (21%)  | 0        | 110 (73%) | 4 (3%)   | 5 (3%)    |     151 |
+| 🔴 [patch_file] 03patch             | 32 (21%)  | 0        | 104 (67%) | 4 (3%)   | 15 (10%)  |     155 |
+| 🔴 [debug_fib] 02b                  | 29 (19%)  | 0        | 105 (70%) | 4 (3%)   | 13 (9%)   |     151 |
+| 🔴 [debug_fib] 02                   | 26 (17%)  | 0        | 83 (55%)  | 13 (9%)  | 29 (19%)  |     151 |
+| 🔴 [basic_answers] 3.llme           | 26 (17%)  | 68 (44%) | 55 (36%)  | 1 (1%)   | 4 (3%)    |     154 |
+| 🔥 [basic_answers] 2.llme           | 23 (15%)  | 69 (45%) | 53 (34%)  | 1 (1%)   | 8 (5%)    |     154 |
+| 🔥 [crapto] 20-b64-hex              | 21 (14%)  | 0        | 115 (76%) | 5 (3%)   | 10 (7%)   |     151 |
+| 🔥 [patch_file] 11cat               | 19 (12%)  | 0        | 113 (73%) | 3 (2%)   | 20 (13%)  |     155 |
+| 🔥 [smokeimages] 2                  | 19 (12%)  | 0        | 67 (43%)  | 67 (43%) | 2 (1%)    |     155 |
+| 🔥 [debug_fib] 03                   | 18 (12%)  | 0        | 114 (75%) | 5 (3%)   | 14 (9%)   |     151 |
+| 🔥 [smokeimages] 0                  | 18 (12%)  | 0        | 68 (44%)  | 67 (43%) | 2 (1%)    |     155 |
+| 🔥 [smokeimages] 1                  | 16 (10%)  | 0        | 100 (65%) | 35 (23%) | 4 (3%)    |     155 |
+| 🔥 [patch_file] 02sed               | 15 (10%)  | 0        | 134 (86%) | 2 (1%)   | 4 (3%)    |     155 |
+| 🔥 [smokeimages] 3                  | 10 (6%)   | 0        | 129 (83%) | 1 (1%)   | 15 (10%)  |     155 |
+| 🔥 [patch_file] 01cat               | 10 (6%)   | 0        | 134 (86%) | 2 (1%)   | 9 (6%)    |     155 |
+| 🔥 [patch_file] 13patch             | 10 (6%)   | 0        | 114 (74%) | 3 (2%)   | 28 (18%)  |     155 |
+| 🔥 [patch_file] 10free              | 9 (6%)    | 0        | 123 (79%) | 3 (2%)   | 20 (13%)  |     155 |
+| 🔥 [debug_fib] 05                   | 8 (5%)    | 0        | 132 (87%) | 4 (3%)   | 7 (5%)    |     151 |
+| 🔥 [patch_file] 15python            | 6 (4%)    | 0        | 135 (87%) | 1 (1%)   | 13 (8%)   |     155 |
+| 🔥 [crapto] 31-rot13-b64-hex-nohint | 3 (2%)    | 0        | 132 (87%) | 4 (3%)   | 12 (8%)   |     151 |
+| 🔥 [crapto] 42-xor-nokey            | 3 (2%)    | 0        | 106 (70%) | 6 (4%)   | 36 (24%)  |     151 |
+| 🔥 [crapto] 30-rot13-b64-hex        | 2 (1%)    | 0        | 127 (84%) | 6 (4%)   | 16 (11%)  |     151 |
+| 🔥 [patch_file] 12sed               | 2 (1%)    | 0        | 127 (82%) | 4 (3%)   | 22 (14%)  |     155 |
+| 🔥 [patch_file] 14ed                | 2 (1%)    | 0        | 116 (75%) | 4 (3%)   | 33 (21%)  |     155 |
+| 💀 [crapto] 43-xor-nokey-nohint     | 0         | 0        | 119 (79%) | 6 (4%)   | 26 (17%)  |     151 |
 
 
   [LiquidAI/LFM2-8B-A1B-GGUF]: https://huggingface.co/LiquidAI/LFM2-8B-A1B-GGUF
@@ -593,6 +607,8 @@ The average time in requests with the server. Because we used different servers 
   [smoketest]: tests/smoketest.sh
   [unsloth/GLM-4.5-Air-GGUF]: https://huggingface.co/unsloth/GLM-4.5-Air-GGUF
   [unsloth/GLM-4.6-GGUF]: https://huggingface.co/unsloth/GLM-4.6-GGUF
+  [unsloth/Kimi-K2-Instruct-GGUF]: https://huggingface.co/unsloth/Kimi-K2-Instruct-GGUF
+  [unsloth/Kimi-K2-Thinking-GGUF]: https://huggingface.co/unsloth/Kimi-K2-Thinking-GGUF
   [unsloth/Magistral-Small-2509-GGUF]: https://huggingface.co/unsloth/Magistral-Small-2509-GGUF
   [unsloth/MiniMax-M2-GGUF]: https://huggingface.co/unsloth/MiniMax-M2-GGUF
   [unsloth/Mistral-Small-3.2-24B-Instruct-2506-GGUF]: https://huggingface.co/unsloth/Mistral-Small-3.2-24B-Instruct-2506-GGUF
