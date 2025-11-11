@@ -86,11 +86,13 @@ class LLME:
             kb = prompt_toolkit.key_binding.KeyBindings()
             kb.add("pageup")(self.on_pageup)
             kb.add("pagedown")(self.on_pagedown)
+            history = prompt_toolkit.history.FileHistory(config.history_filename)
             self.session = prompt_toolkit.PromptSession(
                     complete_while_typing=True,
                     key_bindings=kb,
                     completer=SlashCompleter(self),
                     complete_style=prompt_toolkit.shortcuts.CompleteStyle.MULTI_COLUMN,
+                    history=history,
             )
         self.failsafe = False # when True, its mean we are failing. this variable helps to prevent a loop of failure on the catch-all error handling
 
@@ -1670,6 +1672,7 @@ def process_args():
     parser.add_argument(      "--list-tools", action="store_true", default=None, help="List available tools then exit")
     parser.add_argument(      "--dump-config", action="store_true", default=None, help="Print the effective config and quit")
     parser.add_argument(      "--plugin", metavar="PATH", action="append", dest="plugins", help="Add additional tool (python file or directory) [plugins]")
+    parser.add_argument("-H", "--history-filename", metavar="FILE", help="Read/write command history from FILE [history_filename]")
     parser.add_argument("-v", "--verbose", action="count", help="Increase verbosity level (can be used multiple times)")
     parser.add_argument(      "--log-file", metavar="FILE", help="Write logs to a file [log_file]")
     parser.add_argument("-Y", "--yolo", action="store_true", default=None, help="UNSAFE: Do not ask for confirmation before running tools. Combine with --batch to reach the singularity.")
@@ -1724,6 +1727,9 @@ def process_args():
     if not args.base_url:
         logger.error("Error: --base-url required and not defined the config file.")
         sys.exit(2)
+
+    if args.history_filename is None:
+        args.history_filename = os.path.expanduser("~/.config/llme/history")
 
     return args
 
