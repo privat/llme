@@ -56,8 +56,10 @@ class LLME:
         self.roots = [] # The first system messages (roots without parent)
         self.current_generation = 0 # The generation number of the current conversation (for prompt prefix)
         self.message_index = None # The current message in the history (for /undo and history navigation)
+        self.files = [] # Attached file for the next request.
 
         self.slash_commands = [
+            "/file FILE    attach a file for the next prompt",
             "/models       list available models",
             "/tools        list available tools",
             "/metrics      list current metrics",
@@ -403,9 +405,8 @@ class LLME:
         Returns None or a user message"""
         logger.debug("Get the next prompt. Prompts queue: %d", len(self.prompts))
 
-        files = [] # the list of files to send to the LLM for the next prompt
         while file := self.next_asset():
-            files.append(file)
+            self.files.append(file)
 
         user_input = self.next_input()
 
@@ -416,13 +417,14 @@ class LLME:
             return None
 
         while file := self.next_asset():
-            files.append(file)
+            self.files.append(file)
 
         content_parts = []
-        for asset in files:
+        for asset in self.files:
             content_part = asset.content_part()
             if content_part:
                 content_parts.append(content_part)
+        self.files = []
         if len(content_parts) > 0:
             content_parts.insert(0, {"type": "text", "text": user_input})
             return {"role": "user", "content": content_parts}
@@ -908,6 +910,14 @@ class LLME:
         if cmd in "/help" or cmd in "/?":
             for h in self.slash_commands:
                 print(h)
+        elif cmd in "/file":
+            import shlex
+            args = shlex.split(arg)
+            if not args:
+                raise AppError("/file: Missing paths")
+            for f in args:
+                asset = Asset(f)
+                self.files.append(asset)
         elif cmd in "/tools":
             list_tools()
         elif cmd in "/config":
@@ -1409,8 +1419,7 @@ class Asset:
             with open(path, 'rb') as f:
                 self.raw_content = f.read()
         except OSError as e:
-            logger.error("Can't load file %s: %s", path, e)
-            sys.exit(1) # Make it better
+                raise AppError(f"Can't load file {path}: {e}")
         if len(self.raw_content) == 0:
             logger.info("Empty file %s", path)
             self.mime_type = "inode/x-empty"
