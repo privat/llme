@@ -298,9 +298,9 @@ class LLME:
         default = ""
         if self.message_index is not None:
             need_confirm = True # Always confirm when replaying a specific message
-            message = self.messages[self.message_index]
-            if message["role"] == "user":
-                default = message["content"]
+            message = self.history[self.message_index]
+            if message.role() == "user":
+                default = message.content()
 
         prompt = f"{self.prompt_prefix()} RUN {command}"
         if need_confirm and not self.confirm(prompt, default=default):
@@ -370,7 +370,7 @@ class LLME:
             if self.warmup:
                 self.warmup.start()
             if self.message_index is not None:
-                default = self.messages[self.message_index]["content"]
+                default = self.history[self.message_index].content()
             else:
                 default = ""
             prompt = f"{self.prompt_prefix()}> "
@@ -847,14 +847,14 @@ class LLME:
         return models
 
     def print_message(self, i, message, before=""):
-        role = message["role"]
+        role = message.role()
         if before:
             colors = {"system": "yellow", "user": "green", "assistant": "blue", "tool": "red"}
         else:
             colors = {"system": "light_yellow", "user": "light_green", "assistant": "light_blue", "tool": "light_red"}
         color = colors[role]
-        content = message["content"]
-        tools = message.get("tool_calls")
+        content = message.content()
+        tools = message.data.get("tool_calls")
         if tools:
             content += f"[tools: {', '.join(t['function']['name']+str(t['function']['arguments']) for t in tools)}]"
         content = re.sub(r"\s+", " ", content).strip()
@@ -871,7 +871,7 @@ class LLME:
 
     def list_history(self):
         "Print the history of messages"
-        for i, message in enumerate(self.messages):
+        for i, message in enumerate(self.history):
             if self.message_index and i >= self.message_index:
                 break
             self.print_message(i, message)
@@ -883,7 +883,7 @@ class LLME:
             if self.message_index and i >= self.message_index:
                 break
             self.print_tree(siblings, "", message)
-            self.print_message(message.prefix(), message.data)
+            self.print_message(message.prefix(), message)
             siblings = message.children # next siblings
         self.print_tree(siblings, "", True)
 
@@ -898,7 +898,7 @@ class LLME:
             if child == special:
                 continue
             cid = child.prefix()
-            self.print_message(cid, child.data, prefix + ("├─" if i != last else ""))
+            self.print_message(cid, child, prefix + ("├─" if i != last else ""))
             self.print_tree(child.children, prefix + ("│ " if i != last else ""))
 
     def slash_command(self, user_input):
@@ -1178,6 +1178,18 @@ class Message:
         self.number = n # The message number in the conversation
         self.generation = gen # The generation number of the message
         self.children = [] # The children messages of this message
+
+    def role(self):
+        return self.data["role"]
+
+    def content(self):
+        """The text content of a message"""
+        content = self.data["content"]
+        if isinstance(content, str):
+            return content
+        for c in content:
+            if c["type"] == "text":
+                return c["text"]
 
     def prefix(self):
         """Return the prefix for the message"""
