@@ -112,13 +112,13 @@ class LLME:
 
     def on_pageup(self, event):
         """Keybinding for /undo"""
-        if not self.rollback("user"):
+        if not self.rollback():
             return
         self.cancel_prompt()
 
     def on_pagedown(self, event):
         """Keybinding for /pass"""
-        if not self.rollforward("user"):
+        if not self.rollforward():
             return
         self.cancel_prompt()
 
@@ -724,14 +724,14 @@ class LLME:
                 if self.config.batch:
                     raise
                 logger.error("Server error: %s", extract_requests_error(e))
-                self.rollback("user")
+                self.rollback()
             except CancelEvent:
                 self.session.app.erase_when_done = False
                 logger.debug("Cancelled")
                 continue
             except KeyboardInterrupt:
                 logger.warning("Interrupted by user.")
-                self.rollback("user")
+                self.rollback()
             except EOFError as e:
                 logger.info("Quitting: %s", str(e))
                 break
@@ -750,7 +750,7 @@ class LLME:
                 import traceback
                 traceback.print_exc()
                 logger.error("Unexpected and uncatched exception: %s\nllme might be now, proceed with caution.", e)
-                self.rollback("user")
+                self.rollback()
             if self.config.batch:
                 break
 
@@ -927,11 +927,11 @@ class LLME:
                 raise AppError("/redo: No assistant message to redo")
             self.list_history()
         elif cmd in "/undo":
-            if not self.rollback("user"):
+            if not self.rollback():
                 raise AppError("/undo: No user message to undo")
             self.list_history()
         elif cmd in "/pass":
-            if not self.rollforward("user"):
+            if not self.rollforward():
                 raise AppError("/pass: Already at latest message")
             self.list_history()
         elif cmd in "/edit":
@@ -969,25 +969,25 @@ class LLME:
         else:
             raise AppError(f"{user_input}: Unknown slash command. Use /help for help.")
 
-    def rollback(self, role):
+    def rollback(self, roles = ["user", "tool"]):
         "Move message_index to the previous message of role, return the message on success"
         candidate = None
         for i, message in enumerate(self.messages):
             if self.message_index and i >= self.message_index:
                 break
-            if message.get("role") == role:
+            if message.get("role") in roles:
                 candidate = i
         if not candidate:
             return None
         self.message_index = candidate
         return self.messages[candidate]
 
-    def rollforward(self, role):
+    def rollforward(self, roles = ["user", "tool"]):
         "Move message_index to the next message of role, return the message on success"
         if self.message_index is None:
             return None
         for i, message in enumerate(self.messages[self.message_index+1:]):
-            if message.get("role") == role:
+            if message.get("role") in roles:
                 self.message_index = i + self.message_index + 1
                 return message
         self.message_index = None
