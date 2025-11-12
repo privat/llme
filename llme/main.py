@@ -70,7 +70,7 @@ class LLME:
             "/save FILE    save chat",
             "/load FILE    load chat",
             "/clear        clear the conversation history",
-            "/goto M       jump after message M (e.g /goto 5c)",
+            "/goto M       jump at message M (e.g `/goto 5c` or just `/5c`",
             "/config       list configuration options",
             "/set OPT=VAL  change a config option",
             "/quit         exit the program",
@@ -963,6 +963,9 @@ class LLME:
                 self.set_config(*args)
         elif cmd in "/quit":
             raise EOFError("/quit")
+        elif re.match(r"/\d+\w*", cmd):
+            # goto shortuct
+            self.goto(cmd[1:])
         else:
             raise AppError(f"{user_input}: Unknown slash command. Use /help for help.")
 
