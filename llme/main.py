@@ -242,7 +242,7 @@ class LLME:
 
     def confirm(self, question, default=""):
         """Ask a yes/no confirmation to the user"""
-        if self.config.yolo:
+        if self.config.yolo and self.message_index is None:
             cprint(f"{question}: YOLO!", color="light_red")
             return True
         if self.config.batch:
