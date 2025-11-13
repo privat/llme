@@ -232,7 +232,7 @@ class LLME:
             raise AppError("Confirmation unavailable in batch mode")
         try:
             if self.session:
-                x = self.session.prompt([("#ff0000", f"{question}? ")], placeholder=[("#7f7f7f", "Enter to confirm, or give a prompt to cancel")], default=default)
+                x = self.session.prompt([("#ff0000", f"{question}? ")], placeholder=[("#7f7f7f", "Enter to confirm, or give a prompt to cancel")], default=default, rprompt="")
             else:
                 x = input(colored(f"{question}? ", "light_red"))
             self.failsafe = False # user input still alive
@@ -376,7 +376,15 @@ class LLME:
                 default = ""
             prompt = f"{self.prompt_prefix()}> "
             if self.session:
-                user_input = self.session.prompt([("#00ff00", prompt)], default=default, placeholder=[("#7f7f7f", "A prompt, /h for help, Ctrl-C to interrupt")])
+                rprompt = []
+                if self.files:
+                    for f in self.files:
+                        if rprompt:
+                            rprompt.append(("", " "))
+                        s = ("bg:grey", os.path.basename(f.path))
+                        rprompt.append(s)
+
+                user_input = self.session.prompt([("#00ff00", prompt)], default=default, placeholder=[("#7f7f7f", "A prompt, /h for help, Ctrl-C to interrupt")], rprompt=rprompt)
             else:
                 user_input = input(colored(prompt, "light_green"))
             self.failsafe = False
