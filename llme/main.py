@@ -49,7 +49,6 @@ class LLME:
         self.config = config
         self.model = config.model
         self.prompts = config.prompts # Initial prompts to process
-        self.messages = [] # the sequence of messages with the LLM
         self.raw_messages = [] # the sequence of messages really communicated with the LLM server to work-around their various API limitations
         self.history = [] # A parallel history of messages with generations information
         self.generations = [] # the messages causing new generations (forks). They are the non-first children of messages
@@ -163,7 +162,6 @@ class LLME:
 
         logger.debug("Add %s message: %s", message['role'], message)
         self.build_message_object(message)
-        self.messages.append(message)
 
         # Special filtering for some models/servers
         # TODO make it configurable and modular
@@ -194,7 +192,10 @@ class LLME:
             return
         # Here we need to reset the current conversation to fork it
         # And replace the "message_index" wit a new one
-        self.reset_messages(self.messages[:self.message_index])
+        if self.message_index > 0:
+            self.reset_to_history(self.history[self.message_index-1])
+        else:
+            self.reset_messages([])
         logger.debug(f"Fork performed. New history: %s", self.history)
 
 
@@ -822,7 +823,6 @@ class LLME:
 
     def reset_messages(self, messages):
         self.message_index = None
-        self.messages.clear()
         self.history.clear()
         self.raw_messages.clear()
         for message in messages:
@@ -832,8 +832,9 @@ class LLME:
     def save_chat(self, file):
         logger.info("Dumping conversation to %s", file)
         try:
+            all_messages = [m.data for m in self.history]
             with open(file, "w") as f:
-                json.dump(self.messages, f, indent=2)
+                json.dump(all_messages, f, indent=2)
         except OSError as e:
             raise AppError(f"Can't save chat to {file}") from e
 
