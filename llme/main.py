@@ -127,7 +127,7 @@ class LLME:
     def build_message_object(self, message):
         """Add a message to the history"""
 
-        n = len(self.messages)
+        n = len(self.history)
         if n > 0:
             parent = self.history[n-1]
             gen = parent.generation
@@ -217,7 +217,7 @@ class LLME:
 
     def prompt_prefix(self):
         """Return the prefix number to use in the prompt"""
-        res = str(len(self.messages))
+        res = str(len(self.history))
         if self.message_index is not None:
             res = f"{self.message_index}/{res}"
         return res
@@ -568,7 +568,7 @@ class LLME:
                     continue
                 arguments = {"command": cb[1], "stdin": cb[2]}
                 tool_call = {
-                    "id": f"toolcallid-{len(self.messages)}",
+                    "id": f"toolcallid-{len(self.history)}",
                     "type": "function",
                     "function": {"name": "run_command", "arguments": json.dumps(arguments)}}
                 full_tool_calls.append(tool_call)
@@ -694,20 +694,20 @@ class LLME:
 
     def do_role(self):
         """Process the next role (user, assistant, tool...)"""
-        if not self.messages:
+        if not self.history:
             return self.do_user()
 
         if self.message_index:
-            previous_message = self.messages[self.message_index-1]
+            previous_message = self.history[self.message_index-1]
         else:
-            previous_message = self.messages[-1]
-        previous_role = previous_message.get("role")
+            previous_message = self.history[-1]
+        previous_role = previous_message.role()
         if previous_role == "user" or previous_role == "tool":
             return self.do_assisant()
         elif previous_role == "system":
             return self.do_user()
         elif previous_role == "assistant":
-            tool_calls = previous_message.get("tool_calls")
+            tool_calls = previous_message.tool_calls()
             if tool_calls:
                 return self.do_tools(tool_calls)
             else:
@@ -827,7 +827,7 @@ class LLME:
         self.raw_messages.clear()
         for message in messages:
             self.add_message(message)
-        logger.info("Reset %d messages", len(self.messages))
+        logger.info("Reset %d messages", len(self.history))
 
     def save_chat(self, file):
         logger.info("Dumping conversation to %s", file)
@@ -854,7 +854,7 @@ class LLME:
             colors = {"system": "light_yellow", "user": "light_green", "assistant": "light_blue", "tool": "light_red"}
         color = colors[role]
         content = message.content()
-        tools = message.data.get("tool_calls")
+        tools = message.tool_calls()
         if tools:
             content += f"[tools: {', '.join(t['function']['name']+str(t['function']['arguments']) for t in tools)}]"
         content = re.sub(r"\s+", " ", content).strip()
@@ -979,26 +979,26 @@ class LLME:
     def rollback(self, roles = ["user", "tool"]):
         "Move message_index to the previous message of role, return the message on success"
         candidate = None
-        for i, message in enumerate(self.messages):
+        for i, message in enumerate(self.history):
             if self.message_index and i >= self.message_index:
                 break
-            if message.get("role") in roles:
+            if message.role() in roles:
                 candidate = i
         if not candidate:
             return None
         self.message_index = candidate
-        return self.messages[candidate]
+        return self.history[candidate]
 
     def rollforward(self, roles = ["user", "tool"]):
         "Move message_index to the next message of role, return the message on success"
         if self.message_index is None:
             return None
-        for i, message in enumerate(self.messages[self.message_index+1:]):
-            if message.get("role") in roles:
+        for i, message in enumerate(self.history[self.message_index+1:]):
+            if message.role() in roles:
                 self.message_index = i + self.message_index + 1
                 return message
         self.message_index = None
-        return "x"
+        return True
 
 
     def edit(self):
@@ -1190,6 +1190,9 @@ class Message:
         for c in content:
             if c["type"] == "text":
                 return c["text"]
+
+    def tool_calls(self):
+        return self.data.get("tool_calls")
 
     def prefix(self):
         """Return the prefix for the message"""
