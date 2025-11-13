@@ -216,6 +216,8 @@ class LLME:
     def prompt_prefix(self):
         """Return the prefix number to use in the prompt"""
         res = str(len(self.messages))
+        if self.message_index is not None:
+            res = f"{self.message_index}/{res}"
         return res
 
     def confirm(self, question, default=""):
@@ -291,18 +293,14 @@ class LLME:
             cprint("$ " + command, color="light_red")
             cprint(stdin)
 
+        default = ""
         if self.message_index is not None:
             need_confirm = True # Always confirm when replaying a specific message
-            prompt = f"{self.message_index}/{self.prompt_prefix()} RUN {command}"
             message = self.messages[self.message_index]
             if message["role"] == "user":
                 default = message["content"]
-            else:
-                default = ""
-        else:
-            prompt = f"{self.prompt_prefix()} RUN {command}"
-            default = ""
 
+        prompt = f"{self.prompt_prefix()} RUN {command}"
         if need_confirm and not self.confirm(prompt, default=default):
             return None
 
@@ -370,11 +368,10 @@ class LLME:
             if self.warmup:
                 self.warmup.start()
             if self.message_index is not None:
-                prompt = f"{self.message_index}/{self.prompt_prefix()}> "
                 default = self.messages[self.message_index]["content"]
             else:
-                prompt = f"{self.prompt_prefix()}> "
                 default = ""
+            prompt = f"{self.prompt_prefix()}> "
             if self.session:
                 user_input = self.session.prompt([("#00ff00", prompt)], default=default, placeholder=[("#7f7f7f", "A prompt, /h for help, Ctrl-C to interrupt")])
             else:
