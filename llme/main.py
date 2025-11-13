@@ -163,27 +163,44 @@ class LLME:
         logger.debug("Add %s message: %s", message['role'], message)
         self.build_message_object(message)
 
-        # Special filtering for some models/servers
-        # TODO make it configurable and modular
-        if isinstance(message["content"], list):
-            text_content = []
-            # unpack file content parts
-            for part in message["content"]:
-                if part["type"] == "text":
-                    text_content.append(part["text"])
-                if part["type"] == "file":
-                    # replace the file content with its path.
-                    text_content.append(f"The file is {part['file']['filename']}. You can cat its content.")
-                if part["type"] == "image_url":
-                    self.raw_messages.append(message)
-            self.raw_messages.append({"role": message["role"], "content": "\n".join(text_content)})
+        raw_message = json.loads(json.dumps(message))
+        self.filter_file(raw_message)
+
+        if raw_message["role"] == "tool" and self.config.tool_mode != "native":
+            raw_message["role"] = "user"
+
+        self.raw_messages.append(raw_message)
+
+    def filter_file(self, message):
+        """Filter that handle how file are transmitted.
+        See --file-mode"""
+        if not isinstance(message["content"], list):
+            return
+        if self.config.file_mode == "part":
             return
 
-        if message["role"] == "tool" and self.config.tool_mode != "native":
-            message = message.copy()
-            message["role"] = "user"
+        text_content = []
+        # unpack file content parts
+        for part in message["content"]:
+            if part["type"] == "text":
+                text_content.append(part["text"])
+            elif part["type"] == "image_url":
+                # sorry, images need parts
+                return
+            elif part["type"] != "file":
+                logger.warning("unknown content part type %s", part["type"])
+                return
+            elif self.config.file_mode == "json":
+                # serialize the part as is
+                text_content.append(json.dumps(part['file']))
+            elif self.config.file_mode == "path":
+                # replace the path with the path.
+                text_content.append(f"The path of the file is {part['file']['filename']}. You can cat its content.")
+            else:
+                logger.warning("unknown file_mode %s", self.config.file_mode)
+                return
 
-        self.raw_messages.append(message)
+        message["content"] = "\n\n".join(text_content)
 
     def fork_if_required(self):
         """Fork the conversation to a new generation, if required.
@@ -363,6 +380,25 @@ class LLME:
         if len(file.raw_content) > 0:
             return file
         return None
+
+
+    def get_content(self, message):
+        content = message["content"]
+        if isinstance(content, str):
+            return content, []
+        assets = []
+        text = None
+        for part in content:
+            t = part["type"]
+            if t == "text":
+                text = part["text"]
+            elif t == "image_url":
+                pass
+            elif t == "file":
+                filename = part["file"]["filename"]
+                filename = os.path.basename(filename)
+                assets.append(filename)
+        return text, assets
 
 
     def input_prompt(self):
@@ -1598,6 +1634,8 @@ def resolve_config(args):
     # 5. ultimate defaults where argparse default value is None
     if args.tool_mode is None:
         args.tool_mode = "native"
+    if args.file_mode is None:
+        args.file_mode = "path"
     if args.batch is None and not sys.stdin.isatty():
         args.batch = True
 
@@ -1701,6 +1739,7 @@ def process_args():
     parser.add_argument("-s", "--system", dest="system_prompt", help="System prompt [system_prompt]")
     parser.add_argument(      "--temperature", type=float, help="Temperature of predictions [temperature]")
     parser.add_argument(      "--tool-mode", choices=["markdown", "native"], help="How tools and functions are given to the LLM [tool_mode]")
+    parser.add_argument(      "--file-mode", choices=["part", "path","json"], help="How (non image) files are given to the LLM [file_mode]")
     parser.add_argument("-c", "--config", metavar="FILE", action="append", help="Custom configuration files")
     parser.add_argument(      "--list-tools", action="store_true", default=None, help="List available tools then exit")
     parser.add_argument(      "--dump-config", action="store_true", default=None, help="Print the effective config and quit")
