@@ -491,6 +491,9 @@ class LLME:
             data["tools"] = [tool.schema for tool in all_tools.values()]
         if self.config.temperature is not None:
             data["temperature"] = self.config.temperature
+        if self.config.raw_request_dump:
+            with open(self.config.raw_request_dump, "w") as f:
+                json.dump(data, f, indent=2)
         logger.debug("Sending %d raw messages to %s", len(self.raw_messages), url)
         return requests.post(
             url,
@@ -1733,7 +1736,7 @@ def process_args():
     parser.add_argument("-b", "--batch", action="store_true", default=None, help="Run non-interactively. Implicit if stdin is not a tty [batch]")
     parser.add_argument("-p", "--plain", action="store_true", default=None, help="No colors or tty fanciness. Implicit if stdout is not a tty [plain]")
     parser.add_argument(      "--bulk", action="store_true", default=None, help="Disable stream-mode. Not that useful but it helps debugging APIs [bulk]")
-    parser.add_argument("-o", "--chat-output", metavar="FILE", help="Export the full raw conversation in json")
+    parser.add_argument("-o", "--chat-output", metavar="FILE", help="Export the full conversation in json")
     parser.add_argument("-i", "--chat-input", metavar="FILE", help="Continue a previous (exported) conversation")
     parser.add_argument(      "--export-metrics", metavar="FILE", help="Export metrics, usage, etc. in json")
     parser.add_argument("-s", "--system", dest="system_prompt", help="System prompt [system_prompt]")
@@ -1743,6 +1746,7 @@ def process_args():
     parser.add_argument("-c", "--config", metavar="FILE", action="append", help="Custom configuration files")
     parser.add_argument(      "--list-tools", action="store_true", default=None, help="List available tools then exit")
     parser.add_argument(      "--dump-config", action="store_true", default=None, help="Print the effective config and quit")
+    parser.add_argument(      "--raw-request-dump", metavar="FILE", help="Export the full POSTed json payload [raw_request_dump]")
     parser.add_argument(      "--plugin", metavar="PATH", action="append", dest="plugins", help="Add additional tool (python file or directory) [plugins]")
     parser.add_argument("-H", "--history-filename", metavar="FILE", help="Read/write command history from FILE [history_filename]")
     parser.add_argument("-v", "--verbose", action="count", help="Increase verbosity level (can be used multiple times)")
