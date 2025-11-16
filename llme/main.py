@@ -357,6 +357,12 @@ class LLME:
         proc.wait()
         printn(content)
 
+        lencontent = len(content)
+        if self.config.max_tool_len and lencontent > self.config.max_tool_len:
+            suffix = f"\n[TRUNCADED] Full length is {lencontent} bytes\n"
+            content = content[:self.config.max_tool_len-len(suffix)] + suffix
+            cprint(f"TRUCATED at {self.config.max_tool_len} from {lencontent}", "light_red")
+
         if proc.returncode != 0:
             cprint(f"EXIT {proc.returncode}", "light_red")
 
@@ -1742,6 +1748,7 @@ def process_args():
     parser.add_argument("-s", "--system", dest="system_prompt", help="System prompt [system_prompt]")
     parser.add_argument(      "--temperature", type=float, help="Temperature of predictions [temperature]")
     parser.add_argument(      "--tool-mode", choices=["markdown", "native"], help="How tools and functions are given to the LLM [tool_mode]")
+    parser.add_argument(      "--max-tool-len", type=int, help="Maximum size of tool output in bytes (0 for unlimited) [max_tool_len]")
     parser.add_argument(      "--file-mode", choices=["part", "path","json"], help="How (non image) files are given to the LLM [file_mode]")
     parser.add_argument("-c", "--config", metavar="FILE", action="append", help="Custom configuration files")
     parser.add_argument(      "--list-tools", action="store_true", default=None, help="List available tools then exit")
