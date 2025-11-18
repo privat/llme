@@ -169,7 +169,7 @@ pass() {
 # Shortcut for result ERROR/TIMEOUT.
 # $1 the error code
 checkerr() {
-	err=$1
+	err=${1:-$?}
 	if [ "$err" -eq 124 ]; then
 		result "TIMEOUT"
 		return 124
@@ -178,6 +178,7 @@ checkerr() {
 		result "ERROR" "$(tail -n 1 "$LOGDIR/err.txt")"
 		return $err
 	fi
+	return 0
 }
 
 # Run a basic test with a command
