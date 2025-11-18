@@ -1,6 +1,8 @@
 #!/bin/bash
 
 export TIMEOUT=${TIMEOUT:-180} # test run timeout
+export LLME_TIMEOUT_TOOL=${LLME_TIMEOUT_TOOL:-60}
+export LLME_MAX_TOOL_LEN=${LLME_MAX_TOOL_LEN:-10000}
 
 # Common setup and useful functions for test scripts
 
