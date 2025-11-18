@@ -127,7 +127,7 @@ runllme() {
 	if [ -f venv ]; then
 		. venv/bin/activate
 	fi
-	setsid timeout -v -f -sINT "$TIMEOUT" "$@"
+	setsid timeout --verbose --foreground -sQUIT "$TIMEOUT" "$@"
 	) 2> >(tee -a "$LOGDIR/err.txt" > "$out") > >(tee -a "$LOGDIR/out.txt" > "$out")
 }
 
