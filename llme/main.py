@@ -1146,8 +1146,8 @@ class LLME:
         elif opt == "model":
             self.model = val
         logger.info("set %s: %r", opt, val)
-        # TODO convert types. but don't duplicate argparse
-        setattr(self.config, opt, val)
+        # FIXME this is a bit of a hack
+        setconf(self.argparser, self.config, opt, val)
 
 
 class CancelEvent(Exception):
@@ -1848,14 +1848,15 @@ def process_args():
     if args.history_filename is None:
         args.history_filename = os.path.expanduser("~/.config/llme/history")
 
-    return args
+    return parser, args
 
 
 def main():
     """The main CLI entry point."""
     try:
-        config = process_args()
+        argparser, config = process_args()
         llme = LLME(config)
+        llme.argparser = argparser # FIXME too much hacky
         if config.list_tools:
             list_tools()
             sys.exit(0)
