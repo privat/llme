@@ -403,8 +403,13 @@ def main():
     for i, m in enumerate(model_order):
         model_rank[m] = i
 
-    with open("benchmark.md", 'r') as f:
-        results = f.read()
+    try:
+        with open("benchmark.md", 'r') as f:
+            results = f.read()
+    except IOError:
+        print("No previous benchmark.md file")
+        results = "# Results"
+
 
     cut = "\n<!-- the contents bellow this line are generated -->\n"
     head = results.split(cut, 1)[0]
