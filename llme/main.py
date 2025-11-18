@@ -1582,19 +1582,19 @@ def printn(previous_string):
         print()
 
 
-def apply_config(args, config, path):
+def apply_config(parser, args, config, path):
     """Apply a config dict to an args namespace without overwriting existing values (precedence).
     The method is a little ugly but it works... """
     #TODO check types
     variables = vars(args)
     for k in variables:
         if variables[k] is None and k in config:
-            setattr(args, k, config[k])
+            setconf(parser, args, k, config[k])
     for k in config:
         if k not in variables:
             logger.warning("%s: Unknown config key %s", path, k)
 
-def apply_env(args):
+def apply_env(parser, args):
     """Apply environment variables to an args namespace without overwriting existing values (precedence)."""
     variables = vars(args)
     for k in variables:
@@ -1602,7 +1602,7 @@ def apply_env(args):
         env = os.environ.get(var)
         if variables[k] is None and env:
             # TODO type conversion
-            setattr(args, k, env)
+            setconf(parser, args, k, env)
     for k in os.environ:
         m = re.match(r'LLME_(.*)', k)
         if m and m[1].lower() not in variables:
@@ -1619,7 +1619,7 @@ def load_config_file(path):
     except tomllib.TOMLDecodeError as e:
         raise AppError(f"Invalid config file {path}") from e
 
-def resolve_config(args):
+def resolve_config(parser, args):
     """Compute config in order of precedence"""
     # 1. args have the highest precedence
 
@@ -1627,10 +1627,10 @@ def resolve_config(args):
     if args.config:
         for path in reversed(args.config):
             config = load_config_file(path)
-            apply_config(args, config, path)
+            apply_config(parser, args, config, path)
 
     # 3. Then environment variables
-    apply_env(args)
+    apply_env(parser, args)
 
     # 4. The default config files: user, then system
     config_dirs = [
@@ -1641,7 +1641,7 @@ def resolve_config(args):
         path = os.path.join(directory, "config.toml")
         if os.path.exists(path):
             config = load_config_file(path)
-            apply_config(args, config, path)
+            apply_config(parser, args, config, path)
 
     # 5. ultimate defaults where argparse default value is None
     if args.tool_mode is None:
@@ -1652,6 +1652,37 @@ def resolve_config(args):
         args.batch = True
 
     logger.debug("Final config: %s", vars(args))
+
+def str2bool(s):
+    "Convert a boolean value from a string in a config file or env var"
+    if isinstance(s, bool):
+       return s
+    s = s.lower()
+    if s in ('yes', 'true', '1', 'y', 't'):
+        return True
+    if s in ('no', 'false', '0', 'n', 'f'):
+        return False
+    if s == "":
+        return None
+    raise ValueError(f"Invalid boolean value: {s}")
+
+def search_action(parser, name):
+    "Return the first action according its dest name"
+    for action in parser._actions:
+        if action.dest and action.dest == name:
+            return action
+    return None
+
+def setconf(parser, args, name, value):
+    "Update a setting according to its type"
+    action = search_action(parser, name)
+    if not action:
+        raise AppError(f"Unknown setting {name}")
+    if action.type == bool or isinstance(action, argparse._StoreTrueAction):
+        value = str2bool(value)
+    elif action.type:
+        value = action.type(value)
+    action(parser, args, value)
 
 
 def load_module(path):
@@ -1729,7 +1760,6 @@ class ColorFormatter(logging.Formatter):
     def format(self, record):
         return f"{colored(record.levelname, self.color(record))}: {record.getMessage()}"
 
-
 def process_args():
     """Handle command line arguments and envs."""
     parser = argparse.ArgumentParser(
@@ -1801,7 +1831,7 @@ def process_args():
         filehandler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
         logger.addHandler(filehandler)
 
-    resolve_config(args)
+    resolve_config(parser, args)
 
     if args.dump_config:
         json.dump(vars(args), sys.stdout, indent=2)
