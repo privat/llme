@@ -324,15 +324,15 @@ class LLME:
         if need_confirm and not self.confirm(prompt, default=default):
             return None
 
-        # hack for unbuffered python
         if command == "python":
-            cmd = "python -u"
+            # hack for unbuffered python
+            cmd = ["python -u"]
         else:
-            cmd = command
+            # Otherwise, assume shell
+            cmd = ["bash", "-c", command]
 
         proc = subprocess.Popen(
             cmd,
-            shell=True,
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
