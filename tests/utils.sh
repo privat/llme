@@ -1,5 +1,7 @@
 #!/bin/bash
 
+export TIMEOUT=${TIMEOUT:-180} # test run timeout
+
 # Common setup and useful functions for test scripts
 
 export SUITE=$(basename "$0" .sh)
@@ -123,7 +125,7 @@ runllme() {
 	if [ -f venv ]; then
 		. venv/bin/activate
 	fi
-	setsid timeout -v -f -sINT 180 "$@"
+	setsid timeout -v -f -sINT "$TIMEOUT" "$@"
 	) 2> >(tee -a "$LOGDIR/err.txt" > "$out") > >(tee -a "$LOGDIR/out.txt" > "$out")
 }
 
