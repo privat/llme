@@ -156,7 +156,7 @@ prepare() {
 
 	# create a tmp workdir
 	if [ -z "$WORKDIR" ] || [ -z "$KEEPWORKDIR" ]; then
-		WORKDIR=`mktemp --tmpdir -d llme-XXXXX`
+		export WORKDIR=`mktemp --tmpdir -d llme-XXXXX`
 	fi
 	ln -s "$WORKDIR" "$LOGDIR/workdir"
 }
