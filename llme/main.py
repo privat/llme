@@ -331,6 +331,9 @@ class LLME:
             # Otherwise, assume shell
             cmd = ["bash", "-c", command]
 
+        if self.config.timeout_tool:
+            cmd = ["timeout", "--verbose", str(self.config.timeout_tool)] + cmd
+
         proc = subprocess.Popen(
             cmd,
             stdin=subprocess.PIPE,
@@ -1749,6 +1752,7 @@ def process_args():
     parser.add_argument(      "--temperature", type=float, help="Temperature of predictions [temperature]")
     parser.add_argument(      "--tool-mode", choices=["markdown", "native"], help="How tools and functions are given to the LLM [tool_mode]")
     parser.add_argument(      "--max-tool-len", type=int, help="Maximum size of tool output in bytes (0 for unlimited) [max_tool_len]")
+    parser.add_argument(      "--timeout-tool", type=int, help="Maximum duration in seconds of tool runs (0 for unlimited) [timeout_tool]")
     parser.add_argument(      "--file-mode", choices=["part", "path","json"], help="How (non image) files are given to the LLM [file_mode]")
     parser.add_argument("-c", "--config", metavar="FILE", action="append", help="Custom configuration files")
     parser.add_argument(      "--list-tools", action="store_true", default=None, help="List available tools then exit")
