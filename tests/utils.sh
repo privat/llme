@@ -87,7 +87,7 @@ result() {
 			color=93;;
 	esac
 	printf "\e[${color}m$1\e[0m "
-	echo "$2 $LOGDIR/ model=$model msgs=$msgs words=$words"
+	echo "$2 $model $SUITE:$task $LOGDIR/"
 }
 
 # Check that the llm result matches the pattern $1 on the last line.
