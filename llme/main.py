@@ -324,7 +324,7 @@ class LLME:
 
         if command == "python":
             # hack for unbuffered python
-            cmd = ["python -u"]
+            cmd = ["python", "-u"]
         else:
             # Otherwise, assume shell
             cmd = ["bash", "-c", command]
