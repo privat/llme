@@ -309,9 +309,6 @@ class LLME:
             need_confirm = False
         elif len(cmd) == 3 and cmd[0] == "cat" and cmd[1] == ">":
             self.cat_write(cmd[2], stdin)
-        elif stdin:
-            cprint("$ " + command, color="light_red")
-            cprint(stdin)
 
         default = ""
         if self.message_index is not None:
@@ -320,9 +317,10 @@ class LLME:
             if message.role() == "user":
                 default = message.content()
 
-        prompt = f"{self.prompt_prefix()} RUN {command}"
-        if need_confirm and not self.confirm(prompt, default=default):
-            return None
+        if need_confirm:
+            prompt = f"{self.prompt_prefix()} RUN {command.splitlines()[0]}"
+            if not self.confirm(prompt, default=default):
+                return None
 
         if command == "python":
             # hack for unbuffered python
@@ -584,10 +582,9 @@ class LLME:
                     if "name" in f:
                         full_tool_calls[idx] = tool_call
                         cprint(f["name"], color="red", end='', flush=True)
-                        cprint(f["arguments"], color="red", end='', flush=True)
                     else:
                         full_tool_calls[idx]["function"]["arguments"] += f["arguments"]
-                        cprint(f["arguments"], color="red", end='', flush=True)
+                    cprint(f["arguments"].encode('utf-8').decode('unicode_escape', errors='backslashreplace'), color="red", end='', flush=True)
                     mode="." # force \n after the tool_call is fully outputed
 
             finish_reason = choice0.get('finish_reason')
