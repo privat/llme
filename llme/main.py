@@ -405,7 +405,7 @@ class LLME:
         else:
             cmd = ["bash", "-c", command]
         logger.debug("Direct run %s", cmd)
-        result = subprocess.run(cmd, input=input, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, errors="backslashreplace")
+        result = subprocess.run(cmd, input=input, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         result.check_returncode()
         return result.stdout
 
@@ -415,7 +415,7 @@ class LLME:
             prefix = "llme-temp-"
         import shlex
         pattern = shlex.quote(prefix + "XXXXXX" + suffix)
-        temp = self.direct_run_command(f"mktemp --tmpdir -- {pattern}").strip()
+        temp = self.direct_run_command(f"mktemp --tmpdir -- {pattern}").decode().strip()
         logger.info("Created tempfile %r", temp)
         return temp
 
@@ -423,6 +423,8 @@ class LLME:
         """Write a file for the agent"""
         import shlex
         path = shlex.quote(path)
+        if contents.__class__ == str:
+            contents = contents.encode()
         self.direct_run_command(f"cat > {path}", contents)
 
     def next_asset(self):
