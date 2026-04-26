@@ -111,9 +111,8 @@ class LLME:
 
         tool(self.run_command)
 
-    def cancel_prompt(self):
+    def cancel_prompt(self, app):
         """Cancel the current prompt and go back to the main loop"""
-        app = prompt_toolkit.application.current.get_app()
         app.erase_when_done = True
         app.exit(exception=CancelEvent())
 
@@ -121,13 +120,13 @@ class LLME:
         """Keybinding for /undo"""
         if not self.rollback():
             return
-        self.cancel_prompt()
+        self.cancel_prompt(event.app)
 
     def on_pagedown(self, event):
         """Keybinding for /pass"""
         if not self.rollforward():
             return
-        self.cancel_prompt()
+        self.cancel_prompt(event.app)
 
     def on_enter(self, event):
         """Keybinding for validate"""
