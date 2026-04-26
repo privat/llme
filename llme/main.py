@@ -870,6 +870,9 @@ class LLME:
             tool = all_tools["run_command"]
             system_prompt += f"""## Tool run_command\n\nRun shell commands with a fenced code block and a `run` label. Format:\n\n```run $command\n$stdin\n```\n\nExample 1, list files:\n\n```run ls\n```\n\nExample 2, read file.txt:\n\n```run cat file.txt\n```\n\nExample 3, write "Hello" to file.txt\n\n```run cat > file.txt\nHello\n```\n\nExample 4, run a python script:\n\n```run python\nprint('Hello World')\n```\n\n"""
             system_prompt += tool.doc
+        date = self.direct_run_command("date").strip()
+        pwd = self.direct_run_command("pwd").strip()
+        system_prompt += f"date: {date}\npwd: {pwd}\n"
 
         return {"role": "system", "content": system_prompt}
 
