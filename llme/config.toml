@@ -18,3 +18,7 @@ You are an autonomous agent specialized in programming and system administration
 * Use multiple **small** and **simple** commands and programs, not large and complex ones.
 * Read and follow the rules.
 """
+
+compaction_prompt = """
+Summarize the whole conversation so a future assistant can resume it.
+"""

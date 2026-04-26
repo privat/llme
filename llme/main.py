@@ -64,6 +64,7 @@ class LLME:
             "/models       list available models",
             "/tools        list available tools",
             "/metrics      list current metrics",
+            "/compact      summarize the history and restart fresh",
             "/history      list condensed conversation history",
             "/full-history list hierarchical conversation history (with forks)",
             "/redo         cancel and regenerate the last assistant message",
@@ -777,6 +778,7 @@ class LLME:
         message = self.chat_completion()
         if message:
             self.add_message(message)
+        return message
 
     def run_tool(self, tool_call):
         """Run a tool and return the result as a message"""
@@ -1063,6 +1065,8 @@ class LLME:
         elif cmd in "/config":
             for k, v in vars(self.config).items():
                 print(f"{k}: {repr(v)}")
+        elif cmd in "/compact":
+            self.compact()
         elif cmd in "/models":
             self.list_models()
         elif cmd in "/history":
@@ -1212,6 +1216,15 @@ class LLME:
                 return found
         return None
 
+    def compact(self):
+        """Force the summarization of the conversation"""
+        compaction_prompt = self.config.compaction_prompt
+        message = {"role": "user", "content": compaction_prompt}
+        self.add_message(message)
+        response = self.do_assisant()
+        system_prompt = self.prepare_system_prompt()
+        system_prompt["content"] += "\n\n" + response["content"]
+        self.reset_messages([system_prompt])
 
     def set_config(self, opt, val):
         "Dynamically change a config option"
@@ -1895,6 +1908,7 @@ def process_args():
     parser.add_argument("-Y", "--yolo", action="store_true", default=None, help="UNSAFE: Do not ask for confirmation before running tools. Combine with --batch to reach the singularity.")
     parser.add_argument(      "--version", action="store_true", default=None, help="Display version information and quit")
     parser.add_argument(      "--dummy", action="store_true", default=None, help=argparse.SUPPRESS) # Disable LLM for testing the UI alone
+    parser.add_argument(      "--compaction-prompt", default=None, help=argparse.SUPPRESS)
     parser.add_argument("prompts", nargs='*', help="An initial list of prompts")
     # Trick: iterate on store_true options to add the --no- variants
     for action in parser._actions:

@@ -257,6 +257,9 @@ options:
   --timeout-tool TIMEOUT_TOOL
                         Maximum duration in seconds of tool runs (0 for
                         unlimited) [timeout_tool]
+  --timeout-http TIMEOUT_HTTP
+                        Timeout of LLM connexion (0 for unlimited)
+                        [timeout_http]
   --file-mode {part,path,json}
                         How (non image) files are given to the LLM [file_mode]
   -c, --config FILE     Custom configuration files
@@ -317,6 +320,7 @@ $ llme /help /quit
 /models       list available models
 /tools        list available tools
 /metrics      list current metrics
+/compact      summarize the history and restart fresh
 /history      list condensed conversation history
 /full-history list hierarchical conversation history (with forks)
 /redo         cancel and regenerate the last assistant message
@@ -425,7 +429,7 @@ PR are welcome!
   * [x] whitelist/blacklist
   * [ ] ?
 * Agentic
-  * [ ] compaction
+  * [x] compaction
   * [x] skills
   * [ ] subagents
   * [ ] ?
