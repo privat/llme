@@ -215,7 +215,7 @@ options:
   --bulk                Disable stream-mode. Not that useful but it helps
                         debugging APIs [bulk]
   -o, --chat-output FILE
-                        Export the full raw conversation in json
+                        Export the full conversation in json
   -i, --chat-input FILE
                         Continue a previous (exported) conversation
   --export-metrics FILE
@@ -227,11 +227,24 @@ options:
   --tool-mode {markdown,native}
                         How tools and functions are given to the LLM
                         [tool_mode]
+  --max-tool-len MAX_TOOL_LEN
+                        Maximum size of tool output in bytes (0 for unlimited)
+                        [max_tool_len]
+  --timeout-tool TIMEOUT_TOOL
+                        Maximum duration in seconds of tool runs (0 for
+                        unlimited) [timeout_tool]
+  --file-mode {part,path,json}
+                        How (non image) files are given to the LLM [file_mode]
   -c, --config FILE     Custom configuration files
   --list-tools          List available tools then exit
   --dump-config         Print the effective config and quit
+  --raw-request-dump FILE
+                        Export the full POSTed json payload [raw_request_dump]
   --plugin PATH         Add additional tool (python file or directory)
                         [plugins]
+  -H, --history-filename FILE
+                        Read/write command history from FILE
+                        [history_filename]
   -v, --verbose         Increase verbosity level (can be used multiple times)
   --log-file FILE       Write logs to a file [log_file]
   -Y, --yolo            UNSAFE: Do not ask for confirmation before running
@@ -266,6 +279,7 @@ The command `/help` show the available slash commands.
 <!--slash-help-->
 ```console
 $ llme /help /quit
+/file FILE    attach a file for the next prompt
 /models       list available models
 /tools        list available tools
 /metrics      list current metrics
@@ -278,7 +292,7 @@ $ llme /help /quit
 /save FILE    save chat
 /load FILE    load chat
 /clear        clear the conversation history
-/goto M       jump after message M (e.g /goto 5c)
+/goto M       jump at message M (e.g `/goto 5c` or just `/5c`
 /config       list configuration options
 /set OPT=VAL  change a config option
 /quit         exit the program
