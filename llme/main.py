@@ -980,6 +980,7 @@ class LLME:
         "Print the list of models"
         print(f"Models of {self.config.base_url}:")
         models = self.get_models()
+        models.sort()
         for m in models:
             sel = "-> " if m == self.model else "   "
             print(f"{sel}{m}")
