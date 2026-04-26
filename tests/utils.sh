@@ -124,7 +124,7 @@ runllme() {
 	(
 	set -e
 	cd "$WORKDIR"
-	if [ -f .venv ]; then
+	if [ -d .venv ]; then
 		. .venv/bin/activate
 	fi
 	setsid timeout --verbose --foreground -sQUIT "$TIMEOUT" "$@"
