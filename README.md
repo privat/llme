@@ -189,6 +189,24 @@ Do not run the following command without understanding what it does.
 sudo llme --batch --yolo "Distupgrade the system. You are root! Do as you wish."
 ```
 
+### Sandboxes
+
+Shell commands are executed by default with `bash -c` as the current user.
+Any another command executor or wrapper can be used, it's useful for sandboxing.
+
+E.g. You can setup a container and just execute the commands on them.
+
+```
+llme --sandbox "incus exec sandbox -- su - user -c" "Improve the .bashrc file" --yolo
+```
+
+Note: the shell command to execute is appended as a single argument at the end of the `sandbox` value.
+
+You can use external helper scripts and programs.
+
+```
+llme --sandbox my-sandbox-command-runner "Improve the .bashrc file" --yolo
+```
 
 ### Options (and config)
 
@@ -227,6 +245,7 @@ options:
   --tool-mode {markdown,native}
                         How tools and functions are given to the LLM
                         [tool_mode]
+  --sandbox SANDBOX     The sandbox tool used to run commands [sandbox]
   --max-tool-len MAX_TOOL_LEN
                         Maximum size of tool output in bytes (0 for unlimited)
                         [max_tool_len]
@@ -386,7 +405,7 @@ PR are welcome!
   * [x] run shell command
   * [x] run Python code
   * [x] user-defined tools
-  * [ ] sandboxing
+  * [x] sandboxing
   * [x] whitelist/blacklist
 * User interface & features
   * [x] readline
