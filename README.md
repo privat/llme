@@ -277,6 +277,8 @@ colors in a non TTY
 
 Note: Run a fresh `--help` in case I forgot to update this README.
 
+### Configuration files
+
 All options with names in brackets can be set in the config file (`base_url` for `--base-url`).
 They can also be set by environment variables (`LLME_BASE_URL` for `--base-url`).
 
@@ -288,6 +290,14 @@ For each option, the precedence order is the following:
 4. The user configuration file (`~/.config/llme/config.toml`)
 5. The system configuration file provided by the package (the lowest precedence)
 
+The `--config` option takes a full path `foo/bar.toml`.
+If a simple name (e.g. `foo` is given, the file `~/.config/llme/foo.toml` is used.
+
+You can thus combine easily multiple configuration files.
+
+```bash
+llme -c my-provider -c my-persona -c my-tooling
+```
 
 ### Slash Commands
 

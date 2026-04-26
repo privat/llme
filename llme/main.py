@@ -1632,8 +1632,22 @@ def apply_env(parser, args):
         if m and m[1].lower() not in variables:
             logger.warning("Unknown environment variable %s", k)
 
+config_dirs = [
+    os.path.expanduser("~/.config/llme"),
+    os.path.dirname(os.path.abspath(__file__)),
+]
+
 def load_config_file(path):
     """Load a TOML config file."""
+
+    # Load simple names in config directories
+    if not os.path.exists(path) and not '/' in path:
+        for directory in config_dirs:
+            trypath = os.path.join(directory, path + ".toml")
+            if os.path.exists(trypath):
+                path = trypath
+                break
+
     logger.debug("Loading config from %s", path)
     try:
         with open(path, "rb") as f:
@@ -1657,10 +1671,6 @@ def resolve_config(parser, args):
     apply_env(parser, args)
 
     # 4. The default config files: user, then system
-    config_dirs = [
-        os.path.expanduser("~/.config/llme"),
-        os.path.dirname(os.path.abspath(__file__)),
-    ]
     for directory in config_dirs:
         path = os.path.join(directory, "config.toml")
         if os.path.exists(path):
