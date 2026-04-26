@@ -121,6 +121,19 @@ runllme() {
 		out=/dev/stdout
 	fi
 
+	# interactive mode
+	if [ -n "$I" ]; then
+		(
+			cd "$WORKDIR"
+			if [ -d .venv ]; then
+				. .venv/bin/activate
+			fi
+			export LLME_BATCH=false
+			"$@"
+		)
+		return
+	fi
+
 	(
 	set -e
 	cd "$WORKDIR"
