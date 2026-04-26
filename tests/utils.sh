@@ -124,8 +124,8 @@ runllme() {
 	(
 	set -e
 	cd "$WORKDIR"
-	if [ -f venv ]; then
-		. venv/bin/activate
+	if [ -f .venv ]; then
+		. .venv/bin/activate
 	fi
 	setsid timeout --verbose --foreground -sQUIT "$TIMEOUT" "$@"
 	) 2> >(tee -a "$LOGDIR/err.txt" > "$out") > >(tee -a "$LOGDIR/out.txt" > "$out")
@@ -288,7 +288,7 @@ tllme() {
 		return 1
 	fi
 
-	(cd "$WORKDIR" && python3 -m venv venv)
+	(cd "$WORKDIR" && python3 -m venv .venv)
 
 	echo
 	result "RUNNING"
