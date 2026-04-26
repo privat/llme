@@ -1468,12 +1468,13 @@ class Warmup:
         """ Thread,function.
         It justs wait for the completion of a small request.
         If everything is fine then the thread will just terminate.Otherwise it will signal am event for the main thread.
-        Note: because of Python limitation there is no real way to cancel the request. This is mildly annoying."""
+        Note: because of requests limitation there is no real way to cancel the request. This is mildly annoying.
+        Maybe use httpx.AsyncClient or something else"""
 
         url = f"{self.llm.config.base_url}/chat/completions"
         json = {
             "model": self.llm.model,
-            "messages": [{"role":"user", "content":""}],
+            "messages": self.llm.raw_messages, # use the raw message with system prompt for warmup
             "max_completion_tokens":1,
             "max_tokens":1,
             "temperature":0,
@@ -1481,7 +1482,6 @@ class Warmup:
         }
         logger.info("warmup %s", url)
         try:
-            # TODO maybe add a timeout? I'm not sure
             with requests.post(url=url, headers=self.llm.api_headers, json=json, stream=True) as response:
                 response.raise_for_status()
         except requests.exceptions.RequestException as e:
