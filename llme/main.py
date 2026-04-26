@@ -250,7 +250,7 @@ class LLME:
         url = f"{self.config.base_url}/models"
         logger.info("Get models from %s", url)
         try:
-            response = requests.get(url, headers=self.api_headers, timeout=10)
+            response = requests.get(url, headers=self.api_headers, timeout=self.config.timeout_http)
             response.raise_for_status()
         except requests.exceptions.RequestException as e:
             raise AppError(extract_requests_error(e))
@@ -580,7 +580,7 @@ class LLME:
             json=data,
             headers=self.api_headers,
             stream=not self.config.bulk,
-            timeout=600,  # high enough
+            timeout=self.config.timeout_http,
         )
 
 
@@ -1881,6 +1881,7 @@ def process_args():
     parser.add_argument(      "--sandbox", type=str, help="The sandbox tool used to run commands [sandbox]")
     parser.add_argument(      "--max-tool-len", type=int, help="Maximum size of tool output in bytes (0 for unlimited) [max_tool_len]")
     parser.add_argument(      "--timeout-tool", type=int, help="Maximum duration in seconds of tool runs (0 for unlimited) [timeout_tool]")
+    parser.add_argument(      "--timeout-http", type=int, help="Timeout of LLM connexion (0 for unlimited) [timeout_http]")
     parser.add_argument(      "--file-mode", choices=["part", "path","json"], help="How (non image) files are given to the LLM [file_mode]")
     parser.add_argument("-c", "--config", metavar="FILE", action="append", help="Custom configuration files")
     parser.add_argument(      "--list-tools", action="store_true", default=None, help="List available tools then exit")
@@ -1948,6 +1949,13 @@ def process_args():
     if args.plugins:
         for plugin in args.plugins:
             load_plugin(plugin)
+
+    if args.timeout_tool is None:
+        args.timeout_tool = 600 # 10 min
+    if args.timeout_http is None:
+        args.timeout_http = 600
+    if args.max_tool_len is None:
+        args.max_tool_len = 100000
 
     if not args.base_url:
         logger.error("Error: --base-url required and not defined the config file.")
