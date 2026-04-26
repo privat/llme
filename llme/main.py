@@ -381,11 +381,10 @@ class LLME:
         lencontent = len(content)
         if self.config.max_tool_len and lencontent > self.config.max_tool_len:
             import tempfile
-            temp = tempfile.NamedTemporaryFile(prefix="command_output-", mode='w', delete=False)
-            with temp as f:
-                f.write(content)
+            temp = self.new_tempfile("command_output-")
+            self.write_file(temp, content)
             lines = len(content.splitlines())
-            warning = f"warning: truncated because excessive length ({lines} lines or {lencontent} bytes; max is {self.config.max_tool_len} bytes). Full content is stored at {temp.name}. Extract useful content with grep, sed, head, etc."
+            warning = f"warning: truncated because excessive length ({lines} lines or {lencontent} bytes; max is {self.config.max_tool_len} bytes). Full content is stored at {temp}. Extract useful content with grep, sed, head, etc."
             result += warning +  "\n"
             content = content[:self.config.max_tool_len]
             cprint(warning, "light_red")
@@ -396,6 +395,35 @@ class LLME:
         result += f"stdout:\n{content}\n"
 
         return result
+
+    def direct_run_command(self, command, input=None):
+        """Because of possible sandboxing, access to the agent environment must be indirect"""
+        if self.config.sandbox:
+            import shlex
+            cmd = shlex.split(self.config.sandbox, posix=True)
+            cmd.append(command)
+        else:
+            cmd = ["bash", "-c", command]
+        logger.debug("Direct run %s", cmd)
+        result = subprocess.run(cmd, input=input, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, errors="backslashreplace")
+        result.check_returncode()
+        return result.stdout
+
+    def new_tempfile(self, prefix="", suffix=""):
+        """Create an empty tempfile for the agent"""
+        if not prefix:
+            prefix = "llme-temp-"
+        import shlex
+        pattern = shlex.quote(prefix + "XXXXXX" + suffix)
+        temp = self.direct_run_command(f"mktemp --tmpdir -- {pattern}").strip()
+        logger.info("Created tempfile %r", temp)
+        return temp
+
+    def write_file(self, path, contents):
+        """Write a file for the agent"""
+        import shlex
+        path = shlex.quote(path)
+        self.direct_run_command(f"cat > {path}", contents)
 
     def next_asset(self):
         """Get the next asset from the user. or None"""
