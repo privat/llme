@@ -30,6 +30,8 @@ import threading
 import time
 import tomllib
 
+from . import skills
+
 import prompt_toolkit
 import requests
 from termcolor import colored, cprint
@@ -75,6 +77,7 @@ class LLME:
             "/config       list configuration options",
             "/set OPT=VAL  change a config option",
             "/quit         exit the program",
+            "/skills       list available skills",
             "/help         show this help",
         ]
 
@@ -887,6 +890,11 @@ class LLME:
             system_prompt += tool.doc
         date = self.direct_run_command("date").strip()
         pwd = self.direct_run_command("pwd").strip()
+
+        self.skills = skills.discover_skills(self.config.skills_path)
+        if self.skills:
+            system_prompt += skills.prompt_for_skills(self.skills)
+
         system_prompt += f"date: {date}\npwd: {pwd}\n"
 
         return {"role": "system", "content": system_prompt}
@@ -963,6 +971,10 @@ class LLME:
                 json.dump(all_messages, f, indent=2)
         except OSError as e:
             raise AppError(f"Can't save chat to {file}") from e
+
+    def list_skills(self):
+        """List skills"""
+        skills.list_skills(self.skills)
 
     def list_models(self):
         "Print the list of models"
@@ -1095,6 +1107,8 @@ class LLME:
                 raise AppError("/set: Syntax error, expected name=value")
             else:
                 self.set_config(*args)
+        elif cmd in "/skills":
+            self.list_skills()
         elif cmd in "/quit":
             raise EOFError("/quit")
         elif re.match(r"/\d+\w*", cmd):
@@ -1860,6 +1874,9 @@ def process_args():
     parser.add_argument(      "--export-metrics", metavar="FILE", help="Export metrics, usage, etc. in json")
     parser.add_argument("-s", "--system", dest="system_prompt", help="System prompt [system_prompt]")
     parser.add_argument(      "--temperature", type=float, help="Temperature of predictions [temperature]")
+    parser.add_argument(      "--no-skills", action="store_true", help="Disable defaults skills (excepts those from --skills-path)")
+    parser.add_argument(      "--skills-path", metavar="DIR", action="append", help="Add a skills directory for skill recursive search")
+    parser.add_argument(      "--list-skills", action="store_true", default=None, help="List all discoverable agent skills then exit")
     parser.add_argument(      "--tool-mode", choices=["markdown", "native"], help="How tools and functions are given to the LLM [tool_mode]")
     parser.add_argument(      "--sandbox", type=str, help="The sandbox tool used to run commands [sandbox]")
     parser.add_argument(      "--max-tool-len", type=int, help="Maximum size of tool output in bytes (0 for unlimited) [max_tool_len]")
@@ -1916,6 +1933,16 @@ def process_args():
 
     if args.dump_config:
         json.dump(vars(args), sys.stdout, indent=2)
+        sys.exit(0)
+
+    if args.skills_path is None:
+        args.skills_path = []
+    if not args.no_skills:
+        args.skills_path += skills.SKILL_SEARCH_PATHS
+
+    if args.list_skills:
+        sks = skills.discover_skills(args.skills_path)
+        skills.list_skills(sks)
         sys.exit(0)
 
     if args.plugins:

@@ -243,6 +243,10 @@ options:
                         System prompt [system_prompt]
   --temperature TEMPERATURE
                         Temperature of predictions [temperature]
+  --no-skills           Disable defaults skills (excepts those from --skills-
+                        path)
+  --skills-path DIR     Add a skills directory for skill recursive search
+  --list-skills         List all discoverable agent skills then exit
   --tool-mode {markdown,native}
                         How tools and functions are given to the LLM
                         [tool_mode]
@@ -326,6 +330,7 @@ $ llme /help /quit
 /config       list configuration options
 /set OPT=VAL  change a config option
 /quit         exit the program
+/skills       list available skills
 /help         show this help
 ```
 <!--/slash-help-->
@@ -421,7 +426,7 @@ PR are welcome!
   * [ ] ?
 * Agentic
   * [ ] compaction
-  * [ ] skills
+  * [x] skills
   * [ ] subagents
   * [ ] ?
 * User interface & features

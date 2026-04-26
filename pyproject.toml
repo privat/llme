@@ -21,6 +21,7 @@ dependencies = [
     "termcolor",
     "prompt-toolkit",
     "python-magic",
+    "pyyaml",
 ]
 
 [project.urls]
