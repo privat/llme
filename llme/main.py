@@ -87,8 +87,11 @@ class LLME:
             kb = prompt_toolkit.key_binding.KeyBindings()
             kb.add("pageup")(self.on_pageup)
             kb.add("pagedown")(self.on_pagedown)
+            # We invert the default prompt_toolkit key bindings on multilines
             kb.add("enter")(self.on_enter)
-            kb.add("escape","enter")(self.on_shift_enter)
+            # shift-enter is not a TTY standard and requires specific terminal
+            # alt-enter send the same TTY sequence as escape+enter. use it for now
+            kb.add("escape","enter")(self.on_alt_enter)
             history = prompt_toolkit.history.FileHistory(config.history_filename)
             self.session = prompt_toolkit.PromptSession(
                     complete_while_typing=True,
@@ -128,9 +131,9 @@ class LLME:
 
     def on_enter(self, event):
         """Keybinding for validate"""
-        event.app.exit(result=event.current_buffer.text)
+        event.current_buffer.validate_and_handle()
 
-    def on_shift_enter(self, event):
+    def on_alt_enter(self, event):
         """Keybinding for newline"""
         event.current_buffer.insert_text('\n')
 
