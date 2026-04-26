@@ -12,6 +12,7 @@ A simple, single-file command-line chat client compatible with the OpenAI API.
 - **OpenAI API Compatible:** Works with any self-hosted LLM platform that supports OpenAI chat completions API.
 - **Extremely simple:** Single file, no installation required (but installation is still available).
 - **Command-line interface:** Run it from the terminal.
+- **No TUI bloat:** Just plain unprocessed markdown, readline, and some colors.
 - **Tools included:** Ask it to act on your file system and edit files (yolo).
 
 The basic idea is that LLMs are trained on code and OS configuration and already (machine) learnt to select the probable tools to use and actions to take.
@@ -417,6 +418,12 @@ PR are welcome!
   * [x] user-defined tools
   * [x] sandboxing
   * [x] whitelist/blacklist
+  * [ ] ?
+* Agentic
+  * [ ] compaction
+  * [ ] skills
+  * [ ] subagents
+  * [ ] ?
 * User interface & features
   * [x] readline
   * [x] better prompt & history
@@ -431,7 +438,7 @@ PR are welcome!
   * [x] better tool reporting
   * [x] Usable in pipelines or without a TTY
   * [ ] post-processing output
-  * [ ] attach files in interactive mode
+  * [x] attach files in interactive mode
   * [ ] ?
 * Customization and models
   * [x] config files
