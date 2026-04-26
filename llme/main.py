@@ -205,8 +205,19 @@ class LLME:
                 # serialize the part as is
                 text_content.append(json.dumps(part['file']))
             elif self.config.file_mode == "path":
-                # replace the path with the path.
-                text_content.append(f"The path of the file is {part['file']['filename']}. You can cat its content.")
+                # replace the part with the path.
+                path = part['file']['filename']
+                if self.config.sandbox:
+                    dirname = os.path.dirname(path)
+                    filename = os.path.basename(path)
+                    basename, extension = os.path.splitext(filename)
+                    tempname = self.new_tempfile(basename + "_", extension)
+                    b64 = part['file']['file_data']
+                    import base64
+                    data = base64.b64decode(b64)
+                    self.write_file(tempname, data)
+                    path = tempname
+                text_content.append(f"The path of the file is {path}. You can cat its content.")
             else:
                 logger.warning("unknown file_mode %s", self.config.file_mode)
                 return
