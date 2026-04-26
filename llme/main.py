@@ -372,17 +372,30 @@ class LLME:
         proc.wait()
         printn(content)
 
+        command_name = command.splitlines()[0]
+        if len(command_name) > 20:
+            command_name = command_name[:20] + "..."
+
+        result = f"command: {command_name}\nexitcode: {proc.returncode}\n"
+
         lencontent = len(content)
         if self.config.max_tool_len and lencontent > self.config.max_tool_len:
-            suffix = f"\n[TRUNCADED] Full length is {lencontent} bytes\n"
-            content = content[:self.config.max_tool_len-len(suffix)] + suffix
-            cprint(f"TRUCATED at {self.config.max_tool_len} from {lencontent}", "light_red")
+            import tempfile
+            temp = tempfile.NamedTemporaryFile(prefix="command_output-", mode='w', delete=False)
+            with temp as f:
+                f.write(content)
+            lines = len(content.splitlines())
+            warning = f"warning: truncated because excessive length ({lines} lines or {lencontent} bytes; max is {self.config.max_tool_len} bytes). Full content is stored at {temp.name}. Extract useful content with grep, sed, head, etc."
+            result += warning +  "\n"
+            content = content[:self.config.max_tool_len]
+            cprint(warning, "light_red")
 
         if proc.returncode != 0:
             cprint(f"EXIT {proc.returncode}", "light_red")
 
-        return f"command: {command}\nexitcode: {proc.returncode}\nstdout:\n{content}\n"
+        result += f"stdout:\n{content}\n"
 
+        return result
 
     def next_asset(self):
         """Get the next asset from the user. or None"""
