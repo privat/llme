@@ -87,6 +87,8 @@ class LLME:
             kb = prompt_toolkit.key_binding.KeyBindings()
             kb.add("pageup")(self.on_pageup)
             kb.add("pagedown")(self.on_pagedown)
+            kb.add("enter")(self.on_enter)
+            kb.add("escape","enter")(self.on_shift_enter)
             history = prompt_toolkit.history.FileHistory(config.history_filename)
             self.session = prompt_toolkit.PromptSession(
                     complete_while_typing=True,
@@ -94,6 +96,7 @@ class LLME:
                     completer=SlashCompleter(self),
                     complete_style=prompt_toolkit.shortcuts.CompleteStyle.MULTI_COLUMN,
                     history=history,
+                    multiline=True,
             )
         self.failsafe = False # when True, its mean we are failing. this variable helps to prevent a loop of failure on the catch-all error handling
 
@@ -122,6 +125,14 @@ class LLME:
         if not self.rollforward():
             return
         self.cancel_prompt()
+
+    def on_enter(self, event):
+        """Keybinding for validate"""
+        event.app.exit(result=event.current_buffer.text)
+
+    def on_shift_enter(self, event):
+        """Keybinding for newline"""
+        event.current_buffer.insert_text('\n')
 
     def build_message_object(self, message):
         """Add a message to the history"""
@@ -427,7 +438,7 @@ class LLME:
                         s = ("bg:grey", os.path.basename(f.path))
                         rprompt.append(s)
 
-                user_input = self.session.prompt([("#00ff00", prompt)], default=default, placeholder=[("#7f7f7f", "A prompt, /h for help, Ctrl-C to interrupt")], rprompt=rprompt)
+                user_input = self.session.prompt([("#00ff00", prompt)], default=default, placeholder=[("#7f7f7f", "A prompt, /h for help, Ctrl-C to interrupt. Alt-Enter for multi-line")], rprompt=rprompt)
             else:
                 user_input = input(colored(prompt, "light_green"))
             self.failsafe = False
