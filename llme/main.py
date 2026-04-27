@@ -796,7 +796,7 @@ class LLME:
             args = json.loads(function["arguments"])
         except json.JSONDecodeError as e:
             logger.debug("Tool arguments error: %r", e)
-            cprint(f"{self.prompt_prefix}: Bad tool arguments for {function["name"]}: {e}", color="red")
+            cprint(f"{self.prompt_prefix()}: Bad tool arguments for {function["name"]}: {e}", color="red")
             message = {"role": "tool", "content": f"Error: bad tool arguments {function["name"]}. {e}", "tool_call_id": tool_call["id"]}
             return message
         logger.info(f"CALL %s(%s)", tool.name, args)
@@ -840,6 +840,9 @@ class LLME:
         elif previous_role == "system":
             return self.do_user()
         elif previous_role == "assistant":
+            if self.config.auto_compact and len(self.history) > self.config.auto_compact:
+                cprint(f"{self.prompt_prefix()}> Auto-compaction", color="light_cyan")
+                return self.compact()
             tool_calls = previous_message.tool_calls()
             if tool_calls:
                 return self.do_tools(tool_calls)
@@ -2013,6 +2016,7 @@ def process_args():
     parser.add_argument("-i", "--chat-input", metavar="FILE", help="Continue a previous (exported) conversation")
     parser.add_argument(      "--export-metrics", metavar="FILE", help="Export metrics, usage, etc. in json")
     parser.add_argument("-s", "--system", dest="system_prompt", help="System prompt [system_prompt]")
+    parser.add_argument(      "--auto-compact", type=int, help="Automatically compact when that much rounds is reached (0 for disabled) [auto_compact]")
     parser.add_argument(      "--temperature", type=float, help="Temperature of predictions [temperature]")
     parser.add_argument(      "--extra-body", metavar="YAML", action=YAMLAction, help="YAML/JSON element merged with requests (ex: `--extra-body 'top_p: 0.95'`) [extra_body]")
     parser.add_argument(      "--no-skills", action="store_true", default=None, help="Disable defaults skills (excepts those from --skills-path)")
