@@ -1875,11 +1875,13 @@ def setconf(parser, args, name, value):
     if not action:
         raise AppError(f"Unknown setting {name}")
     if action.type == bool or isinstance(action, argparse._StoreTrueAction):
+        # Special case for bool, as the action just store True
         value = str2bool(value)
+        setattr(args, action.dest, value)
+        return
     elif action.type:
         value = action.type(value)
-    dest = action.dest
-    setattr(args, dest, value)
+    action(parser, args, value)
 
 
 def load_module(path):
