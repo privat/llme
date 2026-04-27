@@ -243,6 +243,8 @@ options:
                         System prompt [system_prompt]
   --temperature TEMPERATURE
                         Temperature of predictions [temperature]
+  --extra-body YAML     YAML/JSON element merged with requests (ex: `--extra-
+                        body 'top_p: 0.95'`) [extra_body]
   --no-skills           Disable defaults skills (excepts those from --skills-
                         path)
   --skills-path DIR     Add a skills directory for skill recursive search
@@ -456,11 +458,11 @@ PR are welcome!
   * [x] plugin system
   * [ ] better tool selection
   * [x] temperature
-  * [ ] other hyper parameters
+  * [x] other hyper parameters
   * [x] handle non-conform thinking & tools
   * [ ] detect model features (is that even possible?)
   * [x] bench system & reporting
-  * [ ] user-defined additional data
+  * [x] user-defined additional data
   * [ ] user-defined filters
 * Code quality
   * [x] docstring and comments

@@ -581,6 +581,8 @@ class LLME:
             data["tools"] = [tool.schema for tool in all_tools.values()]
         if self.config.temperature is not None:
             data["temperature"] = self.config.temperature
+        if(self.config.extra_body):
+            data.update(self.config.extra_body)
         if self.config.raw_request_dump:
             with open(self.config.raw_request_dump, "w") as f:
                 json.dump(data, f, indent=2)
@@ -1445,6 +1447,14 @@ class Message:
     def __repr__(self):
         return self.prefix()
 
+def deep_update(orig, delta):
+    """Deep update (only dicts, other are replaced)"""
+    for k, v in delta.items():
+        if isinstance(v, dict) and isinstance(orig.get(k), dict):
+            deep_update(orig[k], v)
+        else:
+            orig[k] = v
+    return orig
 
 def add_in_dict(total, delta):
     """Deep increase of all values in total"""
@@ -1969,6 +1979,21 @@ class ColorFormatter(logging.Formatter):
     def format(self, record):
         return f"{colored(record.levelname, self.color(record))}: {record.getMessage()}"
 
+class YAMLAction(argparse.Action):
+    """Special action that takes, parse and deep-merge YAML-ish arguments"""
+    def __call__(self, parser, namespace, values, option_string=None):
+        import yaml
+        orig = getattr(namespace, self.dest)
+        if orig is None:
+            orig = {}
+            setattr(namespace, self.dest, orig)
+        # QOL hack
+        delta = yaml.safe_load(values)
+        if type(delta) != dict:
+            s = json.dumps(delta)
+            raise ValueError(f"Expected JSON object, got {s}")
+        deep_update(orig, delta)
+
 def process_args():
     """Handle command line arguments and envs."""
     parser = argparse.ArgumentParser(
@@ -1989,6 +2014,7 @@ def process_args():
     parser.add_argument(      "--export-metrics", metavar="FILE", help="Export metrics, usage, etc. in json")
     parser.add_argument("-s", "--system", dest="system_prompt", help="System prompt [system_prompt]")
     parser.add_argument(      "--temperature", type=float, help="Temperature of predictions [temperature]")
+    parser.add_argument(      "--extra-body", metavar="YAML", action=YAMLAction, help="YAML/JSON element merged with requests (ex: `--extra-body 'top_p: 0.95'`) [extra_body]")
     parser.add_argument(      "--no-skills", action="store_true", default=None, help="Disable defaults skills (excepts those from --skills-path)")
     parser.add_argument(      "--skills-path", metavar="DIR", action="append", help="Add a skills directory for skill recursive search")
     parser.add_argument(      "--list-skills", action="store_true", default=None, help="List all discoverable agent skills then exit")
