@@ -836,6 +836,35 @@ class LLME:
             else:
                 return self.do_user()
 
+    def do_sleep(self, delay):
+        """Throttling server"""
+        try:
+            with Spinner("light_blue", self.config.plain):
+                for i in range(delay, 0, -1):
+                    cprint(f"  Throttled for {i}s... ", "light_blue", end="")
+                    time.sleep(1)
+        except KeyboardInterrupt:
+            logger.warning("Interrupted by user.")
+            self.rollback()
+
+    def get_throttling_delay(self, e):
+        """Extract throttling delay from headers"""
+        if e.response is None:
+            return
+        for h in ['retry-after', 'x-ratelimit-reset-requests', 'x-ratelimit-reset-tokens']:
+            v = e.response.headers.get(h)
+            if not v:
+                continue
+            logger.debug("throttling header %s=%s", h, v)
+            if v[-1] == 's':
+                v = v[:-1]
+            try:
+                return int(v)
+            except:
+                pass
+        return None
+
+
     def loop(self):
         """The main ping-pong loop between the user and the assistant"""
         while True:
@@ -843,6 +872,10 @@ class LLME:
                 self.do_role()
                 continue
             except requests.exceptions.RequestException as e:
+                delay = self.get_throttling_delay(e)
+                if delay:
+                    self.do_sleep(delay)
+                    continue
                 if self.config.batch:
                     raise
                 logger.error("Server error: %s", extract_requests_error(e))
@@ -1683,11 +1716,12 @@ class SlashCompleter(prompt_toolkit.completion.Completer):
 
 def extract_requests_error(e):
     """Common handling of requests error"""
-    logger.debug("request error: %s", e)
+    logger.debug("requests error: %s", e)
     if e.request is None:
         return str(e)
     if e.response is None:
         return f"{e} ({e.request.url})"
+    logger.debug("response headers: %s", e.response.headers)
 
     """Server may format their error in plain text or json"""
     text = e.response.text
@@ -1705,8 +1739,8 @@ def extract_requests_error(e):
 
     text = re.sub(r"<[^>]*>", "", text)
     text = re.sub(r"\s+", " ", text).strip()
-    if len(text) > 80:
-        text = text[:80] + "..."
+    if len(text) > 200:
+        text = text[:200] + "..."
 
     message = f"{text.strip()} ({e.response.status_code} {e.response.request.url})"
     return message
