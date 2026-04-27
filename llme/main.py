@@ -381,13 +381,14 @@ class LLME:
         proc.stdin.close()
 
         content = ''
+        cp = ChunkPrinter()
         with Spinner("light_red", self.config.plain) as am:
             while line := proc.stdout.readline():
                 am.stop()
-                print(line, end='', flush=True)
+                cp.print(line, 'white', 'on_grey')
                 content += line
+        cp.end()
         proc.wait()
-        printn(content)
 
         command_name = command.splitlines()[0]
         if len(command_name) > 20:
@@ -593,11 +594,11 @@ class LLME:
         full_content = ''
         full_reasoning_content = ''
         full_tool_calls = []
-        mode = None # reasoning, content or none
         message = None # The whole message, if any
         last_chunk = None
         first_token = True
         reasoning_label = None
+        cp = ChunkPrinter()
         for data in SSEReader(response):
             processed = False
             choices = data.get("choices")
@@ -628,20 +629,14 @@ class LLME:
                     break # We found one
             if reasoning_content:
                 processed = True
-                if mode and mode != full_reasoning_content:
-                    printn(mode)
                 full_reasoning_content += reasoning_content
-                mode = full_reasoning_content
-                cprint(reasoning_content, "light_magenta", end='', flush=True)
+                cp.print(reasoning_content, "light_magenta", id='reasoning_content')
 
             content = delta.get("content")
             if content:
                 processed = True
-                if mode and mode != full_content:
-                    printn(mode)
                 full_content += content
-                mode = full_content
-                print(content, end='', flush=True)
+                cp.print(content, id='content')
 
             tool_calls = delta.get("tool_calls")
             if tool_calls:
@@ -655,11 +650,11 @@ class LLME:
                         full_tool_calls.append(None)
                     if "name" in f:
                         full_tool_calls[idx] = tool_call
-                        cprint(f["name"], color="red", end='', flush=True)
+                        cp.print(f["name"], color="red", id=idx)
                     else:
                         full_tool_calls[idx]["function"]["arguments"] += f["arguments"]
-                    cprint(f["arguments"].encode('utf-8').decode('unicode_escape', errors='backslashreplace'), color="red", end='', flush=True)
-                    mode="." # force \n after the tool_call is fully outputed
+                    #cp.print(f["arguments"].encode('utf-8').decode('unicode_escape', errors='backslashreplace'), color="red", id=idx)
+                    cp.print_escaped(f["arguments"], color="red", string_color="light_red", id=idx)
 
             finish_reason = choice0.get('finish_reason')
             if finish_reason:
@@ -703,8 +698,7 @@ class LLME:
                 # Force the LLM to stop once a tool call is found
                 break
 
-        if mode:
-            printn(mode)
+        cp.end()
         logger.debug("Chunk: Last one: %s", last_chunk)
         response.close()
 
@@ -751,7 +745,7 @@ class LLME:
         data["last_token_ms"] = data["total_ms"] - data["first_token_ms"] - data["response_ms"]
         self.metrics.update(data)
 
-        cprint(self.metrics.infoline(data), "light_grey", file=sys.stderr)
+        cprint(self.metrics.infoline(data), "light_grey")
 
         if self.config.export_metrics:
             try:
@@ -947,7 +941,7 @@ class LLME:
                 os.unlink(stdinfile.name)
 
         if self.metrics.total:
-            cprint(f"Total: {self.metrics.infoline(self.metrics.total)}", "light_grey", file=sys.stderr)
+            cprint(f"Total: {self.metrics.infoline(self.metrics.total)}", "light_grey")
 
     def load_chat(self, file):
         logger.info("Loading conversation from %s", file)
@@ -1251,6 +1245,50 @@ class LLME:
 class CancelEvent(Exception):
     """Raised when the prompt is cancelled."""
     pass
+
+
+class ChunkPrinter:
+    """Print chunks of text and gracefully handle scope change, newlines, and partial unicode"""
+
+    def __init__(self):
+        self.last = None
+        self.id = None
+        self.inside_string = False
+
+    def print(self, s, color=None, on_color=None, id=None):
+        """Print a colored text, no '\n', forced flush.
+        If id is set, then a different id will force a newline."""
+        if not s:
+            return
+        if id != self.id:
+            self.end()
+            self.id = id
+        cprint(s, color, on_color, end="", flush=True)
+        self.last = s
+
+    def print_escaped(self, s, color=None, string_color=None, on_color=None, id=None):
+        """Assume that s contains strings with escaped content. We un-escape and change the color"""
+        items = re.split(r"(\\[n\"\\]|\")", s)
+        for i in items:
+            if not i:
+                continue
+            elif i == "\"":
+                self.inside_string = not self.inside_string
+                self.print(i, color, on_color, id=id)
+            elif i == "\\n":
+                self.print("\n", color, on_color, id=id)
+            else:
+                if i[0] == "\\":
+                    i = i[1:]
+                c = string_color if self.inside_string else color
+                self.print(i, c, on_color, id=id)
+
+    def end(self):
+        """Add possible final newline"""
+        if self.last and self.last[-1] != '\n':
+            print("")
+            self.last = None
+        self.inside_string = False
 
 
 class Spinner:
@@ -1672,12 +1710,6 @@ def extract_requests_error(e):
 
     message = f"{text.strip()} ({e.response.status_code} {e.response.request.url})"
     return message
-
-
-def printn(previous_string):
-    """Print a newline if previous_string does not end with one"""
-    if not previous_string.endswith("\n"):
-        print()
 
 
 def apply_config(parser, args, config, path):
