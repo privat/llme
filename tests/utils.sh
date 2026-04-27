@@ -123,6 +123,7 @@ runllme() {
 
 	# interactive mode
 	if [ -n "$I" ]; then
+		ln -s "chat.json" "$LOGDIR/out.txt"
 		(
 			cd "$WORKDIR"
 			if [ -d .venv ]; then
