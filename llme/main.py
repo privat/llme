@@ -189,6 +189,8 @@ class LLME:
         self.build_message_object(message)
 
         raw_message = json.loads(json.dumps(message))
+        if "channel" in raw_message:
+            del raw_message["channel"] # Groq adds it but refuse it. Weird
         self.filter_file(raw_message)
 
         if raw_message["role"] == "tool" and self.config.tool_mode != "native":
@@ -595,19 +597,14 @@ class LLME:
             timeout=self.config.timeout_http,
         )
 
-
     def receive_chat_completion_message(self, response):
         """Process the server response to extract and return the message.
         This function handle; stream mode, tools, thinking, metrics, etc."""
 
         start_time = time.perf_counter()
-        full_content = ''
-        full_reasoning_content = ''
-        full_tool_calls = []
-        message = None # The whole message, if any
+        message = {} # The whole message
         last_chunk = None
         first_token = True
-        reasoning_label = None
         cp = ChunkPrinter()
         for data in SSEReader(response):
             processed = False
@@ -619,51 +616,40 @@ class LLME:
                 logger.warning("chunk: too much choices: %s", data)
             choice0 = choices[0]
 
-            message = choice0.get('message')
-            if message:
-                # A whole message is just a big delta! So reuse the whole code path
-                delta = message
-            else:
+            # A whole message is just a big delta! So reuse the whole code path
+            delta = choice0.get('message')
+            if not delta:
                 delta = choice0['delta']
 
             # last_chunk is used for debugging, it's usually too much to print each chunk
             last_chunk = data
             self.completion_metrics["chunk_n"] += 1
 
-            # Some reasoning models like qwen3 of gpt-oss have a reasoning_content field, with various names
+            chunk_update(message, delta)
+
+            # Some openai-api provider have a reasoning_content field, with various names
             # It's non-standard but helps to distinguish the reasoning content from the main content
             for label in ["reasoning_content", "reasoning"]:
                 reasoning_content = delta.get(label)
                 if reasoning_content:
-                    reasoning_label = label
                     break # We found one
             if reasoning_content:
                 processed = True
-                full_reasoning_content += reasoning_content
                 cp.print(reasoning_content, "light_magenta", id='reasoning_content')
 
             content = delta.get("content")
             if content:
                 processed = True
-                full_content += content
                 cp.print(content, id='content')
 
             tool_calls = delta.get("tool_calls")
             if tool_calls:
                 processed = True
-                i =- 1
                 for tool_call in tool_calls:
-                    i = i + 1
-                    idx = tool_call.get("index", i)
+                    idx = tool_call.get("index")
                     f = tool_call["function"]
-                    while len(full_tool_calls) <= idx:
-                        full_tool_calls.append(None)
                     if "name" in f:
-                        full_tool_calls[idx] = tool_call
                         cp.print(f["name"], color="red", id=idx)
-                    else:
-                        full_tool_calls[idx]["function"]["arguments"] += f["arguments"]
-                    #cp.print(f["arguments"].encode('utf-8').decode('unicode_escape', errors='backslashreplace'), color="red", id=idx)
                     cp.print_escaped(f["arguments"], color="red", string_color="light_red", id=idx)
 
             finish_reason = choice0.get('finish_reason')
@@ -695,30 +681,25 @@ class LLME:
                 first_token = False
 
             #FIXME: this is fragile and ugly.
-            if self.config.tool_mode == "markdown":
-                cb = re.search(r"^```run([^\n]*)\n(.*?)^```$", full_content, re.DOTALL | re.MULTILINE)
+            if self.config.tool_mode == "markdown" and message.get('content'):
+                cb = re.search(r"^```run([^\n]*)\n(.*?)^```$", message['content'], re.DOTALL | re.MULTILINE)
                 if not cb:
                     continue
+                tool_calls = message.get("tool_calls")
+                if tool_calls is None:
+                    tool_calls = message['tool_calls'] = []
                 arguments = {"command": cb[1], "stdin": cb[2]}
                 tool_call = {
-                    "id": f"toolcallid-{len(self.history)}",
+                    "id": f"toolcallid-{len(self.history)}-len(tool_calls)",
                     "type": "function",
                     "function": {"name": "run_command", "arguments": json.dumps(arguments)}}
-                full_tool_calls.append(tool_call)
+                tool_calls.append(tool_call)
                 # Force the LLM to stop once a tool call is found
                 break
 
         cp.end()
         logger.debug("Chunk: Last one: %s", last_chunk)
         response.close()
-
-        if not message:
-            # construct the message from the deltas
-            message = {"role": "assistant", "content": full_content}
-            if full_reasoning_content:
-                message[reasoning_label] = full_reasoning_content
-            if full_tool_calls:
-                message["tool_calls"] = full_tool_calls
         return message
 
 
@@ -1026,6 +1007,8 @@ class LLME:
         for m in models:
             sel = "-> " if m == self.model else "   "
             print(f"{sel}{m}")
+        if self.model and models and not self.model in models:
+            logger.warning("Selected model %s not listed", self.model)
         return models
 
     def print_message(self, i, message, before=""):
@@ -1456,6 +1439,43 @@ def deep_update(orig, delta):
         if isinstance(v, dict) and isinstance(orig.get(k), dict):
             deep_update(orig[k], v)
         else:
+            orig[k] = v
+    return orig
+
+CHUNK_FIXED_FIELDS = ["role", "model", "channel"]
+
+def chunk_update(orig, delta, path=""):
+    """Deep update for chunks in streamed messages. This only appends information and should never changes it.
+    This is global chunk merging approach. I hove weird open-api providers will not be too much insane."""
+    import copy
+    delta = copy.deepcopy(delta)
+    for k, v in delta.items():
+        ov = orig.get(k)
+        if isinstance(v, dict) and isinstance(ov, dict):
+            chunk_update(ov, v, f"{path}.{k}")
+        elif (isinstance(v, str) and isinstance(ov, str)
+              # Do not concatenate str values in some root elements as some provider (groq and ollama at least) repeat values in those keys
+              and not (path == "" and k in CHUNK_FIXED_FIELDS)):
+            orig[k] += v
+        elif isinstance(v, list) and isinstance(ov, list):
+            for item in v:
+                # Special case, extension of an existing element in an array
+                if isinstance(item, dict):
+                    idx = item.get("index")
+                    if idx is not None:
+                        if idx < len(ov):
+                            chunk_update(ov[idx], item, f"{path}[{idx}]")
+                            continue
+                        while len(ov) < idx:
+                            logger.warning("Broken server? Chunked array needs empty slots (%r)[%s] = %r", ov, idx, item)
+                            ov.append({})
+                        ov.append(item)
+                        continue
+                # Otherwise, just append
+                ov.append(item)
+        else:
+            if ov is not None and v != ov:
+                logger.error("Broken server? Chunk update issue %s.%s override %r by %r", path, k, ov, v);
             orig[k] = v
     return orig
 
