@@ -1256,7 +1256,17 @@ class LLME:
         compaction_prompt = self.config.compaction_prompt
         message = {"role": "user", "content": compaction_prompt}
         self.add_message(message)
-        response = self.do_assisant()
+
+        # Temporally disable tools
+        old = self.config.tool_mode
+        self.config.tool_mode = "notools"
+        try:
+            response = self.do_assisant()
+        finally:
+            self.config.tool_mode = old
+        if response["content"] == "":
+            logger.error("Agent did not compact. Bad agent!")
+            return
         system_prompt = self.prepare_system_prompt()
         system_prompt["content"] += "\n\n" + response["content"]
         self.reset_messages([system_prompt])
