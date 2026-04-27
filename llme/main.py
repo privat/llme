@@ -1789,9 +1789,10 @@ def resolve_config(parser, args):
     if args.file_mode is None:
         args.file_mode = "path"
     if args.batch is None and not sys.stdin.isatty():
+        logger.debug("no tty: activate batch mode")
         args.batch = True
 
-    logger.debug("Final config: %s", vars(args))
+    logger.debug("Final config: %s", {k:v for k,v in vars(args).items() if v is not None})
 
 def str2bool(s):
     "Convert a boolean value from a string in a config file or env var"
@@ -1920,7 +1921,7 @@ def process_args():
     parser.add_argument(      "--export-metrics", metavar="FILE", help="Export metrics, usage, etc. in json")
     parser.add_argument("-s", "--system", dest="system_prompt", help="System prompt [system_prompt]")
     parser.add_argument(      "--temperature", type=float, help="Temperature of predictions [temperature]")
-    parser.add_argument(      "--no-skills", action="store_true", help="Disable defaults skills (excepts those from --skills-path)")
+    parser.add_argument(      "--no-skills", action="store_true", default=None, help="Disable defaults skills (excepts those from --skills-path)")
     parser.add_argument(      "--skills-path", metavar="DIR", action="append", help="Add a skills directory for skill recursive search")
     parser.add_argument(      "--list-skills", action="store_true", default=None, help="List all discoverable agent skills then exit")
     parser.add_argument(      "--tool-mode", choices=["markdown", "native"], help="How tools and functions are given to the LLM [tool_mode]")
@@ -1956,9 +1957,10 @@ def process_args():
 
     # We need to that first because `can_colorize()` is cached.
     # So we need to "guess" the environment before printing anything, including logs
-    if args.plain is None:
-        args.plain = not can_colorize()
-    elif args.plain:
+    args_plain = args.plain
+    if args_plain is None:
+        args_plain = not can_colorize()
+    elif args_plain:
         # For termcolor and subprocesses
         os.environ["NO_COLOR"] = "True" # https://no-color.org/
     else:
@@ -1966,7 +1968,9 @@ def process_args():
         os.environ["FORCE_COLOR"] = "True" # https://force-color.org/
 
     set_verbose(args.verbose)
-    logger.debug("Given arguments %s", vars(args))
+    logger.debug("Given arguments %s", {k:v for k,v in vars(args).items() if v is not None})
+
+    args.plain = args_plain
     if args.log_file:
         try:
             filehandler = logging.FileHandler(args.log_file)
