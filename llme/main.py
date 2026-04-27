@@ -1823,7 +1823,8 @@ def setconf(parser, args, name, value):
         value = str2bool(value)
     elif action.type:
         value = action.type(value)
-    action(parser, args, value)
+    dest = action.dest
+    setattr(args, dest, value)
 
 
 def load_module(path):
