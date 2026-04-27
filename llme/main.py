@@ -1825,6 +1825,19 @@ def resolve_config(parser, args):
     if args.batch is None and not sys.stdin.isatty():
         logger.debug("no tty: activate batch mode")
         args.batch = True
+    if args.skills_path is None:
+        args.skills_path = []
+    if not args.no_skills:
+        args.skills_path.append("skills")
+        for i in config_dirs:
+            args.skills_path.append(os.path.join(i,"skills"))
+    if args.timeout_tool is None:
+        args.timeout_tool = 600 # 10 min
+    if args.timeout_http is None:
+        args.timeout_http = 600
+    if args.max_tool_len is None:
+        args.max_tool_len = 100000
+
 
     logger.debug("Final config: %s", {k:v for k,v in vars(args).items() if v is not None})
 
@@ -2022,10 +2035,6 @@ def process_args():
         json.dump(vars(args), sys.stdout, indent=2)
         sys.exit(0)
 
-    if args.skills_path is None:
-        args.skills_path = []
-    if not args.no_skills:
-        args.skills_path += skills.SKILL_SEARCH_PATHS
 
     if args.list_skills:
         sks = skills.discover_skills(args.skills_path)
@@ -2035,13 +2044,6 @@ def process_args():
     if args.plugins:
         for plugin in args.plugins:
             load_plugin(plugin)
-
-    if args.timeout_tool is None:
-        args.timeout_tool = 600 # 10 min
-    if args.timeout_http is None:
-        args.timeout_http = 600
-    if args.max_tool_len is None:
-        args.max_tool_len = 100000
 
     if not args.base_url:
         logger.error("Error: --base-url required and not defined the config file.")
