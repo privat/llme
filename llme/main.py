@@ -96,6 +96,7 @@ class LLME:
             # shift-enter is not a TTY standard and requires specific terminal
             # alt-enter send the same TTY sequence as escape+enter. use it for now
             kb.add("escape","enter")(self.on_alt_enter)
+            kb.add("c-c")(self.on_control_c)
             history = prompt_toolkit.history.FileHistory(config.history_filename)
             self.session = prompt_toolkit.PromptSession(
                     complete_while_typing=True,
@@ -139,6 +140,13 @@ class LLME:
     def on_alt_enter(self, event):
         """Keybinding for newline"""
         event.current_buffer.insert_text('\n')
+
+    def on_control_c(self, event):
+        """Clear or leave"""
+        if event.current_buffer.text == "":
+            event.app.exit(exception=KeyboardInterrupt)
+        else:
+            event.app.current_buffer.reset()
 
     def build_message_object(self, message):
         """Add a message to the history"""
