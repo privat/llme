@@ -876,6 +876,10 @@ class LLME:
                     continue
                 if self.config.batch:
                     raise
+                if e.response is not None and e.response.status_code == 404:
+                    models = self.get_models()
+                    if self.model not in models:
+                        cprint(f"Info: current model ({self.model}) is not in the list. Check with /models, chose with /set model=...", "light_cyan")
                 self.rollback()
             except CancelEvent:
                 self.session.app.erase_when_done = False
