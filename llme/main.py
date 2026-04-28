@@ -833,9 +833,9 @@ class LLME:
     def do_sleep(self, delay):
         """Throttling server"""
         try:
-            with Spinner("light_blue", self.config.plain):
+            with Spinner("light_cyan", self.config.plain):
                 for i in range(delay, 0, -1):
-                    cprint(f"  Throttled for {i}s... ", "light_blue", end="")
+                    cprint(f"  Throttled for {i}s... ", "light_cyan", end="")
                     time.sleep(1)
         except KeyboardInterrupt:
             logger.warning("Interrupted by user.")
@@ -856,6 +856,9 @@ class LLME:
                 return int(v)
             except:
                 pass
+        if e.response.status_code == 429:
+            # Default throttling
+            return 60
         return None
 
 
@@ -866,13 +869,13 @@ class LLME:
                 self.do_role()
                 continue
             except requests.exceptions.RequestException as e:
+                logger.error("Server error: %s", extract_requests_error(e))
                 delay = self.get_throttling_delay(e)
                 if delay:
                     self.do_sleep(delay)
                     continue
                 if self.config.batch:
                     raise
-                logger.error("Server error: %s", extract_requests_error(e))
                 self.rollback()
             except CancelEvent:
                 self.session.app.erase_when_done = False
