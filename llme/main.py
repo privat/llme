@@ -839,6 +839,10 @@ class LLME:
     def do_sleep(self, delay):
         """Throttling server"""
         try:
+            if self.config.plain:
+                cprint(f"Throttled for {delay}s...", "light_cyan")
+                time.sleep(delay)
+                return
             with Spinner("light_cyan", self.config.plain):
                 for i in range(delay, 0, -1):
                     cprint(f"  Throttled for {i}s... ", "light_cyan", end="")
