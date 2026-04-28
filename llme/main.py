@@ -264,7 +264,8 @@ class LLME:
             response = requests.get(url, headers=self.api_headers, timeout=self.config.timeout_http)
             response.raise_for_status()
         except requests.exceptions.RequestException as e:
-            raise AppError(extract_requests_error(e))
+            logger.error("Error getting models: %s", extract_requests_error(e))
+            return None
         models = response.json()
         ids = [m["id"] for m in models["data"]]
         logger.info("Available models: %s", ids)
