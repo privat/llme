@@ -71,14 +71,15 @@ def parse_skill_md(content: str) -> tuple[dict, str]:
 
 def prompt_for_skills(skills):
     lines = [
-    	"The following skills provide specialized instructions for specific tasks.",
-		"Use the read tool to load a skill's file when the task matches its description.",
-		"When a skill file references a relative path, resolve it against the skill directory (parent of SKILL.md / dirname of the path) and use that absolute path in tool commands.",
-		"",
+            "## Skills\n",
+            "The following skills provide specialized instructions for specific tasks.",
+            "Use the read tool to load a skill's file when the task matches its description.",
+            "When a skill file references a relative path, resolve it against the skill directory (parent of SKILL.md / dirname of the path) and use that absolute path in tool commands.",
+            "",
         ]
 
     for name, s in skills.items():
-        lines.append(f"Name: {s.name}\nDescription: {s.desc}\nFile: {s.dirpath}/SKILL.md\n\n")
+        lines.append(f"Name: {s.name}\nDescription: {s.desc}\nFile: {s.dirpath}/SKILL.md\n")
     return '\n'.join(lines)
 
 
