@@ -672,6 +672,11 @@ class LLME:
                 processed = True
                 self.completion_metrics.update(usage)
 
+            model = data.get("model")
+            if model and self.model != model:
+                logger.warning("Unexpected answering model: got %s instead of %s", model, self.model)
+                self.model = model
+
             if not processed:
                 logger.info("Chunk: Unexpected content: %s", data)
                 continue
