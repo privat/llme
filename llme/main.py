@@ -58,6 +58,7 @@ class LLME:
         self.current_generation = 0 # The generation number of the current conversation (for prompt prefix)
         self.message_index = None # The current message in the history (for /undo and history navigation)
         self.files = [] # Attached file for the next request.
+        self.answering_model = None
 
         self.slash_commands = [
             "/file FILE    attach a file for the next prompt",
@@ -602,6 +603,9 @@ class LLME:
         """Process the server response to extract and return the message.
         This function handle; stream mode, tools, thinking, metrics, etc."""
 
+        if self.answering_model is None:
+            self.answering_model = self.model
+
         start_time = time.perf_counter()
         message = {} # The whole message
         last_chunk = None
@@ -674,9 +678,9 @@ class LLME:
                 self.completion_metrics.update(usage)
 
             model = data.get("model")
-            if model and self.model != model:
+            if model and self.answering_model != model:
                 logger.warning("Unexpected answering model: got %s instead of %s", model, self.model)
-                self.model = model
+                self.answering_model = model
 
             if not processed:
                 logger.info("Chunk: Unexpected content: %s", data)
