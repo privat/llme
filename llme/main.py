@@ -1896,9 +1896,10 @@ def resolve_config(parser, args):
     if args.skills_path is None:
         args.skills_path = []
     if not args.no_skills:
-        args.skills_path.append("skills")
-        for i in config_dirs:
-            args.skills_path.append(os.path.join(i,"skills"))
+        for i in config_dirs + ["."]:
+            d = os.path.join(i,"skills")
+            if os.path.isdir(d):
+                args.skills_path.append(d)
     if args.timeout_tool is None:
         args.timeout_tool = 600 # 10 min
     if args.timeout_http is None:

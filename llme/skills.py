@@ -85,10 +85,17 @@ def prompt_for_skills(skills):
 
 def discover_skills(directories):
     skills = {}
-    for base_dir in directories:
-        base_dir = Path(base_dir)
-        if not base_dir.is_dir():
-            continue
+    for basedir in directories:
+        base_dir = Path(basedir)
+        if base_dir.is_dir():
+            pass
+        else:
+            base_dir = Path.home() / ".config" / "llme" / "skills_store" / basedir
+            if base_dir.is_dir():
+                pass
+            else:
+                logger.warning("skill directory %s not found", basedir)
+                continue
         skills.update(discover_skills_rec(base_dir))
     return skills
 
@@ -101,15 +108,14 @@ def discover_skills_rec(directory):
     skills = {}
     logger.debug("[skills] check %s", directory)
     for entry in sorted(os.listdir(directory)):
-        skill_dir = directory / entry
-        skill_file = skill_dir / "SKILL.md"
+        skill_file = directory / entry
         
-        if not skill_dir.is_dir():
+        if skill_file.is_dir():
+            # Recursive search
+            skills.update(discover_skills_rec(skill_file))
             continue
 
-        if not skill_file.is_file():
-            # Recursive search
-            skills.update(discover_skills_rec(skill_dir))
+        if entry != "SKILL.md":
             continue
 
         logger.debug("[skills] found %s", skill_file)
@@ -128,8 +134,8 @@ def discover_skills_rec(directory):
             continue
         
         # Spec: name must match directory name
-        if skill_name != entry:
-            logger.debug(f"Skipping {entry}: name field '{skill_name}' != directory '{entry}'")
+        if skill_name != directory.name:
+            logger.debug(f"Skipping {entry}: name field '{skill_name}' != directory '{directory.name}'")
             continue
 
         # Spec: description must exist and be < 1024 chars
@@ -141,7 +147,7 @@ def discover_skills_rec(directory):
         # Discover optional directories for context
         context_files = []
         for subdir in ["references", "assets"]:
-            sub_path = skill_dir / subdir
+            sub_path = directory / subdir
             if sub_path.is_dir():
                 for fname in sorted(os.listdir(sub_path)):
                     fpath = sub_path / fname
@@ -149,9 +155,9 @@ def discover_skills_rec(directory):
                         context_files.append(str(fpath))
 
         skills[skill_name] = Skill(
-                skill_name,
-                desc,
-                str(skill_dir),
+                skill_name.strip(),
+                desc.strip(),
+                str(directory),
                 meta,
         )
 
