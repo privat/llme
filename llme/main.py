@@ -803,7 +803,10 @@ class LLME:
             return
         if result is None:
             return None
-        message = {"role": "tool", "content": str(result), "tool_call_id": tool_call["id"]}
+
+        if not tool.has_parts:
+            result = str(result)
+        message = {"role": "tool", "content": result, "tool_call_id": tool_call["id"]}
         return message
 
     def do_tools(self, tool_calls):
@@ -1672,10 +1675,11 @@ type_map = {int: "integer", str: "string"}
 
 class Tool:
     """A tool usable by the LLM. Create them wit the `@tool` decorator"""
-    def __init__(self, fun):
+    def __init__(self, fun, has_parts=False):
         self.name = fun.__name__
         self.fun = fun
         self.doc = fun.__doc__
+        self.has_parts = has_parts # Might return an array  of content parts
         all_tools[self.name] = self
         self.build_schema()
 
@@ -1709,9 +1713,9 @@ class Tool:
             }
         }
 
-def tool(fun):
+def tool(fun, **kwargs):
     """ Tool decorator. This registers a function to be usable by the LLM."""
-    tool = Tool(fun)
+    tool = Tool(fun, **kwargs)
     return fun
 
 class ToolError(Exception):
