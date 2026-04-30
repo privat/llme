@@ -116,6 +116,7 @@ class LLME:
         self.metrics = Metrics()
 
         tool(self.run_command)
+        tool(self.image_description, has_parts=True)
 
     def cancel_prompt(self, app):
         """Cancel the current prompt and go back to the main loop"""
@@ -457,6 +458,20 @@ class LLME:
             contents = contents.encode()
         self.direct_run_command(f"cat > {path}", contents)
 
+    def image_description(self, path: str):
+        """Returns a description of the given image. Useful for OCR, general description or any meaningful information."""
+        # FIXME: work with sandbox
+        if not os.path.exists(path):
+            return f"Error: path {path} not found"
+        file = Asset(path)
+        if not file.is_image():
+            return f"Error: {path} is not an image but {file.mime_type}"
+        content_part = file.content_part()
+        if not content_part:
+            return f"Error: cannot access content of {path}"
+        return [content_part]
+
+
     def next_asset(self):
         """Get the next asset from the user. or None"""
         if len(self.prompts) == 0:
@@ -474,25 +489,6 @@ class LLME:
         if len(file.raw_content) > 0:
             return file
         return None
-
-
-    def get_content(self, message):
-        content = message["content"]
-        if isinstance(content, str):
-            return content, []
-        assets = []
-        text = None
-        for part in content:
-            t = part["type"]
-            if t == "text":
-                text = part["text"]
-            elif t == "image_url":
-                pass
-            elif t == "file":
-                filename = part["file"]["filename"]
-                filename = os.path.basename(filename)
-                assets.append(filename)
-        return text, assets
 
 
     def input_prompt(self):
@@ -1745,10 +1741,13 @@ class Asset:
         self.mime_type = magic.from_buffer(self.raw_content, mime=True)
         logger.info("File %s is %s", path, self.mime_type)
 
+    def is_image(self):
+        return self.mime_type.startswith("image/")
+
     def content_part(self):
         """Return the content part for the user message"""
         import base64
-        if self.mime_type.startswith("image/"):
+        if self.is_image():
             data = base64.b64encode(self.raw_content).decode()
             url = f"data:{self.mime_type};base64,{data}"
             return {"type": "image_url", "image_url": {"url": url}}
