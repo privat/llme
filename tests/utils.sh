@@ -6,7 +6,7 @@ export LLME_MAX_TOOL_LEN=${LLME_MAX_TOOL_LEN:-10000}
 
 # Common setup and useful functions for test scripts
 
-export SUITE=$(basename "$0" .sh)
+export SUITE=${FORCE_SUITE:-$(basename "$0" .sh)}
 export TESTDIR=$(dirname "$0")
 export ORIGDIR=`pwd`
 export UTILDATE=${UTILDATE:-`date +%s`} # so all runs from a same initial script share a same utildate
