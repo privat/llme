@@ -18,6 +18,7 @@
 """A command-line assistant for local LLMs"""
 
 import argparse
+import argcomplete
 import inspect
 import itertools
 import json
@@ -2042,6 +2043,27 @@ class YAMLAction(argparse.Action):
             raise ValueError(f"Expected JSON object, got {s}")
         deep_update(orig, delta)
 
+def config_completer(prefix, **kwargs):
+    """completer on --config for argcomplete"""
+    file_completer = argcomplete.completers.FilesCompleter('*.toml')
+    paths = []
+    import glob
+    for directory in config_dirs:
+        for path in glob.glob(os.path.join(directory, f"{prefix}*.toml")):
+            paths.append(os.path.basename(path)[:-5])
+    return paths + file_completer(prefix, **kwargs)
+
+def model_completer(prefix, parsed_args, parser, **kwargs):
+    """completer on --model for argcomplete"""
+    # Models list depend on the other options (config and url), so parse them before!
+    resolve_config(parser, parsed_args)
+    llme = LLME(parsed_args)
+    llme.argparser = parser # FIXME too much hacky
+    models = llme.get_models()
+    if not models:
+        return ()
+    return (m for m in models if m.startswith(prefix))
+
 def process_args():
     """Handle command line arguments and envs."""
     parser = argparse.ArgumentParser(
@@ -2051,7 +2073,7 @@ def process_args():
     )
     # Trick: "store_true" options are defaulted to None, so we can distinguish between explicit --foo (True), --no-foo (False) and unset (None)
     parser.add_argument("-u", "--base-url", metavar="URL", help="API base URL [base_url]")
-    parser.add_argument("-m", "--model", metavar="NAME", help="Model name or identifier [model]")
+    parser.add_argument("-m", "--model", metavar="NAME", help="Model name or identifier [model]").completer = model_completer
     parser.add_argument(      "--list-models", action="store_true", default=None, help="List available models then exit")
     parser.add_argument(      "--api-key", metavar="SECRET", help="The API key [api_key]")
     parser.add_argument("-b", "--batch", action="store_true", default=None, help="Run non-interactively. Implicit if stdin is not a tty [batch]")
@@ -2073,7 +2095,7 @@ def process_args():
     parser.add_argument(      "--timeout-tool", type=int, help="Maximum duration in seconds of tool runs (0 for unlimited) [timeout_tool]")
     parser.add_argument(      "--timeout-http", type=int, help="Timeout of LLM connexion (0 for unlimited) [timeout_http]")
     parser.add_argument(      "--file-mode", choices=["part", "path","json"], help="How (non image) files are given to the LLM [file_mode]")
-    parser.add_argument("-c", "--config", metavar="FILE", action="append", help="Custom configuration files")
+    parser.add_argument("-c", "--config", metavar="FILE", action="append", help="Custom configuration files").completer = config_completer
     parser.add_argument(      "--list-tools", action="store_true", default=None, help="List available tools then exit")
     parser.add_argument(      "--dump-config", action="store_true", default=None, help="Print the effective config and quit")
     parser.add_argument(      "--raw-request-dump", metavar="FILE", help="Export the full POSTed json payload [raw_request_dump]")
@@ -2092,6 +2114,8 @@ def process_args():
             for name in action.option_strings:
                 if name.startswith("--") and not name.startswith("--no-"):
                     x=parser.add_argument("--no" + name[1:], dest=action.dest, action="store_false", help=argparse.SUPPRESS)
+
+    argcomplete.autocomplete(parser)
 
     args = parser.parse_intermixed_args()
     if args.version:
