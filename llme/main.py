@@ -404,8 +404,8 @@ class LLME:
         proc.wait()
 
         command_name = command.splitlines()[0]
-        if len(command_name) > 20:
-            command_name = command_name[:20] + "..."
+        if len(command_name) > 60:
+            command_name = command_name[:60] + "..."
 
         result = f"command: {command_name}\nexitcode: {proc.returncode}\n"
 
