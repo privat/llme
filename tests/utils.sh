@@ -46,8 +46,8 @@ jsonescape() {
 result() {
 	config="$ORIGDIR/$LOGDIR/config.json"
 	if [ -f "$config" ]; then
-		url=`jq -r .base_url "$config"`
-		model=`jq -r .model "$config"`
+		url=`jq -r .base_url "$config" 2>/dev/null`
+		model=`jq -r .model "$config" 2>/dev/null`
 	else
 		url=
 		model=
