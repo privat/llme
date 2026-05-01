@@ -13,7 +13,7 @@ export UTILDATE=${UTILDATE:-`date +%s`} # so all runs from a same initial script
 export UTILID=${UTILID:-$UTILDATE-$$-$RANDOM} # so all runs from a same initial script share a same utilid
 
 # The llme tool to check
-LLME="llme"
+LLME="${LLME:-llme}"
 if ! command -v "$LLME" >/dev/null; then
 	echo "llme not found: $LLME" >&2
 	exit 1
