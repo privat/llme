@@ -2105,6 +2105,7 @@ def process_args():
     parser.add_argument(      "--log-file", metavar="FILE", help="Write logs to a file [log_file]")
     parser.add_argument("-Y", "--yolo", action="store_true", default=None, help="UNSAFE: Do not ask for confirmation before running tools. Combine with --batch to reach the singularity.")
     parser.add_argument(      "--version", action="store_true", default=None, help="Display version information and quit")
+    parser.add_argument(      "--completion", action="store_true", default=None, help="Print shell completion script")
     parser.add_argument(      "--dummy", action="store_true", default=None, help=argparse.SUPPRESS) # Disable LLM for testing the UI alone
     parser.add_argument(      "--compaction-prompt", default=None, help=argparse.SUPPRESS)
     parser.add_argument("prompts", nargs='*', help="An initial list of prompts")
@@ -2154,6 +2155,9 @@ def process_args():
         json.dump(vars(args), sys.stdout, indent=2)
         sys.exit(0)
 
+    if args.completion:
+        print(argcomplete.shell_integration.shellcode(["llme"]))
+        sys.exit(0)
 
     if args.list_skills:
         sks = skills.discover_skills(args.skills_path)
