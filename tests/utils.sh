@@ -70,9 +70,12 @@ result() {
 		"task":"$task",
 		"suite":"$SUITE",
 		"utildate":$UTILDATE,
+		"start":$START_DATE,
 		"date":`date +%s`,
 		"path":"$LOGDIR",
+		"timeout":$TIMEOUT,
 		"git-version":"`git -C "$ORIGDIR/$TESTDIR" describe --tags --dirty`",
+		"llme":"$LLME",
 		"llme-version":"`"$LLME" --version`"
 	}
 	EOF
@@ -304,6 +307,7 @@ tllme() {
 
 	(cd "$WORKDIR" && python3 -m venv .venv)
 
+	START_DATE=`date +%s`
 	echo
 	result "RUNNING"
 
