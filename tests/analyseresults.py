@@ -53,21 +53,10 @@ def linksuite(suite):
     return getlink(suite, f"tests/{suite}.sh")
 
 model_results = {}
-def inc_model_results(model, result):
-    inccell(model, result, model_results)
-
 model_suites = {}
 total_model_suites = {}
-def inc_model_suites(model, suite):
-    inccell(model, suite, model_suites)
-
 suite_results = {}
-def inc_suite_results(suite, result):
-    inccell(suite, result, suite_results)
-
 task_results = {}
-def inc_task_results(task, result):
-    inccell(task, result, task_results)
 
 def get(mat, rowid, colid):
     return mat.get(rowid, {}).get(colid, 0)
@@ -330,12 +319,13 @@ class Result:
         return self.model_config_task + " " + self.directory
 
     def process(self):
-        inc_model_results(self.model_config, self.result)
-        inc_suite_results(self.suite, self.result)
-        inc_task_results(self.suite+" "+self.task, self.result)
-        inccell(self.model_config, self.suite, total_model_suites)
+        inccell(self.model_config, self.result, model_results)
+        inccell(self.suite, self.result, suite_results)
+        inccell(self.suite+" "+self.task, self.result, task_results)
         if self.result == "PASS":
-            inc_model_suites(self.model_config, self.suite)
+            inccell(self.model_config, self.suite, model_suites)
+        if self.result != "RUNNING" and self.result != "ERROR":
+            inccell(self.model_config, self.suite, total_model_suites)
         if self.result == "RUNNING":
             global has_running
             has_running = True
@@ -344,10 +334,6 @@ class Result:
                 errors[self.cause].append(self)
             else:
                 errors[self.cause] = [self]
-        if self.metrics:
-            total = self.metrics.get("total")
-            prompt_ms = total.get("prompt_ms", 0)
-            prompt_n = total.get("prompt_n", 0)
 
     def replay(self):
         res = f"./tests/{self.suite}.sh -m {self.model}"
