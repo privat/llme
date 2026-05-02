@@ -80,7 +80,7 @@ def color(rate):
         return colors[6]
 
 has_running = False
-status = ['PASS', 'ALMOST', 'FAIL', 'ERROR', 'TIMEOUT', 'RUNNING']
+status = ['PASS', 'ALMOST', 'FAIL', 'TIMEOUT', 'SUBTOTAL', 'ERROR', 'RUNNING', 'TOTAL']
 
 def print_mat(mat, f, name):
     table = []
@@ -104,9 +104,12 @@ def print_mat(mat, f, name):
         else:
             title = rowid
         total=0
+        subtotal=0
         for colid in mat[rowid]:
             total += mat[rowid][colid]
-        rate = 100.0 * get(mat, rowid, "PASS") / total
+            if colid != "ERROR" and colid != "RUNNING":
+                subtotal += mat[rowid][colid]
+        rate = 100.0 * get(mat, rowid, "PASS") / subtotal
         tablerow = [f"{color(rate)} {title}"]
         table.append(tablerow)
         for colid in status:
@@ -114,9 +117,10 @@ def print_mat(mat, f, name):
             if n == 0:
                 tablerow.append("0")
             else:
-                tablerow.append("%d (%.0f%%)" % (n, 100.0*n/total))
-        tablerow.append(total)
-    headers = [name] + status + ['Total']
+                tablerow.append("%d (%.0f%%)" % (n, 100.0*n/subtotal))
+        tablerow[status.index("SUBTOTAL")+1] = subtotal
+        tablerow[status.index("TOTAL")+1] = total
+    headers = [name] + status
     f.write(tabulate(table, headers=headers, tablefmt="pipe"))
     f.write("\n")
 
@@ -213,11 +217,14 @@ def print_model_time(f):
     f.write("\n")
 
 def scorerow(row):
-    scores = {"PASS": 1000000.0, "ALMOST": 1000.0, "FAIL": 1.0, "ERROR": 0.0, "TIMEOUT": 1.0}
+    scores = {"PASS": 1000000.0, "ALMOST": 1000.0, "FAIL": 1.0, "TIMEOUT": 1.0}
     score = 0
     total = 0
     for colid in row:
-        score += scores.get(colid,0) * row[colid]
+        s = scores.get(colid)
+        if s is None:
+            continue
+        score += s * row[colid]
         total += row[colid]
     return score / total
 
