@@ -64,6 +64,7 @@ result() {
 	cat > "$ORIGDIR/$LOGDIR/result.json" <<-EOF
 	{
 		"result":$(jsonescape "$1"),
+		"timeouted":${TIMEOUTED:-false},
 		"comment":$(jsonescape "$2"),
 		"msgs":${msgs:-null},
 		"words":${words:-null},
@@ -172,6 +173,7 @@ prepare() {
 	export LLME_RAW_REQUEST_DUMP=$ORIGDIR/$LOGDIR/raw_request.txt
 	export LLME_BATCH=true
 	export LLME_YOLO=true
+	unset TIMEOUTED
 
 	# create a tmp workdir
 	if [ -z "$WORKDIR" ] || [ -z "$KEEPWORKDIR" ]; then
@@ -190,8 +192,14 @@ pass() {
 checkerr() {
 	err=${1:-$?}
 	if [ "$err" -eq 124 ]; then
-		result "TIMEOUT"
-		return 124
+		TIMEOUTED=true
+		if [ -n "$TIMEOUT_IS_OK" ]; then
+			echo "Timeout $TIMEOUT"
+			return 0
+		else
+			result "TIMEOUT" "$TIMEOUT"
+			return 124
+		fi
 	elif [ "$err" -ne 0 ]; then
 		grep --color -i error "$LOGDIR/out.txt"
 		result "ERROR" "$(tail -n 1 "$LOGDIR/err.txt")"
@@ -315,15 +323,5 @@ tllme() {
 	err=$?
 
 	teardown
-
-	if [ "$err" -eq 124 ]; then
-		result "TIMEOUT"
-		return 124
-	elif [ "$err" -ne 0 ]; then
-		grep --color -i error "$LOGDIR/out.txt"
-		result "ERROR" "$(tail -n 1 "$LOGDIR/err.txt")"
-		return $err
-	fi
-
-	return 0
+	checkerr "$err"
 }
