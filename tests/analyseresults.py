@@ -280,7 +280,12 @@ class Result:
         if t is None:
             t = "markdown"
             self.config["tool_mode"] = t
-        self.model_config = f"{self.model_config} mode={t}"
+        if t != "native":
+            self.model_config = f"{self.model_config} mode={t}"
+        for c in self.config.get("config") or ():
+            self.model_config += f" {c}"
+        if t := self.config.get("auto_compact"):
+            self.model_config += f" ac={t}"
 
         self.model_config_task = f"{self.model_config} {self.suite} {self.task}"
         if self.model_config_task not in model_config_tasks:
