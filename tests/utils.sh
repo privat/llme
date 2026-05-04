@@ -130,10 +130,8 @@ runllme() {
 		ln -s "chat.json" "$LOGDIR/out.txt"
 		(
 			cd "$WORKDIR"
-			if [ -d .venv ]; then
-				. .venv/bin/activate
-			fi
 			export LLME_BATCH=false
+			before_run
 			"$@"
 		)
 		return
@@ -142,11 +140,19 @@ runllme() {
 	(
 	set -e
 	cd "$WORKDIR"
-	if [ -d .venv ]; then
-		. .venv/bin/activate
-	fi
+	before_run
 	setsid timeout --verbose --foreground -sQUIT "$TIMEOUT" "$@"
 	) 2> >(tee -a "$LOGDIR/err.txt" > "$out") > >(tee -a "$LOGDIR/out.txt" > "$out")
+}
+
+# Last-second preparation
+# Done in the final process in the WORKDIR
+before_run() {
+	if [ -d "$TLLME_VENV" ]; then
+		. "${TLLME_VENV}/bin/activate"
+	elif [ -d .venv ]; then
+		. .venv/bin/activate
+	fi
 }
 
 # Create LOGDIR and WORKDIR.
@@ -313,7 +319,11 @@ tllme() {
 		return 1
 	fi
 
-	(cd "$WORKDIR" && python3 -m venv .venv)
+	TLLME_VENV=${TLLME_VENV:-/tmp/llme_venv}
+	if [ ! -d "$TLLME_VENV" ]; then
+		python3 -m venv "$TLLME_VENV"
+	fi
+
 
 	START_DATE=`date +%s`
 	echo
