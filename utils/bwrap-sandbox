@@ -1,0 +1,12 @@
+#!/bin/sh
+# Simple sandbox with bubblewrap
+# Tweak it to make it more or less strict
+
+# Note: ssh is annoying. A false ssh_conf does the trick
+cat >/tmp/ssh_conf<<EOF
+Host *
+    StrictHostKeyChecking no
+    UserKnownHostsFile /dev/null
+    RequestTTY yes
+EOF
+bwrap --unshare-all --share-net --new-session --ro-bind / / --bind /tmp /tmp --dev /dev --proc /proc --bind-fd 8 /etc/ssh/ssh_config --die-with-parent --clearenv --setenv PATH "$PATH" bash -c "$*" 8</tmp/ssh_conf
