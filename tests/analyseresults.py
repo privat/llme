@@ -10,14 +10,14 @@ import re
 import sys
 from tabulate import tabulate
 
-def inccell(rowid, colid, mat):
+def inccell(rowid, colid, mat, value=1):
     if rowid not in mat:
         mat[rowid] = {}
     matrow = mat[rowid]
     if colid not in matrow:
-        matrow[colid] = 1
+        matrow[colid] = value
     else:
-        matrow[colid] += 1
+        matrow[colid] += value
 
 linksmap = {} # url -> tag
 linkstag = {} # tag -> url
@@ -117,7 +117,7 @@ def print_mat(mat, f, name):
             if n == 0:
                 tablerow.append("0")
             else:
-                tablerow.append("%d (%.0f%%)" % (n, 100.0*n/subtotal))
+                tablerow.append("%.1f (%.0f%%)" % (n, 100.0*n/subtotal))
         tablerow[status.index("SUBTOTAL")+1] = subtotal
         tablerow[status.index("TOTAL")+1] = total
     headers = [name] + status
@@ -298,14 +298,20 @@ class Result:
     def __str__(self):
         return self.model_config_task + " " + self.directory
 
-    def process(self):
-        inccell(self.model_config, self.result, model_results)
-        inccell(self.suite, self.result, suite_results)
-        inccell(self.suite+" "+self.task, self.result, task_results)
-        if self.result == "PASS":
-            inccell(self.model_config, self.suite, model_suites)
+    def count(self):
         if self.result != "RUNNING" and self.result != "ERROR":
-            inccell(self.model_config, self.suite, total_model_suites)
+            return 1
+        else:
+            return 0
+
+    def process(self, value=1):
+        inccell(self.model_config, self.result, model_results, value)
+        inccell(self.suite, self.result, suite_results, value)
+        inccell(self.suite+" "+self.task, self.result, task_results, value)
+        if self.result == "PASS":
+            inccell(self.model_config, self.suite, model_suites, value)
+        if self.result != "RUNNING" and self.result != "ERROR":
+            inccell(self.model_config, self.suite, total_model_suites, value)
         if self.result == "RUNNING":
             global has_running
             has_running = True
@@ -354,10 +360,19 @@ def main():
         keep[model] = True
 
     for ts, tests in model_config_tasks.items():
+        if tests[0].model_config not in keep:
+            continue
         tests.sort(key=lambda x: x.date)
-        t = tests[-1]
-        if t.model_config in keep:
-            t.process()
+        count = 0
+        for t in tests:
+            count += t.count()
+        if count == 0:
+            count = 1
+        print(f"{ts}: {count}")
+        for t in tests:
+            if not t.count():
+                continue
+            t.process(1/count)
             keept_results.append(t)
             base_models[t.model] = True
 
