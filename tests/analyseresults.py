@@ -286,6 +286,11 @@ class Result:
             self.model_config += f" {c}"
         if t := self.config.get("auto_compact"):
             self.model_config += f" ac={t}"
+        for s in self.config.get("skills_path") or ():
+            s.lstrip("/")
+            n = os.path.basename(s)
+            if s != "skills":
+                self.model_config += f" sk={s}"
 
         self.model_config_task = f"{self.model_config} {self.suite} {self.task}"
         if self.model_config_task not in model_config_tasks:
