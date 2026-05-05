@@ -366,7 +366,7 @@ class LLME:
 
         if command == "python":
             # hack for unbuffered python
-            command = ["python -u"]
+            command = "python -u"
 
         if self.config.sandbox:
             cmd = shlex.split(self.config.sandbox, posix=True)
