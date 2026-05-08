@@ -271,8 +271,11 @@ class LLME:
             return None
         models = response.json()
         ids = [m["id"] for m in models["data"]]
+        for m in models["data"]:
+            # llama.cpp give a status field
+            m["state"] = m.get("status", {}).get("value")
         logger.info("Available models: %s", ids)
-        return ids
+        return models["data"]
 
 
     def prompt_prefix(self):
@@ -892,7 +895,7 @@ class LLME:
                     raise
                 if e.response is not None and e.response.status_code == 404:
                     models = self.get_models()
-                    if self.model not in models:
+                    if self.model not in (m["id"] for m in models):
                         cprint(f"Info: current model ({self.model}) is not in the list. Check with /models, chose with /set model=...", "light_cyan")
                 self.rollback()
             except CancelEvent:
@@ -950,7 +953,14 @@ class LLME:
         models = None
         if not self.model:
             models = self.get_models()
-            self.model = models[0]
+            for m in models:
+                if m["state"] == "loaded":
+                    self.model = m["id"]
+                    logger.info("Chose first loaded model from server: {self.model}")
+                    break
+            if not self.model:
+                self.model = models[0]["id"]
+                logger.info("Chose first model from server: {self.model}")
         if self.config.list_models:
             self.list_models()
             return
@@ -1024,11 +1034,21 @@ class LLME:
         "Print the list of models"
         print(f"Models of {self.config.base_url}:")
         models = self.get_models()
-        models.sort()
+        models.sort(key = lambda x: x["id"])
+        found = False
         for m in models:
-            sel = "-> " if m == self.model else "   "
-            print(f"{sel}{m}")
-        if self.model and models and not self.model in models:
+            if m["id"] == self.model:
+                sel = "-> "
+                found = True
+            else:
+                sel = "   "
+            status = m["state"]
+            if status is None or status == "unloaded":
+                status = ""
+            else:
+                status = f" ({status})"
+            print(f"{sel}{m['id']}{status}")
+        if self.model and models and not found:
             logger.warning("Selected model %s not listed", self.model)
         return models
 
@@ -2062,7 +2082,7 @@ def model_completer(prefix, parsed_args, parser, **kwargs):
     models = llme.get_models()
     if not models:
         return ()
-    return (m for m in models if m.startswith(prefix))
+    return (m["id"] for m in models if m["id"].startswith(prefix))
 
 def process_args():
     """Handle command line arguments and envs."""
