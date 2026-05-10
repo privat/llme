@@ -204,7 +204,7 @@ class LLME:
     def filter_file(self, message):
         """Filter that handle how file are transmitted.
         See --file-mode"""
-        if not isinstance(message["content"], list):
+        if not isinstance(message.get("content"), list):
             return
         if self.config.file_mode == "part":
             return
@@ -1458,6 +1458,8 @@ class Message:
     def content(self):
         """The text content of a message"""
         content = self.data["content"]
+        if content is None:
+            return ""
         if isinstance(content, str):
             return content
         for c in content:
