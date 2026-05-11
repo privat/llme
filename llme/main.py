@@ -719,6 +719,9 @@ class LLME:
         cp.end()
         logger.debug("Chunk: Last one: %s", last_chunk)
         response.close()
+        if self.config.raw_response_dump:
+            with open(self.config.raw_response_dump, "w") as f:
+                json.dump(message, f, indent=2)
         return message
 
 
@@ -2127,6 +2130,7 @@ def process_args():
     parser.add_argument(      "--list-tools", action="store_true", default=None, help="List available tools then exit")
     parser.add_argument(      "--dump-config", action="store_true", default=None, help="Print the effective config and quit")
     parser.add_argument(      "--raw-request-dump", metavar="FILE", help="Export the full POSTed json payload [raw_request_dump]")
+    parser.add_argument(      "--raw-response-dump", metavar="FILE", help="Export the full json message response [raw_response_dump]")
     parser.add_argument(      "--plugin", metavar="PATH", action="append", dest="plugins", help="Add additional tool (python file or directory) [plugins]")
     parser.add_argument("-H", "--history-filename", metavar="FILE", help="Read/write command history from FILE [history_filename]")
     parser.add_argument("-v", "--verbose", action="count", help="Increase verbosity level (can be used multiple times)")
