@@ -773,6 +773,7 @@ class LLME:
         prompt = self.next_prompt()
         if prompt:
             self.add_message(prompt)
+        return prompt
 
     def do_assistant(self, **kwargs):
         if self.config.dummy:
