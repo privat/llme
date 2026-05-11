@@ -569,7 +569,7 @@ class LLME:
             return {"role": "user", "content": user_input}
 
 
-    def post_chat_completion(self):
+    def post_chat_completion(self, tools=None):
         """Prepare and send the POST request.
         Returns a response"""
         url = f"{self.config.base_url}/chat/completions"
@@ -580,7 +580,18 @@ class LLME:
             "stream_options": {"include_usage": True},
         }
         if self.config.tool_mode == "native":
-            data["tools"] = [tool.schema for tool in all_tools.values()]
+            data_tools = []
+            for n, tool in all_tools.items():
+                if tools is not None and n not in tools:
+                    continue
+                data_tools.append(tool.schema)
+            if tools:
+                for n in tools:
+                    if not n in all_tools:
+                        logger.warning("Unknown tool %s", n)
+            if data_tools:
+                data["tools"] = data_tools
+
         if self.config.temperature is not None:
             data["temperature"] = self.config.temperature
         if(self.config.extra_body):
@@ -711,7 +722,7 @@ class LLME:
         return message
 
 
-    def chat_completion(self):
+    def chat_completion(self, tools=None):
         """Post messages and get a response from the LLM."""
         self.completion_metrics = {}
         start_time = time.perf_counter()
@@ -719,7 +730,7 @@ class LLME:
         self.completion_metrics["message_n"] = 1 # only one
 
         with Spinner("light_blue", self.config.plain):
-            response = self.post_chat_completion()
+            response = self.post_chat_completion(tools)
             response.raise_for_status()
 
         response_time = time.perf_counter()
@@ -760,7 +771,7 @@ class LLME:
         if prompt:
             self.add_message(prompt)
 
-    def do_assisant(self):
+    def do_assistant(self, **kwargs):
         if self.config.dummy:
             content = "I'm assistant."
             print(colored(f"{self.prompt_prefix()}<", "light_blue"), content)
@@ -768,7 +779,7 @@ class LLME:
             return
         """Add the assistant response to the conversation"""
         self.fork_if_required()
-        message = self.chat_completion()
+        message = self.chat_completion(**kwargs)
         if message:
             self.add_message(message)
         return message
@@ -828,7 +839,7 @@ class LLME:
             previous_message = self.history[-1]
         previous_role = previous_message.role()
         if previous_role == "user" or previous_role == "tool":
-            return self.do_assisant()
+            return self.do_assistant()
         elif previous_role == "system":
             return self.do_user()
         elif previous_role == "assistant":
@@ -1287,12 +1298,7 @@ class LLME:
         self.add_message(message)
 
         # Temporally disable tools
-        old = self.config.tool_mode
-        self.config.tool_mode = "notools"
-        try:
-            response = self.do_assisant()
-        finally:
-            self.config.tool_mode = old
+        response = self.do_assistant(tools=[])
         if response["content"] == "":
             logger.error("Agent did not compact. Bad agent!")
             return
