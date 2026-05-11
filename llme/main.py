@@ -116,8 +116,6 @@ class LLME:
 
         self.metrics = Metrics()
 
-        tool(self.run_command)
-        tool(self.image_description, has_parts=True)
 
     def cancel_prompt(self, app):
         """Cancel the current prompt and go back to the main loop"""
@@ -949,6 +947,8 @@ class LLME:
 
     def start(self):
         """Start, work, and terminate"""
+        tool(self.run_command)
+        tool(self.image_description, has_parts=True)
 
         models = None
         if not self.model:
