@@ -21,11 +21,12 @@ SKILL_SEARCH_PATHS = [
 
 
 class Skill:
-    def __init__(self, name, desc, dirpath, meta):
+    def __init__(self, name, desc, dirpath, meta, body):
         self.name = name
         self.desc = desc
         self.dirpath = dirpath
         self.meta = meta
+        self.body = body
 
 
 def validate_skill_name(name: str) -> bool:
@@ -126,7 +127,7 @@ def discover_skills_rec(directory):
             continue
         
         meta, body = parse_skill_md(raw_content)
-        skill_name = meta.get('name', '')
+        skill_name = meta.get('name', '').strip()
         
         # Validation
         if not validate_skill_name(skill_name):
@@ -139,7 +140,7 @@ def discover_skills_rec(directory):
             continue
 
         # Spec: description must exist and be < 1024 chars
-        desc = meta.get('description', '')
+        desc = meta.get('description', '').strip()
         if not desc or len(desc) > 1024:
             logger.warning(f"Skipping {skill_name}: invalid or missing description")
             continue
@@ -155,10 +156,11 @@ def discover_skills_rec(directory):
                         context_files.append(str(fpath))
 
         skills[skill_name] = Skill(
-                skill_name.strip(),
-                desc.strip(),
+                skill_name,
+                desc,
                 str(directory),
                 meta,
+                body,
         )
 
     return skills
