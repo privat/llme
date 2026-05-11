@@ -793,15 +793,15 @@ class LLME:
         function = tool_call["function"]
         tool = all_tools.get(function["name"])
         if not tool:
-            cprint(f"Unknown tool {function["name"]}", color="red")
-            message = {"role": "tool", "content": f"Error: unknown tool {function["name"]}. Available tools: {", ".join(all_tools)}", "tool_call_id": tool_call["id"]}
+            cprint(f"Unknown tool {function['name']}", color="red")
+            message = {"role": "tool", "content": f"Error: unknown tool {function['name']}. Available tools: {', '.join(all_tools)}", "tool_call_id": tool_call["id"]}
             return message
         try:
             args = json.loads(function["arguments"])
         except json.JSONDecodeError as e:
             logger.debug("Tool arguments error: %r", e)
-            cprint(f"{self.prompt_prefix()}: Bad tool arguments for {function["name"]}: {e}", color="red")
-            message = {"role": "tool", "content": f"Error: bad tool arguments {function["name"]}. {e}", "tool_call_id": tool_call["id"]}
+            cprint(f"{self.prompt_prefix()}: Bad tool arguments for {function['name']}: {e}", color="red")
+            message = {"role": "tool", "content": f"Error: bad tool arguments {function['name']}. {e}", "tool_call_id": tool_call["id"]}
             return message
         logger.info(f"CALL %s(%s)", tool.name, args)
         try:
@@ -810,8 +810,8 @@ class LLME:
             logger.debug("Tool error: %r", e)
             if e.__cause__:
                 e = e.__cause__
-            cprint(f"Error during {function["name"]}: {e}", color="red")
-            message = {"role": "tool", "content": f"Error during {function["name"]}: {e}", "tool_call_id": tool_call["id"]}
+            cprint(f"Error during {function['name']}: {e}", color="red")
+            message = {"role": "tool", "content": f"Error during {function['name']}: {e}", "tool_call_id": tool_call["id"]}
             self.add_message(message)
             return
         if result is None:
@@ -1319,7 +1319,7 @@ class LLME:
         if not opts:
             raise AppError(f"Unknown setting: {opt}")
         if len(opts) > 1:
-            raise AppError(f"Ambiguous setting: {opt} could match {", ".join(opts)}")
+            raise AppError(f"Ambiguous setting: {opt} could match {', '.join(opts)}")
         opt = opts[0]
 
         if opt == "verbose":
