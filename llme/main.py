@@ -807,6 +807,14 @@ class LLME:
         logger.info(f"CALL %s(%s)", tool.name, args)
         try:
             result = tool.fun(**args)
+        except ValueError as e:
+            logger.debug("Tool error: %r", e)
+            if e.__cause__:
+                e = e.__cause__
+            cprint(f"Error during {function['name']}: {e}", color="red")
+            message = {"role": "tool", "content": f"Error during {function['name']}: {e}", "tool_call_id": tool_call["id"]}
+            self.add_message(message)
+            return message
         except ToolError as e:
             logger.debug("Tool error: %r", e)
             if e.__cause__:
