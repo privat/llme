@@ -429,7 +429,7 @@ class LLME:
 
         return result
 
-    def direct_run_command(self, command, input=None):
+    def direct_run_command(self, command, input="", check=True):
         """Because of possible sandboxing, access to the agent environment must be indirect"""
         if self.config.sandbox:
             import shlex
@@ -439,7 +439,8 @@ class LLME:
             cmd = ["bash", "-c", command]
         logger.debug("Direct run %s", cmd)
         result = subprocess.run(cmd, input=input, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        result.check_returncode()
+        if check:
+            result.check_returncode()
         return result.stdout
 
     def new_tempfile(self, prefix="", suffix=""):
