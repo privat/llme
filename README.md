@@ -241,6 +241,11 @@ options:
                         Export metrics, usage, etc. in json
   -s, --system SYSTEM_PROMPT
                         System prompt [system_prompt]
+  --session SESSION     Resume a previous session
+  --no-session          Do not save the session
+  --auto-compact AUTO_COMPACT
+                        Automatically compact when that much rounds is reached
+                        (0 for disabled) [auto_compact]
   --temperature TEMPERATURE
                         Temperature of predictions [temperature]
   --extra-body YAML     YAML/JSON element merged with requests (ex: `--extra-
@@ -269,6 +274,9 @@ options:
   --dump-config         Print the effective config and quit
   --raw-request-dump FILE
                         Export the full POSTed json payload [raw_request_dump]
+  --raw-response-dump FILE
+                        Export the full json message response
+                        [raw_response_dump]
   --plugin PATH         Add additional tool (python file or directory)
                         [plugins]
   -H, --history-filename FILE
@@ -279,6 +287,7 @@ options:
   -Y, --yolo            UNSAFE: Do not ask for confirmation before running
                         tools. Combine with --batch to reach the singularity.
   --version             Display version information and quit
+  --completion          Print shell completion script
 
 Boolean flags can be negated with `--no-`. Example `--no-plain` to force
 colors in a non TTY
@@ -447,7 +456,9 @@ PR are welcome!
   * [x] undo/retry/edit
   * [x] error recovery
   * [x] better tool reporting
-  * [x] Usable in pipelines or without a TTY
+  * [x] usable in pipelines or without a TTY
+  * [x] auto compaction
+  * [x] sessions
   * [ ] post-processing output
   * [x] attach files in interactive mode
   * [ ] ?

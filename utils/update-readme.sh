@@ -10,7 +10,7 @@ echo '```'
 sed -n '/^<!--\/help-->$/,/^<!--slash-help-->$/p' README.md
 echo '```console'
 echo '$ llme /help /quit'
-llme /help /quit
+llme --no-session /help /quit
 echo '```'
 sed -n '/^<!--\/slash-help-->$/,$p' README.md
 } > README.new.md
