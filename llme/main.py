@@ -908,6 +908,8 @@ class LLME:
         while True:
             try:
                 self.do_role()
+                if self.config.chat_output:
+                    self.save_chat(self.config.chat_output)
                 continue
             except requests.exceptions.RequestException as e:
                 logger.error("Server error: %s", extract_requests_error(e))
@@ -1019,8 +1021,6 @@ class LLME:
         try:
             self.loop()
         finally:
-            if self.config.chat_output:
-                self.save_chat(self.config.chat_output)
             if stdinfile:
                 os.unlink(stdinfile.name)
 
