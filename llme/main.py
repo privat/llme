@@ -822,7 +822,7 @@ class LLME:
             cprint(f"Error during {function['name']}: {e}", color="red")
             message = {"role": "tool", "content": f"Error during {function['name']}: {e}", "tool_call_id": tool_call["id"]}
             self.add_message(message)
-            return
+            return message
         if result is None:
             return None
 
@@ -833,6 +833,8 @@ class LLME:
 
     def do_tools(self, tool_calls):
         """Run all the tools in the list, and add results to the conversation"""
+        if not tool_calls:
+            return
         for tool_call in tool_calls:
             message = self.run_tool(tool_call)
             if message:
