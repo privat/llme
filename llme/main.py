@@ -190,6 +190,8 @@ class LLME:
         self.build_message_object(message)
 
         raw_message = json.loads(json.dumps(message))
+        if "llme-meta" in raw_message:
+            del raw_message["llme-meta"]
         if "channel" in raw_message:
             del raw_message["channel"] # Groq adds it but refuse it. Weird
         self.filter_file(raw_message)
@@ -618,6 +620,7 @@ class LLME:
 
         start_time = time.perf_counter()
         message = {} # The whole message
+        meta = {} # LLME specific metadata
         last_chunk = None
         first_token = True
         cp = ChunkPrinter()
@@ -723,6 +726,9 @@ class LLME:
         if self.config.raw_response_dump:
             with open(self.config.raw_response_dump, "w") as f:
                 json.dump(message, f, indent=2)
+        meta["model"] = self.model
+        meta["answering_model"] = self.answering_model
+        message["llme-meta"] = meta
         return message
 
 
@@ -746,7 +752,8 @@ class LLME:
         message = self.receive_chat_completion_message(response)
         message_time = time.perf_counter()
         self.completion_metrics["total_ms"] = (message_time - start_time) * 1000.0
-        self.update_metrics()
+        meta = message["llme-meta"]
+        meta["metrics"] = self.update_metrics()
         return message
 
 
@@ -767,6 +774,7 @@ class LLME:
                     json.dump({"total": self.metrics.total, "history": self.metrics.history}, file, indent=2)
             except OSError as e:
                 raise AppError(f"Can't save metrics to {self.config.export_metrics}") from e
+        return data
 
 
     def do_user(self):
@@ -1471,7 +1479,15 @@ class Message:
         self.parent = parent # The parent message in the conversation tree
         self.number = n # The message number in the conversation
         self.generation = gen # The generation number of the message
+        self.id = f"{self.number}{base26ish(self.generation)}" # The unique id of the message
         self.children = [] # The children messages of this message
+        meta = data.get("llme-meta")
+        if meta is None:
+            meta = {}
+            self.data["llme-meta"] = meta
+        meta["id"] = self.id
+        if parent:
+            meta["parent"] = parent.id
 
     def role(self):
         return self.data["role"]
@@ -1492,7 +1508,7 @@ class Message:
 
     def prefix(self):
         """Return the prefix for the message"""
-        return f"{self.number}{base26ish(self.generation)}"
+        return self.id
 
     def __repr__(self):
         return self.prefix()
