@@ -1055,11 +1055,26 @@ class LLME:
         if self.metrics.total:
             cprint(f"Total: {self.metrics.infoline(self.metrics.total)}", "light_grey")
 
-    def load_chat(self, file):
+    def load_chat(self, file, format=None):
         logger.info("Loading conversation from %s", file)
+        if not format:
+            format = self.chat_file_format(file)
         try:
             with open(file, "r") as f:
-                self.reset_messages(json.load(f))
+                if format == "yaml":
+                    import yaml
+                    messages = yaml.safe_load(f)
+                if format == "jsonl":
+                    messages = []
+                    for line in f:
+                        line = line.strip()
+                        if line:
+                            messages.append(json.loads(line))
+                else:
+                    if format != "json":
+                        logger.error("Unknown format %s. Default as json", format)
+                    messages = json.load(f)
+            self.reset_messages(messages)
         except OSError as e:
             raise AppError(f"Can't load chat from {file}") from e
 
@@ -1092,12 +1107,37 @@ class LLME:
                 id_map[orig_id] = m.id
         logger.info("Reset %d messages", len(self.history))
 
-    def save_chat(self, file):
-        logger.info("Dumping conversation to %s", file)
+    def chat_file_format(self, file):
+        """Return the format of a chat file"""
+        if file.endswith(".yaml") or file.endswith(".yml"):
+            return "yaml"
+        elif file.endswith(".jsonl"):
+            return "jsonl"
+        else:
+            if not file.endswith(".json"):
+                logger.error("Unknown format extension for %s. Default to json", file)
+            return "json"
+
+    def save_chat(self, file, messages=None, format=None):
+        if messages is None:
+            messages = self.full_history
+        if not format:
+            format = self.chat_file_format(file)
+        logger.info("Dumping %s messages to %s", len(messages), file)
         try:
-            all_messages = [m.data for m in self.history]
+            all_messages = [m.data for m in messages]
             with open(file, "w") as f:
-                json.dump(all_messages, f, indent=2)
+                if format == "yaml":
+                    import yaml
+                    yaml.dump(all_messages, f, default_flow_style=False, default_style="", width=65536)
+                if format == "jsonl":
+                    for m in all_messages:
+                        json.dump(m, f)
+                        f.write('\n')
+                else:
+                    if format != "json":
+                        logger.error("Unknown format %s. Saved as json", format)
+                    json.dump(all_messages, f, indent=2)
         except OSError as e:
             raise AppError(f"Can't save chat to {file}") from e
 
@@ -1289,9 +1329,9 @@ class LLME:
     def edit(self):
         "Save the chat in a tmpfile, edit it, and load it back"
         import tempfile
-        with tempfile.NamedTemporaryFile(mode='w', delete=True) as tmp:
+        with tempfile.NamedTemporaryFile(mode='w', suffix=".yaml", delete=True) as tmp:
             import shlex
-            self.save_chat(tmp.name)
+            self.save_chat(tmp.name, self.history, format="yaml")
             editor = os.environ.get("EDITOR", "editor")
             try:
                 cmd = shlex.split(editor) + [tmp.name]
