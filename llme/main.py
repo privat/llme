@@ -998,7 +998,7 @@ class LLME:
         pwd = self.direct_run_command("pwd").decode().strip()
         system_prompt += f"\n## Contextual information\n\ndate: {date}\npwd: {pwd}\n"
 
-        return {"role": "system", "content": system_prompt}
+        return {"role": "system", "content": system_prompt.strip()}
 
 
     def start(self):
