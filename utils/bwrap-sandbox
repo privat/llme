@@ -9,4 +9,22 @@ Host *
     UserKnownHostsFile /dev/null
     RequestTTY yes
 EOF
-bwrap --unshare-all --share-net --new-session --ro-bind / / --bind /tmp /tmp --dev /dev --proc /proc --bind-fd 8 /etc/ssh/ssh_config --die-with-parent --clearenv --setenv PATH "$PATH" bash -c "$*" 8</tmp/ssh_conf
+# Agents share a common /tmp/llme_venv with the host
+bwrap --unshare-all --share-net \
+	--new-session \
+	--die-with-parent \
+	--ro-bind / / \
+	--dev /dev \
+	--proc /proc \
+	--tmpfs /tmp \
+	--bind /tmp/llme_venv /tmp/llme_venv \
+	--tmpfs /home \
+	--bind /tmp/ssh_conf /etc/ssh/ssh_config \
+	--bind "$PWD" "$PWD" \
+	--clearenv \
+	--setenv USER "$USER" \
+	--setenv PATH "$PATH" \
+	--setenv TERM "$TERM" \
+	--setenv HOME "$PWD" \
+	--chdir "$PWD"  \
+	bash -c "test -f /tmp/llme_venv/bin/activate && . /tmp/llme_venv/bin/activate; $*"
