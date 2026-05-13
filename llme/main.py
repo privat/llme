@@ -1130,7 +1130,7 @@ class LLME:
                 if format == "yaml":
                     import yaml
                     yaml.dump(all_messages, f, default_flow_style=False, default_style="", width=65536)
-                if format == "jsonl":
+                elif format == "jsonl":
                     for m in all_messages:
                         json.dump(m, f)
                         f.write('\n')
