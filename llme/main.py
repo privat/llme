@@ -2227,6 +2227,8 @@ def process_args():
     parser.add_argument("-i", "--chat-input", metavar="FILE", help="Continue a previous (exported) conversation")
     parser.add_argument(      "--export-metrics", metavar="FILE", help="Export metrics, usage, etc. in json")
     parser.add_argument("-s", "--system", dest="system_prompt", help="System prompt [system_prompt]")
+    parser.add_argument(      "--session", type=str, default=None, help="Resume a previous session")
+    parser.add_argument(      "--no-session", type=bool, default=None, help="Do not save the session")
     parser.add_argument(      "--auto-compact", type=int, help="Automatically compact when that much rounds is reached (0 for disabled) [auto_compact]")
     parser.add_argument(      "--temperature", type=float, help="Temperature of predictions [temperature]")
     parser.add_argument(      "--extra-body", metavar="YAML", action=YAMLAction, help="YAML/JSON element merged with requests (ex: `--extra-body 'top_p: 0.95'`) [extra_body]")
@@ -2320,6 +2322,47 @@ def process_args():
     if args.history_filename is None:
         args.history_filename = os.path.expanduser("~/.config/llme/history")
 
+    if not args.no_session:
+        session_root_directory = os.path.expanduser("~/.config/llme/sessions")
+        import time
+        timestamp = time.strftime("%Y%m%d-%H%M%S")
+        if args.session:
+            if os.path.exists(args.session):
+                session_directory = args.session
+            else:
+                session_directory = os.path.join(session_root_directory, args.session)
+                if not os.path.exists(session_directory):
+                    raise AppError(f"Session {args.session} not found (also tried {session_directory})")
+            if not args.chat_input:
+                chat_file = os.path.join(session_directory, "chat.jsonl")
+                if os.path.exists(chat_file):
+                    args.chat_input = chat_file
+            logger.info("Resuming session in %s", session_directory)
+        else:
+            os.makedirs(session_root_directory, exist_ok=True)
+            args.session = timestamp
+            session_directory = os.path.join(session_root_directory, timestamp)
+            os.makedirs(session_directory, exist_ok=False)
+            logger.info("New session in %s", session_directory)
+        if not args.chat_output:
+            args.chat_output = os.path.join(session_directory, "chat.jsonl")
+        if not args.export_metrics:
+            args.export_metrics = os.path.join(session_directory, f"{timestamp}-metrics.json")
+        if not args.raw_request_dump:
+            args.raw_request_dump = os.path.join(session_directory, f"{timestamp}-request.json")
+        if not args.raw_response_dump:
+            args.raw_response_dump = os.path.join(session_directory, f"{timestamp}-response.json")
+        conf_file = os.path.join(session_directory, f"{timestamp}-config.json")
+        with open(conf_file, "w") as f:
+            json.dump(vars(args), f, indent=2)
+        logfile = os.path.join(session_directory, f"{timestamp}.log")
+        filehandler = logging.FileHandler(logfile)
+        filehandler.setLevel(logging.DEBUG)
+        logger.setLevel(logging.DEBUG)
+        filehandler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+        logger.addHandler(filehandler)
+
+
     return parser, args
 
 
@@ -2334,6 +2377,8 @@ def main():
             sys.exit(0)
 
         llme.start()
+        if config.session:
+            cprint(f"Continue this session with --session {config.session}", "light_cyan")
     except AppError as e:
         logger.error("%s", e)
         sys.exit(1)
