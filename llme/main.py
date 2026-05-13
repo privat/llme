@@ -2274,7 +2274,7 @@ def process_args():
     parser.add_argument(      "--export-metrics", metavar="FILE", help="Export metrics, usage, etc. in json")
     parser.add_argument("-s", "--system", dest="system_prompt", help="System prompt [system_prompt]")
     parser.add_argument(      "--session", type=str, default=None, help="Resume a previous session")
-    parser.add_argument(      "--no-session", type=bool, default=None, help="Do not save the session")
+    parser.add_argument(      "--no-session", action="store_true", default=None, help="Do not save the session")
     parser.add_argument(      "--auto-compact", type=int, help="Automatically compact when that much rounds is reached (0 for disabled) [auto_compact]")
     parser.add_argument(      "--temperature", type=float, help="Temperature of predictions [temperature]")
     parser.add_argument(      "--extra-body", metavar="YAML", action=YAMLAction, help="YAML/JSON element merged with requests (ex: `--extra-body 'top_p: 0.95'`) [extra_body]")
