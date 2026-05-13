@@ -61,6 +61,7 @@ class LLME:
         self.message_index = None # The current message in the history (for /undo and history navigation)
         self.files = [] # Attached file for the next request.
         self.answering_model = None
+        self.chat_output_file = None
 
         self.slash_commands = [
             "/file FILE    attach a file for the next prompt",
@@ -190,6 +191,11 @@ class LLME:
         message_obj = Message(message, parent, n, gen)
         self.full_history.append(message_obj)
         sibling.append(message_obj)
+        if self.config.chat_output:
+            if self.chat_output_file is None:
+                self.chat_output_file = open(self.config.chat_output, "w")
+            self.chat_output_file.write(json.dumps(message) + "\n")
+            self.chat_output_file.flush()
         if append:
             self.history.append(message_obj)
             self.current_generation = gen
@@ -936,8 +942,6 @@ class LLME:
         while True:
             try:
                 self.do_role()
-                if self.config.chat_output:
-                    self.save_chat(self.config.chat_output)
                 continue
             except requests.exceptions.RequestException as e:
                 logger.error("Server error: %s", extract_requests_error(e))
