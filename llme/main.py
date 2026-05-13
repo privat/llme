@@ -54,6 +54,7 @@ class LLME:
         self.prompts = config.prompts # Initial prompts to process
         self.raw_messages = [] # the sequence of messages really communicated with the LLM server to work-around their various API limitations
         self.history = [] # A parallel history of messages with generations information
+        self.full_history = [] # The full history with forks (append only!)
         self.generations = [] # the messages causing new generations (forks). They are the non-first children of messages
         self.roots = [] # The first system messages (roots without parent)
         self.current_generation = 0 # The generation number of the current conversation (for prompt prefix)
@@ -153,6 +154,18 @@ class LLME:
         """Add a message to the history"""
 
         n = len(self.history)
+        append = True
+        meta = message.get("llme-meta")
+        if meta is not None:
+            if parent_id := meta.get("parent"):
+                parent = self.get_message_by_id(parent_id)
+                if parent is None:
+                    logger.error("Parent message not found: %s", parent_id)
+                else:
+                    gen = parent.generation
+                    sibling = parent.children
+                    if n > 0 and parent != self.history[n-1]:
+                        append = False
         if n > 0:
             parent = self.history[n-1]
             gen = parent.generation
@@ -166,17 +179,21 @@ class LLME:
             for s in sibling:
                 if s.data == message:
                     # Already known, reuse it
-                    self.history.append(s)
-                    self.current_generation = s.generation
-                    return
+                    if append:
+                        self.history.append(s)
+                        self.current_generation = s.generation
+                    return s
             # Need a new generation number
             self.generations.append(message)
             gen = len(self.generations)
 
-        self.current_generation = gen
         message_obj = Message(message, parent, n, gen)
+        self.full_history.append(message_obj)
         sibling.append(message_obj)
-        self.history.append(message_obj)
+        if append:
+            self.history.append(message_obj)
+            self.current_generation = gen
+        return message_obj
 
     def add_message(self, message):
         """
@@ -187,7 +204,9 @@ class LLME:
         self.fork_if_required()
 
         logger.debug("Add %s message: %s", message['role'], message)
-        self.build_message_object(message)
+        result = self.build_message_object(message)
+        if self.history[-1] != result:
+            return result
 
         raw_message = json.loads(json.dumps(message))
         if "llme-meta" in raw_message:
@@ -200,6 +219,7 @@ class LLME:
             raw_message["role"] = "user"
 
         self.raw_messages.append(raw_message)
+        return result
 
     def filter_file(self, message):
         """Filter that handle how file are transmitted.
@@ -1043,12 +1063,33 @@ class LLME:
         except OSError as e:
             raise AppError(f"Can't load chat from {file}") from e
 
+    def get_message_by_id(self, message_id):
+        """Get a message by its id"""
+        for m in self.full_history:
+            if m.id == message_id:
+                return m
+        return None
+
     def reset_messages(self, messages):
         self.message_index = None
         self.history.clear()
         self.raw_messages.clear()
+        id_map = {}
         for message in messages:
-            self.add_message(message)
+            orig_id = message.get("id")
+            if orig_id is not None:
+                del message["id"]
+                orig_parent = message.get("parent")
+                if orig_parent:
+                    del message["parent"]
+                    dest_parent = id_map.get(orig_parent)
+                    if not dest_parent:
+                        logger.error("Parent %s not found for %s", orig_parent, orig_id)
+                    else:
+                        message["parent"] = dest_parent
+            m = self.add_message(message)
+            if orig_id is not None:
+                id_map[orig_id] = m.id
         logger.info("Reset %d messages", len(self.history))
 
     def save_chat(self, file):
