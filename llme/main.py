@@ -333,7 +333,6 @@ class LLME:
 
     def cat_write(self, file, stdin):
         if not os.path.exists(file):
-            cprint(stdin, color="green")
             return
 
         import difflib
