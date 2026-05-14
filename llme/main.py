@@ -393,10 +393,6 @@ class LLME:
             if not self.confirm(prompt, default=default):
                 return None
 
-        if command == "python":
-            # hack for unbuffered python
-            command = "python -u"
-
         if self.config.sandbox:
             cmd = shlex.split(self.config.sandbox, posix=True)
             cmd.append(command)
@@ -406,6 +402,9 @@ class LLME:
         if self.config.timeout_tool:
             cmd = ["timeout", "--verbose", str(self.config.timeout_tool)] + cmd
 
+        env = os.environ.copy()
+        env["PYTHONUNBUFFERED"] = "1"
+
         proc = subprocess.Popen(
             cmd,
             stdin=subprocess.PIPE,
@@ -413,7 +412,8 @@ class LLME:
             stderr=subprocess.STDOUT,
             text=True,
             errors="backslashreplace", # Avoid encoding errors in the output
-            bufsize=1  # line-buffered
+            bufsize=1,  # line-buffered
+            env=env,
         )
         logger.debug("Starting sub-process %s", command)
 
