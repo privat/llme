@@ -329,7 +329,7 @@ class LLME:
             self.prompts.insert(0, x)
             return False
         except KeyboardInterrupt:
-            raise EOFError("Confirmation interrupted") # ugly
+            raise QuitEvent("Confirmation interrupted")
 
     def cat_write(self, file, stdin):
         if not os.path.exists(file):
@@ -550,7 +550,7 @@ class LLME:
                 self.warmup = None
             return user_input
         except KeyboardInterrupt:
-            raise EOFError("interrupted") # ugly
+            raise QuitEvent("interrupted")
 
 
     def next_input(self):
@@ -560,7 +560,7 @@ class LLME:
             if not self.config.plain:
                 print(colored(f"{self.prompt_prefix()}>", "light_green"), user_input)
         elif self.config.batch:
-            raise EOFError("end of batch") # ugly
+            raise QuitEvent("end of batch")
         else:
             user_input = self.input_prompt()
         return user_input
@@ -962,7 +962,7 @@ class LLME:
             except KeyboardInterrupt:
                 logger.warning("Interrupted by user.")
                 self.rollback()
-            except EOFError as e:
+            except QuitEvent as e:
                 logger.info("Quitting: %s", str(e))
                 break
             except AppError as e:
@@ -1343,7 +1343,7 @@ class LLME:
         elif cmd in "/skills":
             self.list_skills()
         elif cmd in "/quit":
-            raise EOFError("/quit")
+            raise QuitEvent("/quit")
         elif re.match(r"/\d+\w*", cmd):
             # goto shortuct
             self.goto(cmd[1:])
@@ -1483,6 +1483,10 @@ class LLME:
 
 class CancelEvent(Exception):
     """Raised when the prompt is cancelled."""
+    pass
+
+class QuitEvent(Exception):
+    """Raised when the user wants to quit or there is nothing more to do."""
     pass
 
 
