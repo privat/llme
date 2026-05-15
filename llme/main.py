@@ -872,10 +872,11 @@ class LLME:
                 # The user cancelled the tool execution. Let they answer instead of the tool
                 self.do_user()
 
-    def do_role(self):
+    def do_role(self, oneround=False, tools=None):
         """Process the next role (user, assistant, tool...)"""
         if not self.history:
-            return self.do_user()
+            self.do_user()
+            return None
 
         if self.message_index:
             previous_message = self.history[self.message_index-1]
@@ -883,18 +884,21 @@ class LLME:
             previous_message = self.history[-1]
         previous_role = previous_message.role()
         if previous_role == "user" or previous_role == "tool":
-            return self.do_assistant()
+            self.do_assistant(tools=tools)
         elif previous_role == "system":
-            return self.do_user()
+            self.do_user()
         elif previous_role == "assistant":
+            tool_calls = previous_message.tool_calls()
+            if not tool_calls and oneround:
+                return previous_message
             if self.config.auto_compact and len(self.history) > self.config.auto_compact:
                 cprint(f"{self.prompt_prefix()}> Auto-compaction", color="light_cyan")
-                return self.compact()
-            tool_calls = previous_message.tool_calls()
-            if tool_calls:
-                return self.do_tools(tool_calls)
+                self.compact()
+            elif tool_calls:
+                self.do_tools(tool_calls)
             else:
-                return self.do_user()
+                self.do_user()
+        return None
 
     def do_sleep(self, delay):
         """Throttling server"""
@@ -932,11 +936,13 @@ class LLME:
         return None
 
 
-    def loop(self):
+    def loop(self, oneround=False, tools=None):
         """The main ping-pong loop between the user and the assistant"""
         while True:
             try:
-                self.do_role()
+                response = self.do_role(oneround, tools=tools)
+                if response:
+                    return response
                 continue
             except requests.exceptions.RequestException as e:
                 logger.error("Server error: %s", extract_requests_error(e))
