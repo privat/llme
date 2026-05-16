@@ -314,7 +314,7 @@ class LLME:
     def confirm(self, question, default=""):
         """Ask a yes/no confirmation to the user"""
         if self.config.yolo and self.message_index is None:
-            cprint(f"{question}: YOLO!", color="light_red")
+            cprint(f"{question}: YOLO!", color="light_yellow")
             return True
         if self.config.batch:
             raise AppError("Confirmation unavailable in batch mode")
@@ -322,7 +322,7 @@ class LLME:
             if self.session:
                 x = self.session.prompt([("#ff0000", f"{question}? ")], placeholder=[("#7f7f7f", "Enter to confirm, or give a prompt to cancel")], default=default, rprompt="")
             else:
-                x = input(colored(f"{question}? ", "light_red"))
+                x = input(colored(f"{question}? ", "light_yellow"))
             self.failsafe = False # user input still alive
             if x == "":
                 return True
@@ -424,7 +424,7 @@ class LLME:
 
         content = ''
         cp = ChunkPrinter()
-        with Spinner("light_red", self.config.plain) as am:
+        with Spinner("light_yellow", self.config.plain) as am:
             while line := proc.stdout.readline():
                 am.stop()
                 cp.print(line, 'white', 'on_grey')
@@ -692,8 +692,8 @@ class LLME:
                     idx = tool_call.get("index")
                     f = tool_call["function"]
                     if "name" in f:
-                        cp.print(f["name"], color="red", id=idx)
-                    cp.print_escaped(f["arguments"], color="red", string_color="light_red", id=idx)
+                        cp.print(f["name"], color="yellow", id=idx)
+                    cp.print_escaped(f["arguments"], color="yellow", string_color="light_yellow", id=idx)
 
             finish_reason = choice0.get('finish_reason')
             if finish_reason:
@@ -1221,9 +1221,9 @@ class LLME:
     def print_message(self, i, message, before=""):
         role = message.role()
         if before:
-            colors = {"system": "yellow", "user": "green", "assistant": "blue", "tool": "red"}
+            colors = {"system": "yellow", "user": "green", "assistant": "blue", "tool": "yellow"}
         else:
-            colors = {"system": "light_yellow", "user": "light_green", "assistant": "light_blue", "tool": "light_red"}
+            colors = {"system": "light_yellow", "user": "light_green", "assistant": "light_blue", "tool": "light_yellow"}
         color = colors[role]
         content = message.content()
         tools = message.tool_calls()
