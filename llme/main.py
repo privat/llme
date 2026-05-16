@@ -791,7 +791,7 @@ class LLME:
         data["last_token_ms"] = data["total_ms"] - data["first_token_ms"] - data["response_ms"]
         self.metrics.update(data)
 
-        cprint(self.metrics.infoline(data), "light_grey")
+        cprint(self.metrics.infoline(data, self), "light_grey")
 
         if self.config.export_metrics:
             try:
@@ -884,6 +884,9 @@ class LLME:
             previous_message = self.history[-1]
         previous_role = previous_message.role()
         if previous_role == "user" or previous_role == "tool":
+            if self.token_budget and self.token_budget_start + self.token_budget <= self.metrics.predicted_n():
+                self.add_message({"role": "user", "content": "final answer now. No more tools available. You have to conclude."})
+                tools=[]
             self.do_assistant(tools=tools)
         elif previous_role == "system":
             self.do_user()
@@ -936,13 +939,16 @@ class LLME:
         return None
 
 
-    def loop(self, oneround=False, tools=None):
+    def loop(self, oneround=False, tools=None, token_budget=None):
         """The main ping-pong loop between the user and the assistant"""
+        if token_budget is not None:
+            self.token_budget_start = self.metrics.predicted_n()
+            self.token_budget = token_budget
         while True:
             try:
                 response = self.do_role(oneround, tools=tools)
-                if response:
-                    return response
+                if response is not None:
+                    return response.data
                 continue
             except requests.exceptions.RequestException as e:
                 logger.error("Server error: %s", extract_requests_error(e))
@@ -1060,7 +1066,7 @@ class LLME:
                 os.unlink(stdinfile.name)
 
         if self.metrics.total:
-            cprint(f"Total: {self.metrics.infoline(self.metrics.total)}", "light_grey")
+            cprint(f"Total: {self.metrics.infoline(self.metrics.total, self)}", "light_grey")
         if self.config.session:
             cprint(f"Continue this session with --session {self.config.session}", "light_cyan")
 
@@ -1715,14 +1721,21 @@ class Metrics:
         self.total = {}
         self.history = []
 
+    def predicted_n(self):
+        return self.total.get("predicted_n", 0)
+
     def update(self, d):
         """Add all"""
         self.history.append(d)
         add_in_dict(self.total, d)
 
-    def infoline(self, d):
+    def infoline(self, d, llme=None):
         """Write a concise infoline"""
         info = []
+        if llme and llme.token_budget:
+            used = self.predicted_n() - llme.token_budget_start
+            if total != 0:
+                info.append(f"budget:%dt/%dt %.0f%%" % (used, llme.token_budget, used*100/llme.token_budget))
         if "cache_n" in d:
             info.append(f"cache:%dt prompt:%dt %.2ft/s predicted:%dt %.2ft/s" % (
                 d["cache_n"],
