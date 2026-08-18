@@ -253,7 +253,7 @@ class LLME:
             elif self.config.file_mode == "path":
                 # replace the part with the path.
                 path = part['file']['filename']
-                if self.config.sandbox:
+                if self.config.box:
                     dirname = os.path.dirname(path)
                     filename = os.path.basename(path)
                     basename, extension = os.path.splitext(filename)
@@ -393,8 +393,8 @@ class LLME:
             if not self.confirm(prompt, default=default):
                 return None
 
-        if self.config.sandbox:
-            cmd = shlex.split(self.config.sandbox, posix=True)
+        if self.config.box:
+            cmd = shlex.split(self.config.box, posix=True)
             cmd.append(command)
         else:
             cmd = ["bash", "-c", command]
@@ -458,10 +458,10 @@ class LLME:
         return result
 
     def direct_run_command(self, command, input="", check=True):
-        """Because of possible sandboxing, access to the agent environment must be indirect"""
-        if self.config.sandbox:
+        """Because of possible (sand)boxing, access to the agent environment must be indirect"""
+        if self.config.box:
             import shlex
-            cmd = shlex.split(self.config.sandbox, posix=True)
+            cmd = shlex.split(self.config.box, posix=True)
             cmd.append(command)
         else:
             cmd = ["bash", "-c", command]
@@ -2301,7 +2301,7 @@ def process_args():
     parser.add_argument(      "--skills-path", metavar="DIR", action="append", help="Add a skills directory for skill recursive search")
     parser.add_argument(      "--list-skills", action="store_true", default=None, help="List all discoverable agent skills then exit")
     parser.add_argument(      "--tool-mode", choices=["markdown", "native"], help="How tools and functions are given to the LLM [tool_mode]")
-    parser.add_argument(      "--sandbox", type=str, help="The sandbox tool used to run commands [sandbox]")
+    parser.add_argument(      "--box", type=str, help="The (sand)box tool used to run commands [box]")
     parser.add_argument(      "--max-tool-len", type=int, help="Maximum size of tool output in bytes (0 for unlimited) [max_tool_len]")
     parser.add_argument(      "--timeout-tool", type=int, help="Maximum duration in seconds of tool runs (0 for unlimited) [timeout_tool]")
     parser.add_argument(      "--timeout-http", type=int, help="Timeout of LLM connexion (0 for unlimited) [timeout_http]")
