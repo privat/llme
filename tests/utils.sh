@@ -54,7 +54,7 @@ result() {
 	fi
 	chat="$ORIGDIR/$LOGDIR/chat.json"
 	if [ -f "$chat" ]; then
-		msgs=`jq '.|length' "$chat"`
+		msgs=`jq -s '.|length' "$chat"`
 		words=`wc -w < "$chat"`
 	else
 		msgs=
