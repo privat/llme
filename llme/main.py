@@ -62,6 +62,7 @@ class LLME:
         self.files = [] # Attached file for the next request.
         self.answering_model = None
         self.chat_output_file = None
+        self.token_budget = None
 
         self.slash_commands = [
             "/file FILE    attach a file for the next prompt",
