@@ -481,6 +481,12 @@ class LLME:
         logger.info("Created tempfile %r", temp)
         return temp
 
+    def read_file(self, path):
+        """Read a file for the agent"""
+        import shlex
+        path = shlex.quote(path)
+        return self.direct_run_command(f"cat {path}")
+
     def write_file(self, path, contents):
         """Write a file for the agent"""
         import shlex
@@ -488,6 +494,39 @@ class LLME:
         if contents.__class__ == str:
             contents = contents.encode()
         self.direct_run_command(f"cat > {path}", contents)
+
+    def update_file(self, path: str, regexp: str, new_content: str):
+        """Update the content of a file.
+
+        `regexp` matches the exact part to replace.
+        `new_content` is the new block of text, used verbatim.
+
+        Python re syntax is used with the flag re.MULTILINE (so ^ and $ match the begin and the end of a line)
+
+        `regexp` must match exactly once in the original file or an error is thrown.
+        The use of anti-greed operator `?` helps to select small parts.
+
+        example:
+
+        * `update_file("README.md","^# Introduction$(.|\n)*?^# Usage$", "# Introduction\n\nlorem ipsum...\n\n# Usage")`
+        """
+
+        data = self.read_file(path)
+
+        regexp = re.compile(regexp.encode(), re.MULTILINE)
+        matches = list(regexp.finditer(data))
+        if len(matches) == 0:
+            raise Exception("regexp not matched")
+        if len(matches) > 1:
+            spans = ', '.join([str(m.span()) for m in matches])
+            raise Exception(f"multiple matches; found {len(matches)} spans {spans}")
+        new_data = regexp.sub(new_content.encode(), data)
+        deletions=matches[0].group()[:-1].count(b'\n')+1
+        insertions=new_content[:-1].count('\n')+1
+        self.write_file(path, new_data)
+        message = f"{insertions} insertions(+), {deletions} deletions(-)"
+        cprint(message, color="yellow")
+        return [message]
 
     def image_description(self, path: str):
         """Returns a description of the given image. Useful for OCR, general description or any meaningful information."""
@@ -1016,6 +1055,7 @@ class LLME:
     def start(self):
         """Start, work, and terminate"""
         tool(self.run_command)
+        tool(self.update_file)
         tool(self.image_description, has_parts=True)
 
         models = None
