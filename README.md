@@ -2,7 +2,7 @@
 
 → [Alternative README](README.vibe.md)
 
-A simple, single-file command-line chat client compatible with the OpenAI API.
+A simple, command-line chat client compatible with the OpenAI API.
 
 *(or "I just want to quickly test my model hosted with llama.cpp but don't want to spin up openwebui")*
 
@@ -70,15 +70,6 @@ git clone https://github.com/privat/llme.git
 pipx install -e ./llme
 llme --help
 ```
-
-Clone and run from source (no installation)
-
-```bash
-git clone https://github.com/privat/llme.git
-pip install -r llme/requirements.txt
-./llme/llme/main.py --help
-```
-
 
 ## Usage
 
