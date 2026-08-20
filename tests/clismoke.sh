@@ -6,7 +6,7 @@
 validate_chat() {
 	i=0
 	for re in "$@"; do
-		if ! content=$(jq -c ".[$i]" "$LOGDIR/chat.json"); then
+		if ! content=$(jq -cs ".[$i]" "$LOGDIR/chat.json"); then
 			result FAIL "bad jq"
 			return 1
 		fi
@@ -17,7 +17,7 @@ validate_chat() {
 		fi
 		((i++))
 	done
-	if ! content=$(jq "length" "$LOGDIR/chat.json"); then
+	if ! content=$(jq -s "length" "$LOGDIR/chat.json"); then
 		result ALMOST "bad jq"
 		return 1
 	fi

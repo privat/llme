@@ -96,7 +96,7 @@ result() {
 
 # Check that the llm result matches the pattern $1 on the last line.
 answer() {
-	if jq -r '.[-1].content' "$LOGDIR/chat.json" | sed '/^$/d' | tail -n1 | grep -x "$1"; then
+	if jq -sr '.[-1].content' "$LOGDIR/chat.json" | sed '/^$/d' | tail -n1 | grep -x "$1"; then
 		result "PASS"
 	elif grep --color=always -i "$1" "$LOGDIR/out.txt" > >(head); then
 		result "ALMOST"
@@ -254,7 +254,7 @@ et() {
 validate_chat() {
 	i=0
 	for re in "$@"; do
-		if ! content=$(jq -c ".[$i]" "$LOGDIR/chat.json"); then
+		if ! content=$(jq -cs ".[$i]" "$LOGDIR/chat.json"); then
 			result FAIL "bad jq"
 			return 1
 		fi
@@ -265,7 +265,7 @@ validate_chat() {
 		fi
 		((i++))
 	done
-	if ! content=$(jq "length" "$LOGDIR/chat.json"); then
+	if ! content=$(jq -s "length" "$LOGDIR/chat.json"); then
 		result ALMOST "bad jq"
 		return 1
 	fi
