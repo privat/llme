@@ -362,7 +362,7 @@ class ServerMixin:
                     tool_calls = message['tool_calls'] = []
                 arguments = {"command": cb[1], "stdin": cb[2]}
                 tool_call = {
-                    "id": f"toolcallid-{len(self.history)}-len(tool_calls)",
+                    "id": f"toolcallid-{len(self.history)}-{len(tool_calls)}",
                     "type": "function",
                     "function": {"name": "run_command", "arguments": json.dumps(arguments)}}
                 tool_calls.append(tool_call)
