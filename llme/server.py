@@ -203,7 +203,8 @@ class ServerMixin:
     def get_models(self):
         """List the available models"""
         if self.config.dummy:
-            return ['dummy']
+            # Return a proper model dict, as the callers expect "id" and "state" fields
+            return [{"id": "dummy", "state": "loaded"}]
         url = f"{self.config.base_url}/models"
         logger.info("Get models from %s", url)
         try:
