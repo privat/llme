@@ -135,11 +135,11 @@ class LLME(HistoryMixin, ServerMixin, ToolsMixin, UIMixin, LoopMixin):
             for m in models:
                 if m["state"] == "loaded":
                     self.model = m["id"]
-                    logger.info("Chose first loaded model from server: {self.model}")
+                    logger.info("Chose first loaded model from server: %s", self.model)
                     break
             if not self.model:
                 self.model = models[0]["id"]
-                logger.info("Chose first model from server: {self.model}")
+                logger.info("Chose first model from server: %s", self.model)
         if self.config.list_models:
             self.list_models()
             return
