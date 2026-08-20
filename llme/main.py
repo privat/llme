@@ -68,6 +68,8 @@ class LLME(HistoryMixin, ServerMixin, ToolsMixin, UIMixin, LoopMixin):
         self.answering_model = None
         self.chat_output_file = None
         self.token_budget = None
+        self.dummy_responses_queue = None # Canned responses for --dummy-responses (lazily loaded)
+        self.dummy_responses_index = 0 # Next canned response to return
 
         self.slash_commands = [
             "/file FILE    attach a file for the next prompt",
@@ -164,7 +166,7 @@ class LLME(HistoryMixin, ServerMixin, ToolsMixin, UIMixin, LoopMixin):
                 # No prompts, so use whole stdin as single prompt.
                 self.prompts = [sys.stdin.read()]
 
-        if len(self.prompts) == 0 and not self.config.dummy:
+        if len(self.prompts) == 0 and not self.config.dummy and not self.config.dummy_responses:
             if not models:
                 self.get_models()
             self.warmup = Warmup(self)
@@ -320,6 +322,7 @@ def process_args():
     parser.add_argument(      "--dump-config", action="store_true", default=None, help="Print the effective config and quit")
     parser.add_argument(      "--raw-request-dump", metavar="FILE", help="Export the full POSTed json payload [raw_request_dump]")
     parser.add_argument(      "--raw-response-dump", metavar="FILE", help="Export the full json message response [raw_response_dump]")
+    parser.add_argument(      "--dummy-responses", metavar="FILE", help="Mock the server responses with FILE: a json array, a single message, or a jsonl of --raw-response-dump outputs. No server needed [dummy_responses]")
     parser.add_argument(      "--plugin", metavar="PATH", action="append", dest="plugins", help="Add additional tool (python file or directory) [plugins]")
     parser.add_argument("-H", "--history-filename", metavar="FILE", help="Read/write command history from FILE [history_filename]")
     parser.add_argument("-v", "--verbose", action="count", help="Increase verbosity level (can be used multiple times)")
@@ -389,7 +392,7 @@ def process_args():
         for plugin in args.plugins:
             load_plugin(plugin)
 
-    if not args.base_url:
+    if not args.base_url and not args.dummy_responses:
         logger.error("Error: --base-url required and not defined the config file.")
         sys.exit(2)
 

@@ -321,6 +321,16 @@ t dummy2 llme --dummy --list-models "$@" &&
 t dummy3 llme -u bad --dummy hello "$@" &&
 	validate_chat system hello "I'm assistant."
 
+# --dummy-responses (mock the server responses from a file, no server needed)
+t dummyres1 llme -u bad -m m --no-session --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses.json" hello "$@" &&
+	smoke "canned response"
+t dummyres2 llme -u bad -m m --no-session -Y --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses-toolcall.json" runit "$@" &&
+	smoke "DUMMY_TOOL_RAN" "dummy tool ran successfully"
+t dummyres3 llme -u bad -m m --no-session --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses.jsonl" one two "$@" &&
+	smoke "Jsonl response one" "Jsonl response two"
+et dummyres4 llme -u bad -m m --no-session --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses.jsonl" one two three "$@" &&
+	validate_err "No more dummy responses"
+
 # args
 t args0 llme "$@" < /dev/null &&
 	pass

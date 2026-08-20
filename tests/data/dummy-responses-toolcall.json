@@ -1,0 +1,4 @@
+[
+  {"role": "assistant", "content": null, "tool_calls": [{"index": 0, "id": "call_1", "type": "function", "function": {"name": "run_command", "arguments": "{\"command\": \"echo DUMMY_TOOL_RAN\"}"}}]},
+  {"role": "assistant", "content": "The dummy tool ran successfully."}
+]

@@ -90,6 +90,48 @@ class SSEReader:
             except:
                 logger.warning("Chunk: Got a weird one: %s", data)
 
+class DummyResponse:
+    """A fake streaming response built from a canned message.
+    It mimics the minimal interface of a streaming requests.Response
+    (iter_lines, raise_for_status, close) so that the whole
+    receive_chat_completion_message() code path is exercised as with a real
+    server. Used with --dummy-responses to test without a server."""
+    def __init__(self, message, model):
+        # A whole message is just a big delta. Wrap it in a single SSE chunk.
+        chunk = {"choices": [{"delta": message, "finish_reason": "stop"}], "model": model}
+        self._line = b"data: " + json.dumps(chunk).encode()
+
+    def iter_lines(self):
+        return iter([self._line])
+
+    def raise_for_status(self):
+        return None
+
+    def close(self):
+        pass
+
+def load_dummy_responses(path):
+    """Load the canned responses for --dummy-responses.
+    Compatible with --raw-response-dump output: a json array of messages, a single
+    json message, or a jsonl file with one message per line."""
+    try:
+        with open(path, "r") as f:
+            content = f.read()
+    except OSError as e:
+        raise AppError(f"Can't load dummy responses from {path}") from e
+    try:
+        data = json.loads(content)
+    except json.JSONDecodeError:
+        data = None
+    if data is None:
+        # Not a single json document: assume jsonl (one raw response per line)
+        data = [json.loads(line) for line in content.splitlines() if line.strip()]
+    elif isinstance(data, dict):
+        data = [data]
+    if not isinstance(data, list):
+        raise AppError(f"Invalid dummy responses file {path}: expected a json array, a single message, or jsonl")
+    return data
+
 def extract_requests_error(e):
     """Common handling of requests error"""
     logger.debug("requests error: %s", e)
@@ -202,7 +244,7 @@ class ServerMixin:
     """LLME mixin: talks to the (OpenAI-compatible) server."""
     def get_models(self):
         """List the available models"""
-        if self.config.dummy:
+        if self.config.dummy or self.config.dummy_responses:
             # Return a proper model dict, as the callers expect "id" and "state" fields
             return [{"id": "dummy", "state": "loaded"}]
         url = f"{self.config.base_url}/models"
@@ -220,6 +262,19 @@ class ServerMixin:
             m["state"] = m.get("status", {}).get("value")
         logger.info("Available models: %s", ids)
         return models["data"]
+
+
+    def next_dummy_response(self):
+        """Return the next canned response for --dummy-responses.
+        The responses file is loaded lazily on first use, and one response is
+        consumed per call, until the file is exhausted."""
+        if self.dummy_responses_queue is None:
+            self.dummy_responses_queue = load_dummy_responses(self.config.dummy_responses)
+        if self.dummy_responses_index >= len(self.dummy_responses_queue):
+            raise AppError(f"No more dummy responses in {self.config.dummy_responses} (needed response #{self.dummy_responses_index+1})")
+        message = self.dummy_responses_queue[self.dummy_responses_index]
+        self.dummy_responses_index += 1
+        return message
 
 
     def post_chat_completion(self, tools=None):
@@ -253,6 +308,9 @@ class ServerMixin:
             with open(self.config.raw_request_dump, "w") as f:
                 json.dump(data, f, indent=2)
         logger.debug("Sending %d raw messages to %s", len(self.raw_messages), url)
+        if self.config.dummy_responses:
+            logger.info("Dummy response from %s (no server contacted)", self.config.dummy_responses)
+            return DummyResponse(self.next_dummy_response(), self.model)
         return requests.post(
             url,
             json=data,
