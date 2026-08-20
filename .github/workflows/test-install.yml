@@ -1,0 +1,43 @@
+name: test install methods
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test-install:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+
+      - name: With pip -e (and venv)
+        run: |
+          python -m venv pip-venv
+          . pip-venv/bin/activate
+          pip install -U pip
+          pip install -e .
+
+          python -c "import llme"
+
+          python -m llme --help
+
+          llme --help
+
+      - uses: astral-sh/setup-uv@v6
+
+      - name: With uv
+        run: |
+          uv sync
+          uv run python -m llme --help
+          uv run llme --help
+
+      - name: Build wheel
+        run: |
+          pip wheel -w dist/ .
+          python -m venv wheel-test
+          . wheel-test/bin/activate
+          pip install dist/*.whl
+          llme --help
