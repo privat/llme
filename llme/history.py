@@ -232,9 +232,19 @@ class HistoryMixin:
             logger.info("Resuming session in %s", session_directory)
         else:
             os.makedirs(session_root_directory, exist_ok=True)
-            self.config.session = timestamp
-            session_directory = os.path.join(session_root_directory, timestamp)
-            os.makedirs(session_directory, exist_ok=False)
+            # The timestamp has second precision: two runs in the same second
+            # would collide. Append a counter until the directory is free.
+            session_name = timestamp
+            n = 0
+            while True:
+                session_directory = os.path.join(session_root_directory, session_name)
+                try:
+                    os.makedirs(session_directory)
+                    break
+                except FileExistsError:
+                    n += 1
+                    session_name = f"{timestamp}-{n}"
+            self.config.session = session_name
             logger.info("New session in %s", session_directory)
         if not self.config.chat_output:
             self.config.chat_output = os.path.join(session_directory, "chat.jsonl")
