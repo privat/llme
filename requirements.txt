@@ -1,6 +1,0 @@
-argcomplete
-requests
-termcolor
-python-magic
-pyyaml
-prompt_toolkit
