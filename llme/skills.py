@@ -12,14 +12,6 @@ import yaml
 logger = logging.getLogger('llme')
 
 
-# XDG Base Directory Specification paths for skills
-SKILL_SEARCH_PATHS = [
-    Path.home() / ".config" / "llme" / "skills",
-    Path(__file__).parent / "skills",
-    Path.cwd() / "skills",
-]
-
-
 class Skill:
     def __init__(self, name, desc, dirpath, meta, body):
         self.name = name
