@@ -216,9 +216,9 @@ class Metrics:
         """Write a concise infoline"""
         info = []
         if llme and llme.token_budget:
+            # token_budget is guaranteed non-zero by the condition above
             used = self.predicted_n() - llme.token_budget_start
-            if total != 0:
-                info.append(f"budget:%dt/%dt %.0f%%" % (used, llme.token_budget, used*100/llme.token_budget))
+            info.append(f"budget:%dt/%dt %.0f%%" % (used, llme.token_budget, 100.0 * used / llme.token_budget))
         if "cache_n" in d:
             info.append(f"cache:%dt prompt:%dt %.2ft/s predicted:%dt %.2ft/s" % (
                 d["cache_n"],
