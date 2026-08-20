@@ -263,7 +263,7 @@ class HistoryMixin:
                 if format == "yaml":
                     import yaml
                     messages = yaml.safe_load(f)
-                if format == "jsonl":
+                elif format == "jsonl":
                     messages = []
                     for line in f:
                         line = line.strip()
