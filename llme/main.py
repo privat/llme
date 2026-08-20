@@ -127,10 +127,6 @@ class LLME(HistoryMixin, ServerMixin, ToolsMixin, UIMixin, LoopMixin):
 
     def start(self):
         """Start, work, and terminate"""
-        tool(self.run_command)
-        tool(self.update_file)
-        tool(self.image_description, has_parts=True)
-
         models = None
         if not self.model:
             models = self.get_models()
@@ -403,12 +399,20 @@ def process_args():
     return parser, args
 
 
+def register_builtin_tools(llme):
+    """Register the built-in tools bound to the given LLME instance."""
+    tool(llme.run_command)
+    tool(llme.update_file)
+    tool(llme.image_description, has_parts=True)
+
+
 def main():
     """The main CLI entry point."""
     try:
         argparser, config = process_args()
         llme = LLME(config)
         llme.argparser = argparser # FIXME too much hacky
+        register_builtin_tools(llme)
         if config.list_tools:
             list_tools()
             sys.exit(0)
