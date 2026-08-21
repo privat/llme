@@ -127,10 +127,11 @@ t input2 llme --dummy -i chat.json -i '' world "$@" &&
 et input3 llme --dummy -i /bad/file hello "$@" &&
 	validate_err "No such file"
 # /load FILE    load chat
-t s-load1 llme hello2 '/load chat.json' world '/load chat.json' "$@" &&
-	validate_chat 'You are assistant.' hello "I'm assistant."
-t s-load2 llme '/load chat.json' world "$@" &&
-	validate_chat 'You are assistant.' hello "I'm assistant." world assistant
+# The session log is append-only: the loaded messages are added, not replacing.
+t s-load1 llme --dummy hello2 '/load chat.json' world '/load chat.json' "$@" &&
+	validate_log "0a system" "1a user: hello2" "2a assistant" "0b system: You are assistant." "1b user: hello" "2b assistant: I'm assistant." "3b user: world" "4b assistant" "0c system: You are assistant." "1c user: hello" "2c assistant: I'm assistant."
+t s-load2 llme --dummy '/load chat.json' world "$@" &&
+	validate_log "0a system" "0b system: You are assistant." "1b user: hello" "2b assistant: I'm assistant." "3b user: world" "4b assistant"
 et s-load3 llme --dummy '/load' world "$@" &&
 	validate_err "Missing filename"
 et s-load4 llme --dummy '/load /bad/file' hello "$@" &&
@@ -292,16 +293,16 @@ t s-help llme --dummy /help hello "$@" &&
 	smoke "list available models"
 
 # /redo        cancel and regenerate the last assistant message
-t s-redo1 llme hello /redo world /redo "$@" &&
-	validate_chat system hello assistant world assistant # hum how to test that
-t s-redo2 llme hello /redo /redo "$@" &&
-	validate_chat system hello assistant
+t s-redo1 llme --dummy hello /redo world /redo "$@" &&
+	validate_log "0a system" "1a user: hello" "2a assistant" "2b assistant" "3b user: world" "4b assistant" "4c assistant"
+t s-redo2 llme --dummy hello /redo /redo "$@" &&
+	validate_log "0a system" "1a user: hello" "2a assistant" "2b assistant" "2c assistant"
 et s-redo3 llme --dummy /redo hello "$@" &&
 	validate_err "No assistant message to redo"
 
 # /undo         cancel the last user message (and the response)
-t s-undo1 llme hello /undo world /undo "$@" &&
-	validate_chat system world assistant
+t s-undo1 llme --dummy hello /undo world /undo "$@" &&
+	validate_log "0a system" "1a user: hello" "2a assistant" "1b user: world" "2b assistant"
 
 et s-undo2 llme --dummy /undo hello "$@" &&
 	validate_err "No user message to undo"
@@ -313,18 +314,18 @@ et s-pass2 llme --dummy /pass hello "$@" &&
 	validate_err "Already at latest message"
 
 # /goto M       jump after message M (e.g /goto 5c)
-t s-goto00 llme hello world "/goto 0" goodbye "$@" &&
-	validate_chat goodbye assistant
-t s-goto01 llme hello world "/goto 1" goodbye "$@" &&
-	validate_chat system goodbye assistant
-t s-goto02 llme hello world "/goto 2" goodbye "$@" &&
-	validate_chat system hello assistant goodbye assistant
-t s-goto03 llme hello world "/goto 3" goodbye "$@" &&
-	validate_chat system hello assistant goodbye assistant
-t s-goto04 llme hello world "/goto 4" goodbye "$@" &&
-	validate_chat system hello assistant world assistant goodbye assistant
-t s-goto10 llme hello /undo world "/goto 2a" "$@" &&
-	validate_chat system hello assistant
+t s-goto00 llme --dummy hello world "/goto 0" goodbye "$@" &&
+	validate_log "0a system" "1a user: hello" "2a assistant" "3a user: world" "4a assistant" "0b user: goodbye" "1b assistant"
+t s-goto01 llme --dummy hello world "/goto 1" goodbye "$@" &&
+	validate_log "0a system" "1a user: hello" "2a assistant" "3a user: world" "4a assistant" "1b user: goodbye" "2b assistant"
+t s-goto02 llme --dummy hello world "/goto 2" goodbye "$@" &&
+	validate_log "0a system" "1a user: hello" "2a assistant" "3a user: world" "4a assistant" "2b assistant" "3b user: goodbye" "4b assistant"
+t s-goto03 llme --dummy hello world "/goto 3" goodbye "$@" &&
+	validate_log "0a system" "1a user: hello" "2a assistant" "3a user: world" "4a assistant" "3b user: goodbye" "4b assistant"
+t s-goto04 llme --dummy hello world "/goto 4" goodbye "$@" &&
+	validate_log "0a system" "1a user: hello" "2a assistant" "3a user: world" "4a assistant" "4b assistant" "5b user: goodbye" "6b assistant"
+t s-goto10 llme --dummy hello /undo world "/goto 2a" "$@" &&
+	validate_log "0a system" "1a user: hello" "2a assistant" "1b user: world" "2b assistant" "2c assistant"
 et s-goto12 llme --dummy hello /undo world "/goto" "$@" &&
 	validate_err "Missing message label"
 et s-goto13 llme --dummy hello /undo world "/goto bad" "$@" &&
@@ -339,7 +340,7 @@ t s-history1 llme --dummy hello /history "$@" &&
 
 t s-history2 llme --dummy hello /undo world /history "$@" &&
 	smoke "1 user: world" &&
-	validate_chat system world assistant
+	validate_log "0a system" "1a user: hello" "2a assistant" "1b user: world" "2b assistant"
 
 # /full-history list hierarchical conversation history (with forks)
 t s-full-history1 llme --dummy hello /full-history "$@" &&
@@ -348,15 +349,15 @@ t s-full-history1 llme --dummy hello /full-history "$@" &&
 
 t s-full-history2 llme --dummy hello /undo world /full-history "$@" &&
 	smoke "1a user: hello" "1b user: world" &&
-	validate_chat system world assistant
+	validate_log "0a system" "1a user: hello" "2a assistant" "1b user: world" "2b assistant"
 
 # /edit         run EDITOR on the chat (save,editor,load)
 export EDITOR="sed -i 's/hello/world/'"
-t s-edit1 llme hello /edit hello "$@" &&
-	validate_chat system world assistant hello assistant
+t s-edit1 llme --dummy hello /edit hello "$@" &&
+	validate_log "0a system" "1a user: hello" "2a assistant" "1b user: world" "2b assistant" "2c assistant" "3c user: hello" "4c assistant"
 export EDITOR="sed -i 's/hello/world/'"
-t s-edit2 llme --system=hello /edit hello2 "$@" &&
-	validate_chat world hello2 assistant
+t s-edit2 llme --dummy --system=hello /edit hello2 "$@" &&
+	validate_log "0a system: hello" "0b system: world" "1b user: hello2" "2b assistant"
 export EDITOR="false"
 et s-edit3 llme --dummy /edit hello "$@" &&
 	validate_err "returned non-zero exit"
