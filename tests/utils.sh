@@ -12,6 +12,9 @@ export ORIGDIR=`pwd`
 export UTILDATE=${UTILDATE:-`date +%s`} # so all runs from a same initial script share a same utildate
 export UTILID=${UTILID:-$UTILDATE-$$-$RANDOM} # so all runs from a same initial script share a same utilid
 
+# The final errorcode
+errorcode=${errorcode:-0}
+
 # The llme tool to check
 LLME="${LLME:-llme}"
 if ! command -v "$LLME" >/dev/null; then
@@ -82,12 +85,14 @@ result() {
 	EOF
 	case $1 in
 		ERROR*|FAIL*|TIMEOUT*)
+			errorcode=1
 			color=91;;
 		PASS*)
 			color=92;;
 		RUNNING*)
 			color=94;;
 		*)
+			errorcode=${errorcode:-2}
 			color=93;;
 	esac
 	printf "\e[${color}m$1\e[0m "
