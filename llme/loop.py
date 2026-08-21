@@ -117,7 +117,7 @@ class LoopMixin:
                     raise
                 if e.response is not None and e.response.status_code == 404:
                     models = self.get_models()
-                    if self.model not in (m["id"] for m in models):
+                    if models and self.model not in (m["id"] for m in models):
                         cprint(f"Info: current model ({self.model}) is not in the list. Check with /models, chose with /set model=...", "light_cyan")
                 self.rollback()
             except CancelEvent:

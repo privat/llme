@@ -132,6 +132,9 @@ class LLME(HistoryMixin, ServerMixin, ToolsMixin, UIMixin, LoopMixin):
         models = None
         if not self.model:
             models = self.get_models()
+            if not models:
+                # get_models() already logged the reason
+                raise AppError(f"Can't get models from {self.config.base_url}")
             for m in models:
                 if m["state"] == "loaded":
                     self.model = m["id"]
