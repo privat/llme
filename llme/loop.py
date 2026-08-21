@@ -108,13 +108,14 @@ class LoopMixin:
                     return response.data
                 continue
             except requests.exceptions.RequestException as e:
-                logger.error("Server error: %s", extract_requests_error(e))
                 delay = self.get_throttling_delay(e)
                 if delay:
+                    logger.error("Server error: %s", extract_requests_error(e))
                     self.do_sleep(delay)
                     continue
                 if self.config.batch:
                     raise
+                logger.error("Server error: %s", extract_requests_error(e))
                 if e.response is not None and e.response.status_code == 404:
                     models = self.get_models()
                     if models and self.model not in (m["id"] for m in models):

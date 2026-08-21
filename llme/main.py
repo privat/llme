@@ -429,7 +429,7 @@ def main():
         sys.exit(1)
     except requests.exceptions.RequestException as e:
         logger.error("Server error: %s", extract_requests_error(e))
-        raise e
+        sys.exit(1)
 
 
 if __name__ == "__main__":
