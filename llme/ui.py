@@ -119,6 +119,8 @@ class UIMixin:
             return user_input
         except KeyboardInterrupt:
             raise QuitEvent("interrupted")
+        except EOFError:
+            raise QuitEvent("EOF")
 
 
     def next_input(self):
