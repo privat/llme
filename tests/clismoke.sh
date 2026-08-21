@@ -367,3 +367,5 @@ et s-edit4 llme --dummy hello /edit "$@" &&
 export EDITOR="echo 'badquote"
 et s-edit5 llme --dummy hello /edit "$@" &&
 	validate_err "Invalid editor command"
+
+exit "$errorcode"
