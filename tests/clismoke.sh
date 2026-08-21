@@ -78,11 +78,11 @@ setup() {
 	copy README.md chat.json
 }
 
-t prompt01 llme hello world "$@" &&
+t prompt01 llme --dummy hello world "$@" &&
 	validate_chat system hello assistant world assistant
 
 # Empty prompts are ignored. not POLA
-t prompt02 llme '' "$@" &&
+t prompt02 llme --dummy '' "$@" &&
 	validate_chat system
 
 t prompt03 llme README.md hello "$@" &&
@@ -97,7 +97,7 @@ et prompt05 llme /etc/shadow hello "$@" &&
 t prompt06 llme <<<hello world "$@" &&
 	validate_chat system '"world".*filename' assistant tool assistant
 
-t prompt07 llme <<<hello "$@" &&
+t prompt07 llme --dummy <<<hello "$@" &&
 	validate_chat system hello assistant
 
 #  -u, --base-url BASE_URL API base URL [base_url]
@@ -125,7 +125,7 @@ et ss-url1 llme '/set base_url=bad' hello "$@" &&
 et model1 llme -m bad hello "$@" &&
 	validate_err "ERROR" # unfortunately, servers can react differently to this error
 
-t model2 llme -m '' hello "$@" &&
+t model2 llme --dummy -m '' hello "$@" &&
 	validate_chat system hello assistant # Should chose a default model
 
 #  --list-models         List available models then exit
@@ -138,15 +138,15 @@ t s-models llme /models hello "$@" &&
 
 
 #  --api-key API_KEY     The API key [api_key]
-t key1 llme --api-key SECRET_KEY hello "$@" &&
+t key1 llme --dummy --api-key SECRET_KEY hello "$@" &&
 	validate_chat system hello assistant
 
-t key2 llme --api-key '' hello "$@" &&
+t key2 llme --dummy --api-key '' hello "$@" &&
 	validate_chat system hello assistant
 
 #  -b, --batch           Run non-interactively. Implicit if stdin is not a tty [batch]
 # batch+no prompts = stdin is big prompt
-t batch1 llme -b "$@" <<<$'hello\nworld\n' &&
+t batch1 llme --dummy -b "$@" <<<$'hello\nworld\n' &&
 	validate_chat system 'hello.*world' assistant
 # no batch+no prompts = stdin lines are prompts
 t batch2 llme --no-batch "$@" <<<$'hello\nworld\n' &&
@@ -159,77 +159,77 @@ t batch4 llme --no-batch goodbye "$@" <<<$'hello\nworld\n' &&
 	validate_chat system goodbye assistant hello assistant world assistant
 
 #  -p, --plain           No colors or tty fanciness. Implicit if stdout is not a tty [plain]
-t plain1 llme -p hello "$@" &&
+t plain1 llme --dummy -p hello "$@" &&
 	validate_chat system hello assistant
-t plain2 llme --no-plain hello "$@" &&
+t plain2 llme --dummy --no-plain hello "$@" &&
 	smoke $'\e\\[0m'
 
 #  --bulk                Disable stream-mode. Not that useful but it helps debugging APIs [bulk]
-t bulk1 llme --bulk hello "$@" &&
+t bulk1 llme --dummy --bulk hello "$@" &&
 	validate_chat system hello assistant
 
 #  -o, --chat-output CHAT_OUTPUT Export the full raw conversation in json
-t output1 llme -o tmp.json hello "$@" &&
+t output1 llme --dummy -o tmp.json hello "$@" &&
 	validate_with jq . "$WORKDIR/tmp.json"
 
-t output2 llme -o tmp.json -o '' hello "$@" &&
+t output2 llme --dummy -o tmp.json -o '' hello "$@" &&
 	validate_with [ ! -f "$WORKDIR/tmp.json" ]
 
 et output3 llme -o /bad/file hello "$@" &&
 	validate_err "No such file"
 
 # /save FILE    save chat
-t s-save1 llme hello '/save tmp.json' world '/save tmp2.json' "$@" &&
+t s-save1 llme --dummy hello '/save tmp.json' world '/save tmp2.json' "$@" &&
 	validate_with jq . "$WORKDIR/tmp.json" &&
 	validate_with jq . "$WORKDIR/tmp2.json"
-t s-save2 llme '/save tmp3.json' hello "$@" &&
+t s-save2 llme --dummy '/save tmp3.json' hello "$@" &&
 	validate_with jq . "$WORKDIR/tmp3.json"
-et s-save3 llme '/save' hello "$@" &&
+et s-save3 llme --dummy '/save' hello "$@" &&
 	validate_err "Missing filename"
-et s-save4 llme '/save /bad/file' hello "$@" &&
+et s-save4 llme --dummy '/save /bad/file' hello "$@" &&
 	validate_err "No such file"
 
 #  -i, --chat-input CHAT_INPUT Continue a previous (exported) conversation
-t input1 llme -i chat.json world "$@" &&
+t input1 llme --dummy -i chat.json world "$@" &&
 	validate_chat system hello assistant world assistant
 
-t input2 llme -i chat.json -i '' world "$@" &&
+t input2 llme --dummy -i chat.json -i '' world "$@" &&
 	validate_chat system world assistant
 
-et input3 llme -i /bad/file hello "$@" &&
+et input3 llme --dummy -i /bad/file hello "$@" &&
 	validate_err "No such file"
 # /load FILE    load chat
 t s-load1 llme hello2 '/load chat.json' world '/load chat.json' "$@" &&
 	validate_chat 'You are assistant.' hello "I'm assistant."
 t s-load2 llme '/load chat.json' world "$@" &&
 	validate_chat 'You are assistant.' hello "I'm assistant." world assistant
-et s-load3 llme '/load' world "$@" &&
+et s-load3 llme --dummy '/load' world "$@" &&
 	validate_err "Missing filename"
-et s-load4 llme '/load /bad/file' hello "$@" &&
+et s-load4 llme --dummy '/load /bad/file' hello "$@" &&
 	validate_err "No such file"
 
 #  --export-metrics EXPORT_METRICS Export metrics, usage, etc. in json
-t export-metrics1 llme --export-metrics tmp.json hello "$@" &&
+t export-metrics1 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses.json" --export-metrics tmp.json hello "$@" &&
 	validate_with jq . "$WORKDIR/tmp.json"
-et export-metrics2 llme --export-metrics /bad/file hello "$@" &&
+et export-metrics2 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses.json" --export-metrics /bad/file hello "$@" &&
 	validate_err "No such file"
-t export-metrics3 llme --export-metrics tmp.json --export-metrics '' hello "$@" &&
+t export-metrics3 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses.json" --export-metrics tmp.json --export-metrics '' hello "$@" &&
 	validate_with [ ! -f "$WORKDIR/tmp.json" ] &&
 	validate_chat system hello assistant
 # /metrics      list current metrics
-t s-metrics llme /metrics hello /metrics "$@" &&
+t s-metrics llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses.json" /metrics hello /metrics "$@" &&
 	smoke "message_n: 1" &&
 	validate_chat system hello assistant
 
 #  -s, --system SYSTEM_PROMPT System prompt [system_prompt]
-t system1 llme -s hello world "$@" &&
+t system1 llme --dummy -s hello world "$@" &&
 	validate_chat hello world assistant
 
-t system2 llme -s '' hello "$@" &&
+t system2 llme --dummy -s '' hello "$@" &&
 	validate_chat hello assistant
 
 #  --temperature TEMPERATURE Temperature of predictions [temperature]
-t temp1 llme --temperature 0 hello "$@" &&
+t temp1 llme --dummy --temperature 0 hello "$@" &&
 	validate_chat system hello assistant
 
 et temp2 llme --temperature '' hello "$@" &&
@@ -239,9 +239,9 @@ et temp3 llme --temperature bad hello "$@" &&
 	validate_err 'invalid float value'
 
 #  --tool-mode {markdown,native} How tools and functions are given to the LLM [tool_mode]
-t tool-mode1 llme --tool-mode markdown hello "$@" &&
+t tool-mode1 llme --dummy --tool-mode markdown hello "$@" &&
 	validate_chat '```' hello assistant
-t tool-mode2 llme --tool-mode native hello "$@" &&
+t tool-mode2 llme --dummy --tool-mode native hello "$@" &&
 	validate_chat system hello assistant # How to test this?
 et tool-mode3 llme --tool-mode bad hello "$@" &&
 	validate_err 'invalid choice'
@@ -249,7 +249,7 @@ et tool-mode4 llme --tool-mode '' hello "$@" &&
 	validate_err 'invalid choice'
 
 #  -c, --config CONFIG   Custom configuration files
-t config1 llme -c "$ORIGDIR/$TESTDIR/data/config.toml" hello "$@" &&
+t config1 llme --dummy -c "$ORIGDIR/$TESTDIR/data/config.toml" hello "$@" &&
 	validate_chat 'You are assistant.' hello ''
 et config2 llme -c bad hello "$@" &&
 	validate_err "No such file"
@@ -262,7 +262,7 @@ et config4 llme -c chat.json hello "$@" &&
 t list-tools1 llme --list-tools hello "$@" &&
 	smoke "run_command"
 # /tools        list available tools
-t s-tools1 llme /tools hello "$@" &&
+t s-tools1 llme --dummy /tools hello "$@" &&
 	smoke "run_command" &&
 	validate_chat system hello assistant
 
@@ -270,16 +270,16 @@ t s-tools1 llme /tools hello "$@" &&
 t dump-config1 llme --dump-config hello "$@" &&
 	smoke '"dump_config": true'
 # /config       list configuration options
-t s-config1 llme '/config' hello "$@" &&
+t s-config1 llme --dummy '/config' hello "$@" &&
 	smoke 'base_url' &&
 	validate_chat system hello assistant
 
 #  --plugin PLUGINS      Add additional tool (python file or directory) [plugins]
-t plugin1 llme --plugin "$ORIGDIR/$TESTDIR/../examples/weather_plugin.py" hello "$@" &&
+t plugin1 llme --dummy --plugin "$ORIGDIR/$TESTDIR/../examples/weather_plugin.py" hello "$@" &&
 	validate_chat system hello assistant
 t plugin1b llme --list-tools --plugin "$ORIGDIR/$TESTDIR/../examples/weather_plugin.py" hello "$@" &&
 	smoke 'weather(city: str)'
-t plugin2 llme --plugin "$ORIGDIR/$TESTDIR/../examples" hello "$@" &&
+t plugin2 llme --dummy --plugin "$ORIGDIR/$TESTDIR/../examples" hello "$@" &&
 	validate_chat system hello assistant
 t plugin2b llme --list-tools --plugin "$ORIGDIR/$TESTDIR/../examples" hello "$@" &&
 	smoke 'weather(city: str)'
@@ -287,22 +287,22 @@ et plugin3 llme --plugin bad hello "$@" &&
 	validate_err "No such file"
 
 #  -v, --verbose         Increase verbosity level (can be used multiple times)
-t verbose1 llme -v hello "$@" &&
+t verbose1 llme --dummy -v hello "$@" &&
 	validate_err "level set to INFO"
-t verbose2 llme -vv hello "$@" &&
+t verbose2 llme --dummy -vv hello "$@" &&
 	validate_err "level set to DEBUG"
-t verbose3 llme -vvv hello "$@" &&
+t verbose3 llme --dummy -vvv hello "$@" &&
 	validate_err "level set to DEBUG"
-t ss-verbose1 llme '/set verbose=1' hello "$@"
+t ss-verbose1 llme --dummy '/set verbose=1' hello "$@"
 
 #  --log-file LOG_FILE   Write logs to a file [log_file]
-t log-file1 llme --log-file tmp.log hello "$@" &&
+t log-file1 llme --dummy --log-file tmp.log hello "$@" &&
 	validate_with grep -q 'llme - DEBUG' "$WORKDIR/tmp.log"
 et log-file2 llme --log-file /bad/file hello "$@" &&
 	validate_err "No such file"
 
 #  -Y, --yolo            UNSAFE: Do not ask for confirmation before running tools. Combine with --batch to reach the singularity.
-t yolo1 llme --yolo hello "$@" &&
+t yolo1 llme --dummy --yolo hello "$@" &&
 	validate_chat system hello assistant
 
 #  --version             Display version information and quit
@@ -332,35 +332,35 @@ et dummyres4 llme -u bad -m m --no-session --dummy-responses "$ORIGDIR/$TESTDIR/
 	validate_err "No more dummy responses"
 
 # args
-t args0 llme "$@" < /dev/null &&
+t args0 llme --dummy "$@" < /dev/null &&
 	pass
 # prefix
-t args1 llme --verbo hello "$@" &&
+t args1 llme --dummy --verbo hello "$@" &&
 	validate_err "level set to INFO"
 et args2 llme --bad hello "$@" &&
 	validate_err "unrecognized argument"
-t args3 llme --no-version hello "$@" &&
+t args3 llme --dummy --no-version hello "$@" &&
 	validate_chat system hello assistant
-et s-set1 llme '/set bad=bad' hello "$@" &&
+et s-set1 llme --dummy '/set bad=bad' hello "$@" &&
 	validate_err "Unknown setting"
-et s-set2 llme '/set bad' hello "$@" &&
+et s-set2 llme --dummy '/set bad' hello "$@" &&
 	validate_err "Syntax error"
-et s-set3 llme '/set' hello "$@" &&
+et s-set3 llme --dummy '/set' hello "$@" &&
 	validate_err "Missing setting"
 # prefix
-t slash1 llme /he hello "$@" &&
+t slash1 llme --dummy /he hello "$@" &&
 	smoke "list available models"
-et slash2 llme /bad hello "$@" &&
+et slash2 llme --dummy /bad hello "$@" &&
 	validate_err "Unknown slash command"
 et slash3 llme / hello "$@" &&
 	validate_err "Is a directory" # / is the root directory
 
 # /quit         exit the program
-t s-quit llme /quit hello "$@" &&
+t s-quit llme --dummy /quit hello "$@" &&
 	validate_chat system
 
 # /help         show this help
-t s-help llme /help hello "$@" &&
+t s-help llme --dummy /help hello "$@" &&
 	smoke "list available models"
 
 # /redo        cancel and regenerate the last assistant message
@@ -368,20 +368,20 @@ t s-redo1 llme hello /redo world /redo "$@" &&
 	validate_chat system hello assistant world assistant # hum how to test that
 t s-redo2 llme hello /redo /redo "$@" &&
 	validate_chat system hello assistant
-et s-redo3 llme /redo hello "$@" &&
+et s-redo3 llme --dummy /redo hello "$@" &&
 	validate_err "No assistant message to redo"
 
 # /undo         cancel the last user message (and the response)
 t s-undo1 llme hello /undo world /undo "$@" &&
 	validate_chat system world assistant
 
-et s-undo2 llme /undo hello "$@" &&
+et s-undo2 llme --dummy /undo hello "$@" &&
 	validate_err "No user message to undo"
 
 # /pass         go forward in history (cancel /undo) [PageDown]
-t s-pass1 llme hello /undo /pass world "$@" &&
+t s-pass1 llme --dummy hello /undo /pass world "$@" &&
 	validate_chat system hello assistant world assistant
-et s-pass2 llme /pass hello "$@" &&
+et s-pass2 llme --dummy /pass hello "$@" &&
 	validate_err "Already at latest message"
 
 # /goto M       jump after message M (e.g /goto 5c)
@@ -397,28 +397,28 @@ t s-goto04 llme hello world "/goto 4" goodbye "$@" &&
 	validate_chat system hello assistant world assistant goodbye assistant
 t s-goto10 llme hello /undo world "/goto 2a" "$@" &&
 	validate_chat system hello assistant
-et s-goto12 llme hello /undo world "/goto" "$@" &&
+et s-goto12 llme --dummy hello /undo world "/goto" "$@" &&
 	validate_err "Missing message label"
-et s-goto13 llme hello /undo world "/goto bad" "$@" &&
+et s-goto13 llme --dummy hello /undo world "/goto bad" "$@" &&
 	validate_err "Invalid message label"
-et s-goto14 llme hello world "/goto 42" goodbye "$@" &&
+et s-goto14 llme --dummy hello world "/goto 42" goodbye "$@" &&
 	validate_err "Message 42 not found"
 
 # /history      list condensed conversation history
-t s-history1 llme hello /history "$@" &&
+t s-history1 llme --dummy hello /history "$@" &&
 	smoke "1 user: hello" &&
 	validate_chat system hello assistant
 
-t s-history2 llme hello /undo world /history "$@" &&
+t s-history2 llme --dummy hello /undo world /history "$@" &&
 	smoke "1 user: world" &&
 	validate_chat system world assistant
 
 # /full-history list hierarchical conversation history (with forks)
-t s-full-history1 llme hello /full-history "$@" &&
+t s-full-history1 llme --dummy hello /full-history "$@" &&
 	smoke "1a user: hello" &&
 	validate_chat system hello assistant
 
-t s-full-history2 llme hello /undo world /full-history "$@" &&
+t s-full-history2 llme --dummy hello /undo world /full-history "$@" &&
 	smoke "1a user: hello" "1b user: world" &&
 	validate_chat system world assistant
 
@@ -430,11 +430,11 @@ export EDITOR="sed -i 's/hello/world/'"
 t s-edit2 llme --system=hello /edit hello2 "$@" &&
 	validate_chat world hello2 assistant
 export EDITOR="false"
-et s-edit3 llme /edit hello "$@" &&
+et s-edit3 llme --dummy /edit hello "$@" &&
 	validate_err "returned non-zero exit"
 export EDITOR="/bad/name"
-et s-edit4 llme hello /edit "$@" &&
+et s-edit4 llme --dummy hello /edit "$@" &&
 	validate_err "No such file"
 export EDITOR="echo 'badquote"
-et s-edit5 llme hello /edit "$@" &&
+et s-edit5 llme --dummy hello /edit "$@" &&
 	validate_err "Invalid editor command"
