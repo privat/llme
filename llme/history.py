@@ -115,7 +115,10 @@ class HistoryMixin:
         sibling.append(message_obj)
         if self.config.chat_output:
             if self.chat_output_file is None:
-                self.chat_output_file = open(self.config.chat_output, "w")
+                try:
+                    self.chat_output_file = open(self.config.chat_output, "w")
+                except OSError as e:
+                    raise AppError(f"Can't open chat output file {self.config.chat_output}") from e
             self.chat_output_file.write(json.dumps(message) + "\n")
             self.chat_output_file.flush()
         if append:
