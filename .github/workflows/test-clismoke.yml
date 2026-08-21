@@ -1,0 +1,25 @@
+name: smoke tests (server-free)
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  clismoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0 # so git describe --tags works (used by result.json)
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: Install llme
+        run: |
+          pip install -U pip
+          pip install -e .
+
+      - name: Run server-free smoke tests
+        run: bash tests/clismoke.sh
