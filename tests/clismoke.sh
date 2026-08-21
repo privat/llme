@@ -101,7 +101,7 @@ t output1 llme --dummy -o tmp.json hello "$@" &&
 t output2 llme --dummy -o tmp.json -o '' hello "$@" &&
 	validate_with [ ! -f "$WORKDIR/tmp.json" ]
 
-et output3 llme -o /bad/file hello "$@" &&
+et output3 llme -o a/bad/file hello "$@" &&
 	validate_err "No such file"
 
 # /save FILE    save chat
@@ -112,7 +112,7 @@ t s-save2 llme --dummy '/save tmp3.json' hello "$@" &&
 	validate_with jq . "$WORKDIR/tmp3.json"
 et s-save3 llme --dummy '/save' hello "$@" &&
 	validate_err "Missing filename"
-et s-save4 llme --dummy '/save /bad/file' hello "$@" &&
+et s-save4 llme --dummy '/save a/bad/file' hello "$@" &&
 	validate_err "No such file"
 
 #  -i, --chat-input CHAT_INPUT Continue a previous (exported) conversation
@@ -122,7 +122,7 @@ t input1 llme --dummy -i chat.json world "$@" &&
 t input2 llme --dummy -i chat.json -i '' world "$@" &&
 	validate_chat system world assistant
 
-et input3 llme --dummy -i /bad/file hello "$@" &&
+et input3 llme --dummy -i a/bad/file hello "$@" &&
 	validate_err "No such file"
 # /load FILE    load chat
 # The session log is append-only: the loaded messages are added, not replacing.
@@ -132,13 +132,13 @@ t s-load2 llme --dummy '/load chat.json' world "$@" &&
 	validate_log "0a system" "0b system: You are assistant." "1b user: hello" "2b assistant: I'm assistant." "3b user: world" "4b assistant"
 et s-load3 llme --dummy '/load' world "$@" &&
 	validate_err "Missing filename"
-et s-load4 llme --dummy '/load /bad/file' hello "$@" &&
+et s-load4 llme --dummy '/load a/bad/file' hello "$@" &&
 	validate_err "No such file"
 
 #  --export-metrics EXPORT_METRICS Export metrics, usage, etc. in json
 t export-metrics1 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses.json" --export-metrics tmp.json hello "$@" &&
 	validate_with jq . "$WORKDIR/tmp.json"
-et export-metrics2 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses.json" --export-metrics /bad/file hello "$@" &&
+et export-metrics2 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses.json" --export-metrics a/bad/file hello "$@" &&
 	validate_err "No such file"
 t export-metrics3 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses.json" --export-metrics tmp.json --export-metrics '' hello "$@" &&
 	validate_with [ ! -f "$WORKDIR/tmp.json" ] &&
@@ -225,7 +225,7 @@ t ss-verbose1 llme --dummy '/set verbose=1' hello "$@"
 #  --log-file LOG_FILE   Write logs to a file [log_file]
 t log-file1 llme --dummy --log-file tmp.log hello "$@" &&
 	validate_with grep -q 'llme - DEBUG' "$WORKDIR/tmp.log"
-et log-file2 llme --log-file /bad/file hello "$@" &&
+et log-file2 llme --log-file a/bad/file hello "$@" &&
 	validate_err "No such file"
 
 #  -Y, --yolo            UNSAFE: Do not ask for confirmation before running tools. Combine with --batch to reach the singularity.
