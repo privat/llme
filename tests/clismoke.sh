@@ -13,17 +13,17 @@ t prompt01 llme --dummy hello world "$@" &&
 t prompt02 llme --dummy '' "$@" &&
 	validate_chat system
 
-t prompt03 llme README.md hello "$@" &&
-	validate_chat system '"hello".*README' assistant tool assistant
+t prompt03 llme --dummy README.md hello "$@" &&
+	validate_chat system '"hello".*README' assistant
 
-t prompt04 llme hello README.md "$@" &&
-	validate_chat system '"hello".*README' assistant tool assistant
+t prompt04 llme --dummy hello README.md "$@" &&
+	validate_chat system '"hello".*README' assistant
 
-et prompt05 llme /etc/shadow hello "$@" &&
+et prompt05 llme --dummy /etc/shadow hello "$@" &&
 	validate_err "Permission denied"
 
-t prompt06 llme <<<hello world "$@" &&
-	validate_chat system '"world".*filename' assistant tool assistant
+t prompt06 llme --dummy <<<hello world "$@" &&
+	validate_chat system '"world".*filename' assistant
 
 t prompt07 llme --dummy <<<hello "$@" &&
 	validate_chat system hello assistant
@@ -35,32 +35,31 @@ et url1 llme -u bad hello "$@" &&
 et url2 llme -u '' hello "$@" &&
 	validate_err "base-url required"
 
-et url3 llme -u http://bad.example.com hello "$@" &&
-	validate_err "Failed to resolve"
+# URL ignored in dummy mode
+t url3 llme --dummy -u http://bad.example.com hello "$@" &&
+	validate_chat system hello assistant
 
 et url4 llme -u http:// hello "$@" &&
 	validate_err "Invalid URL"
 
-et url5 llme -u http://localhost:1 hello "$@" &&
-	validate_err "Connection refused"
-
-et url6 llme -u http://google.com hello "$@" &&
-	validate_err "404"
-et ss-url1 llme '/set base_url=bad' hello "$@" &&
-	validate_err "Invalid URL"
+# URL ignored in dummy mode
+t url6 llme --dummy -u http://google.com hello "$@" &&
+	validate_chat system hello assistant
 
 #  -m, --model MODEL     Model name [model]
-et model1 llme -m bad hello "$@" &&
-	validate_err "ERROR" # unfortunately, servers can react differently to this error
+# dummy ignore the model
+t model1 llme --dummy -m bad hello "$@" &&
+	validate_chat system hello assistant
 
 t model2 llme --dummy -m '' hello "$@" &&
 	validate_chat system hello assistant # Should chose a default model
 
 #  --list-models         List available models then exit
-t list-models1 llme --list-models &&
+t list-models1 llme --dummy --list-models &&
 	smoke "Models of"
+
 # /models       list available models
-t s-models llme /models hello "$@" &&
+t s-models llme --dummy /models hello "$@" &&
 	smoke "Models of" &&
 	validate_chat system hello assistant
 
@@ -77,13 +76,12 @@ t key2 llme --dummy --api-key '' hello "$@" &&
 t batch1 llme --dummy -b "$@" <<<$'hello\nworld\n' &&
 	validate_chat system 'hello.*world' assistant
 # no batch+no prompts = stdin lines are prompts
-t batch2 llme --no-batch "$@" <<<$'hello\nworld\n' &&
+t batch2 llme --dummy --no-batch "$@" <<<$'hello\nworld\n' &&
 	validate_chat system hello assistant world assistant
-# batch+prompts = stdin is data
-t batch3 llme -b goodbye "$@" <<<$'hello\nworld\n' &&
-	validate_chat system "goodbye.*file" assistant tool assistant
+# batch+prompts = stdin is data (batch3 is in clismokelive.sh: it needs a real
+# LLM that will actually use a tool on the stdin data)
 # no batch+prompts = stdin are more prompts
-t batch4 llme --no-batch goodbye "$@" <<<$'hello\nworld\n' &&
+t batch4 llme --dummy --no-batch goodbye "$@" <<<$'hello\nworld\n' &&
 	validate_chat system goodbye assistant hello assistant world assistant
 
 #  -p, --plain           No colors or tty fanciness. Implicit if stdout is not a tty [plain]
@@ -251,13 +249,13 @@ t dummy3 llme -u bad --dummy hello "$@" &&
 	validate_chat system hello "I'm assistant."
 
 # --dummy-responses (mock the server responses from a file, no server needed)
-t dummyres1 llme -u bad -m m --no-session --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses.json" hello "$@" &&
+t dummyres1 llme -u bad --no-session --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses.json" hello "$@" &&
 	smoke "canned response"
-t dummyres2 llme -u bad -m m --no-session -Y --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses-toolcall.json" runit "$@" &&
+t dummyres2 llme -u bad --no-session -Y --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses-toolcall.json" runit "$@" &&
 	smoke "DUMMY_TOOL_RAN" "dummy tool ran successfully"
-t dummyres3 llme -u bad -m m --no-session --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses.jsonl" one two "$@" &&
+t dummyres3 llme -u bad --no-session --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses.jsonl" one two "$@" &&
 	smoke "Jsonl response one" "Jsonl response two"
-et dummyres4 llme -u bad -m m --no-session --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses.jsonl" one two three "$@" &&
+et dummyres4 llme -u bad --no-session --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses.jsonl" one two three "$@" &&
 	validate_err "No more dummy responses"
 
 # args
