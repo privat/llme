@@ -276,6 +276,38 @@ validate_chat() {
 	result PASS
 }
 
+# validate the full append-only chat log (session style):
+# each regex is matched, in order, against "id role: content" of a message,
+# and the number of messages must match.
+# Unlike validate_chat(), this does not assume the log is the current history:
+# forks are not truncated, they are appended, and the llme-meta id (with its
+# generation suffix) makes it possible to check the fork structure.
+validate_log() {
+	i=0
+	for re in "$@"; do
+		if ! content=$(jq -csr ".[$i] | .[\"llme-meta\"].id + \" \" + .role + \": \" + (.content|tostring)" "$LOGDIR/chat.json"); then
+			result FAIL "bad jq"
+			return 1
+		fi
+		if ! echo "$content" | grep -qP "$re"; then
+			echo "$content"
+			result FAIL "at $i no $re"
+			return 1
+		fi
+		((i++))
+	done
+	if ! content=$(jq -cs "length" "$LOGDIR/chat.json"); then
+		result ALMOST "bad jq"
+		return 1
+	fi
+	if [ "$content" -ne "$i" ]; then
+		result ALMOST "expected length $i, got $content"
+		return 1
+	fi
+	result PASS
+}
+
+
 # Vadidate if specific regex are found in the err.txt file
 validate_err() {
 	for re in "$@"; do
