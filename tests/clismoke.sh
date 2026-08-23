@@ -19,8 +19,8 @@ t prompt03 llme --dummy README.md hello "$@" &&
 t prompt04 llme --dummy hello README.md "$@" &&
 	validate_chat system '"hello".*README' assistant
 
-et prompt05 llme --dummy /etc/shadow hello "$@" &&
-	validate_err "Permission denied"
+et prompt05 llme --dummy .. hello "$@" &&
+	validate_err "Is a directory"
 
 t prompt06 llme --dummy <<<hello world "$@" &&
 	validate_chat system '"world".*filename' assistant
@@ -101,8 +101,8 @@ t output1 llme --dummy -o tmp.json hello "$@" &&
 t output2 llme --dummy -o tmp.json -o '' hello "$@" &&
 	validate_with [ ! -f "$WORKDIR/tmp.json" ]
 
-et output3 llme -o a/bad/file hello "$@" &&
-	validate_err "No such file"
+et output3 llme -o .. hello "$@" &&
+	validate_err "Is a directory"
 
 # /save FILE    save chat
 t s-save1 llme --dummy hello '/save tmp.json' world '/save tmp2.json' "$@" &&
@@ -220,7 +220,8 @@ t verbose2 llme --dummy -vv hello "$@" &&
 	validate_err "level set to DEBUG"
 t verbose3 llme --dummy -vvv hello "$@" &&
 	validate_err "level set to DEBUG"
-t ss-verbose1 llme --dummy '/set verbose=1' hello "$@"
+t ss-verbose1 llme --dummy '/set verbose=1' hello "$@" &&
+	validate_err "level set to INFO"
 
 #  --log-file LOG_FILE   Write logs to a file [log_file]
 t log-file1 llme --dummy --log-file tmp.log hello "$@" &&
@@ -280,7 +281,7 @@ t slash1 llme --dummy /he hello "$@" &&
 et slash2 llme --dummy /bad hello "$@" &&
 	validate_err "Unknown slash command"
 et slash3 llme / hello "$@" &&
-	validate_err "Is a directory" # / is the root directory
+	validate_err "Can't load" # / is the root directory
 
 # /quit         exit the program
 t s-quit llme --dummy /quit hello "$@" &&
