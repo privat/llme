@@ -78,6 +78,12 @@ class SSEReader:
                 logger.warning(f"Chunk: Unexpected: %s", line)
                 continue
             event, data = data
+            if event == b'':
+                if data == b'':
+                    logger.debug("Chunk: keep alive")
+                else:
+                    logger.info("Chunk: comment: %s", data)
+                continue
             if event != b'data':
                 logger.warning(f"Chunk: Unexpected event type: %s", line)
                 continue
