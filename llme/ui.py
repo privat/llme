@@ -50,7 +50,7 @@ class UIMixin:
         else:
             event.app.current_buffer.reset()
 
-    def confirm(self, question, default=""):
+    def confirm(self, prompt, question, default=""):
         """Ask a yes/no confirmation to the user"""
         if self.config.yolo and self.message_index is None:
             cprint(f"{question}: YOLO!", color="light_yellow")
@@ -58,10 +58,11 @@ class UIMixin:
         if self.config.batch:
             raise AppError("Confirmation unavailable in batch mode")
         try:
+            cprint(f"{question}", color="light_yellow")
             if self.session:
-                x = self.session.prompt([("#ff0000", f"{question}? ")], placeholder=[("#7f7f7f", "Enter to confirm, or give a prompt to cancel")], default=default, rprompt="")
+                x = self.session.prompt([("#ff0000", f"{prompt}? ")], placeholder=[("#7f7f7f", "Enter to confirm, or give a prompt to cancel")], default=default, rprompt="")
             else:
-                x = input(colored(f"{question}? ", "light_yellow"))
+                x = input(colored(f"{prompt}? ", "light_yellow"))
             self.failsafe = False # user input still alive
             if x == "":
                 return True

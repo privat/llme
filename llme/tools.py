@@ -172,8 +172,8 @@ class ToolsMixin:
                 default = message.content()
 
         if need_confirm:
-            prompt = f"{self.prompt_prefix()} RUN {command.splitlines()[0]}"
-            if not self.confirm(prompt, default=default):
+            prompt = f"{self.prompt_prefix()} RUN"
+            if not self.confirm(prompt, command.splitlines()[0], default=default):
                 return None
 
         if self.config.box:
