@@ -262,8 +262,8 @@ t dummyres2 llme -u bad --no-session -Y --dummy-responses "$ORIGDIR/$TESTDIR/dat
 	smoke "DUMMY_TOOL_RAN" "dummy tool ran successfully"
 t dummyres3 llme -u bad --no-session --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses.jsonl" one two "$@" &&
 	smoke "Jsonl response one" "Jsonl response two"
-et dummyres4 llme -u bad --no-session --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses.jsonl" one two three "$@" &&
-	validate_err "No more dummy responses"
+t dummyres4 llme -u bad --no-session --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses.jsonl" one two three "$@" &&
+	smoke "Dummy response filler"
 
 # args
 t args0 llme --dummy "$@" < /dev/null &&
