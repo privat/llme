@@ -64,15 +64,6 @@ def tool(fun, **kwargs):
     tool = Tool(fun, **kwargs)
     return fun
 
-class ToolError(Exception):
-    """Exception raised by tools intended to the assistant.
-    Other exceptions raised by tools are send-back to the user.
-    You can wrap an existing exception e for the assistant with:
-
-        raise ToolError() from e
-    """
-    pass
-
 class Asset:
     "A loaded file"
     def __init__(self, path):
