@@ -252,17 +252,17 @@ t dummy1 llme --dummy hello "$@" &&
 	validate_chat system hello "I'm assistant."
 t dummy2 llme --dummy --list-models "$@" &&
 	smoke dummy
-t dummy3 llme -u bad --dummy hello "$@" &&
+t dummy3 llme --dummy hello "$@" &&
 	validate_chat system hello "I'm assistant."
 
 # --dummy-responses (mock the server responses from a file, no server needed)
-t dummyres1 llme -u bad --no-session --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses.json" hello "$@" &&
+t dummyres1 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses.json" hello "$@" &&
 	smoke "canned response"
-t dummyres2 llme -u bad --no-session -Y --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses-toolcall.json" runit "$@" &&
+t dummyres2 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses-toolcall.json" runit "$@" &&
 	smoke "DUMMY_TOOL_RAN" "dummy tool ran successfully"
-t dummyres3 llme -u bad --no-session --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses.jsonl" one two "$@" &&
+t dummyres3 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses.jsonl" one two "$@" &&
 	smoke "Jsonl response one" "Jsonl response two"
-t dummyres4 llme -u bad --no-session --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses.jsonl" one two three "$@" &&
+t dummyres4 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses.jsonl" one two three "$@" &&
 	smoke "Dummy response filler"
 
 # args
