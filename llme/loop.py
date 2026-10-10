@@ -38,17 +38,15 @@ class LoopMixin:
             self.add_message(message)
         return message
 
-    def do_tools(self, tool_calls):
-        """Run all the tools in the list, and add results to the conversation"""
-        if not tool_calls:
-            return
-        for tool_call in tool_calls:
-            message = self.run_tool(tool_call)
-            if message:
-                self.add_message(message)
-            else:
-                # The user cancelled the tool execution. Let they answer instead of the tool
-                self.do_user()
+    def do_tool(self, tool_call):
+        """Run the tool, and add result to the conversation"""
+        message = self.run_tool(tool_call)
+        if message:
+            self.add_message(message)
+            message["llme-meta"]["tool_call"] = tool_call
+        else:
+            # The user cancelled the tool execution. Let they answer instead of the tool
+            self.do_user()
 
     def do_role(self, oneround=False, tools=None):
         """Process the next role (user, assistant, tool...)"""
@@ -56,11 +54,38 @@ class LoopMixin:
             self.do_user()
             return None
 
-        if self.message_index:
-            previous_message = self.history[self.message_index-1]
-        else:
-            previous_message = self.history[-1]
+        role = None
+        if self.message_index is not None:
+            message = self.history[self.message_index]
+            role = message.role()
+            logger.info("Index: %s; role: %s", self.message_index, role)
+            if role == "user" or role == "system":
+                self.do_user()
+            elif role == "tool":
+                tool_call = message.data["llme-meta"].get("tool_call")
+                if tool_call is None:
+                    logger.warn("Warning, tool result without associated tool call")
+                    self.do_user()
+                    return None
+                self.do_tool(tool_call)
+                # Fixme
+            elif role == "assistant":
+                # We relaunch the prompt and might get a different answer
+                self.do_assistant(tools=tools)
+            else:
+                raise Exception(f"Unexpected role {role}")
+            return None
+
+        previous_message = self.history[-1]
         previous_role = previous_message.role()
+        if previous_role == "user" or previous_role == "tool":
+            role = "assistant"
+        elif previous_role == "system":
+            role = "user"
+        elif previous_role == "assistant":
+            tool_calls = previous_message.tool_calls()
+            if not tool_calls and oneround:
+                return previous_message
         if previous_role == "user" or previous_role == "tool":
             if self.token_budget and self.token_budget_start + self.token_budget <= self.metrics.predicted_n():
                 self.add_message({"role": "user", "content": "final answer now. No more tools available. You have to conclude."})
@@ -76,7 +101,8 @@ class LoopMixin:
                 cprint(f"{self.prompt_prefix()}> Auto-compaction", color="light_cyan")
                 self.compact()
             elif tool_calls:
-                self.do_tools(tool_calls)
+                for tool_call in tool_calls:
+                    self.do_tool(tool_call)
             else:
                 self.do_user()
         return None
