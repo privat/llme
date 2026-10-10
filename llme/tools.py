@@ -8,7 +8,7 @@ import subprocess
 
 from termcolor import cprint
 
-from .errors import AppError, QuitEvent
+from .errors import AppError, QuitEvent, CancelEvent
 from .terminal import ChunkPrinter, Spinner
 
 logger = logging.getLogger('llme')
@@ -347,6 +347,8 @@ class ToolsMixin:
         try:
             result = tool.fun(**args)
         except KeyboardInterrupt:
+            raise
+        except CancelEvent:
             raise
         except QuitEvent:
             raise
