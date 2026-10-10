@@ -277,8 +277,11 @@ class ServerMixin:
         if self.dummy_responses_queue is None:
             self.dummy_responses_queue = load_dummy_responses(self.config.dummy_responses)
         if self.dummy_responses_index >= len(self.dummy_responses_queue):
-            raise AppError(f"No more dummy responses in {self.config.dummy_responses} (needed response #{self.dummy_responses_index+1})")
-        message = self.dummy_responses_queue[self.dummy_responses_index]
+            if self.dummy_responses_index == len(self.dummy_responses_queue):
+                logger.info("No more dummy responses in %s (needed response #%d", self.config.dummy_responses, self.dummy_responses_index+1)
+            message = {"role":"assistant","content":"Dummy response filler"}
+        else:
+            message = self.dummy_responses_queue[self.dummy_responses_index]
         self.dummy_responses_index += 1
         return message
 
