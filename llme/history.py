@@ -6,6 +6,7 @@ import os
 import re
 import subprocess
 
+from .slash import slash
 from .errors import AppError
 
 logger = logging.getLogger('llme')
@@ -274,6 +275,7 @@ class HistoryMixin:
         filehandler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
         logger.addHandler(filehandler)
 
+    @slash("load", "load chat", metavar="FILE", missing="filename", complete="path")
     def load_chat(self, file, format=None):
         logger.info("Loading conversation from %s", file)
         if not format:
@@ -349,6 +351,7 @@ class HistoryMixin:
                 logger.error("Unknown format extension for %s. Default to json", file)
             return "json"
 
+    @slash("save", "save chat", metavar="FILE", missing="filename", complete="path")
     def save_chat(self, file, messages=None, format=None):
         if messages is None:
             messages = self.full_history
@@ -397,6 +400,7 @@ class HistoryMixin:
         return True
 
 
+    @slash("edit", "run EDITOR on the chat (save,editor,load)")
     def edit(self):
         "Save the chat in a tmpfile, edit it, and load it back"
         import tempfile
@@ -445,6 +449,7 @@ class HistoryMixin:
         logger.debug("goto %s -> %d %d -> %r", n, num, gen, message)
         return message
 
+    @slash("goto", "jump at message M (e.g `/goto 5c` or just `/5c`", metavar="M", missing="message label")
     def goto(self, n):
         """Jump after a message in the full history"""
         message = self.find_label_in_history(n)
@@ -465,3 +470,27 @@ class HistoryMixin:
             if found:
                 return found
         return None
+
+    # ---- Slash commands ----
+
+    @slash("undo", "cancel the last user message (and the response) [PageUp]")
+    def cmd_undo(self):
+        if not self.rollback():
+            raise AppError("/undo: No user message to undo")
+        self.list_history()
+
+    @slash("redo", "cancel and regenerate the last assistant message")
+    def cmd_redo(self):
+        if not self.rollback("assistant"):
+            raise AppError("/redo: No assistant message to redo")
+        self.list_history()
+
+    @slash("pass", "go forward in history (cancel /undo) [PageDown]")
+    def cmd_pass(self):
+        if not self.rollforward():
+            raise AppError("/pass: Already at latest message")
+        self.list_history()
+
+    @slash("clear", "clear the conversation history")
+    def cmd_clear(self):
+        self.reset_messages([self.prepare_system_prompt()])

@@ -27,6 +27,7 @@ import sys
 
 from . import skills
 
+from .slash import all_slash_commands
 from .config import YAMLAction, config_completer, resolve_config
 from .errors import AppError
 from .history import HistoryMixin
@@ -71,28 +72,8 @@ class LLME(HistoryMixin, ServerMixin, ToolsMixin, UIMixin, LoopMixin):
         self.dummy_responses_queue = None # Canned responses for --dummy-responses (lazily loaded)
         self.dummy_responses_index = 0 # Next canned response to return
 
-        self.slash_commands = [
-            "/file FILE    attach a file for the next prompt",
-            "/models       list available models",
-            "/tools        list available tools",
-            "/metrics      list current metrics",
-            "/compact      summarize the history and restart fresh",
-            "/history      list condensed conversation history",
-            "/full-history list hierarchical conversation history (with forks)",
-            "/redo         cancel and regenerate the last assistant message",
-            "/undo         cancel the last user message (and the response) [PageUp]",
-            "/pass         go forward in history (cancel /undo) [PageDown]",
-            "/edit         run EDITOR on the chat (save,editor,load)",
-            "/save FILE    save chat",
-            "/load FILE    load chat",
-            "/clear        clear the conversation history",
-            "/goto M       jump at message M (e.g `/goto 5c` or just `/5c`",
-            "/config       list configuration options",
-            "/set OPT=VAL  change a config option",
-            "/quit         exit the program",
-            "/skills       list available skills",
-            "/help         show this help",
-        ]
+        # Slash commands registry, collected from the @slash decorators
+        self.slash_commands = all_slash_commands(self)
 
         self.warmup = None
         if self.config.batch or not sys.stdin.isatty() or not sys.stdout.isatty():

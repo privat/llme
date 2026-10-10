@@ -8,6 +8,7 @@ import subprocess
 
 from termcolor import cprint
 
+from .slash import slash
 from .errors import AppError, QuitEvent, CancelEvent
 from .terminal import ChunkPrinter, Spinner
 
@@ -358,3 +359,9 @@ class ToolsMixin:
             result = str(result)
         message = {"role": "tool", "content": result, "tool_call_id": tool_call["id"]}
         return message
+
+    # ---- Slash commands ----
+
+    @slash("tools", "list available tools")
+    def cmd_tools(self):
+        list_tools()

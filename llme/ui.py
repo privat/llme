@@ -8,10 +8,11 @@ import prompt_toolkit
 from termcolor import cprint, colored
 
 from . import skills
+from .slash import slash
 from .config import setconf
 from .errors import AppError, CancelEvent, QuitEvent
 from .logging import set_verbose
-from .tools import Asset, list_tools
+from .tools import Asset
 
 logger = logging.getLogger('llme')
 
@@ -168,10 +169,12 @@ class UIMixin:
             return {"role": "user", "content": user_input}
 
 
+    @slash("skills", "list available skills")
     def list_skills(self):
         """List skills"""
         skills.list_skills(self.skills)
 
+    @slash("models", "list available models")
     def list_models(self):
         "Print the list of models"
         print(f"Models of {self.config.base_url}:")
@@ -217,6 +220,7 @@ class UIMixin:
         print(before + colored(prefix, color) + content)
 
 
+    @slash("history", "list condensed conversation history")
     def list_history(self):
         "Print the history of messages"
         for i, message in enumerate(self.history):
@@ -224,6 +228,7 @@ class UIMixin:
                 break
             self.print_message(i, message)
 
+    @slash("full-history", "list hierarchical conversation history (with forks)")
     def list_full_history(self):
         "Print the full history with nice indentation."
         siblings = self.roots
@@ -249,84 +254,73 @@ class UIMixin:
             self.print_message(cid, child, prefix + ("├─" if i != last else ""))
             self.print_tree(child.children, prefix + ("│ " if i != last else ""))
 
+    # ---- Slash commands (dispatched by slash_command) ----
+
+    @slash("file", "attach a file for the next prompt", metavar="FILE", missing="paths", complete="path")
+    def cmd_file(self, rest):
+        import shlex
+        for path in shlex.split(rest):
+            self.files.append(Asset(path))
+
+    @slash("metrics", "list current metrics")
+    def cmd_metrics(self):
+        for k, v in self.metrics.total.items():
+            print(f"{k}: {repr(v)}")
+
+    @slash("config", "list configuration options")
+    def cmd_config(self):
+        for k, v in vars(self.config).items():
+            print(f"{k}: {repr(v)}")
+
+    @slash("set", "change a config option", metavar="OPT=VAL", missing="setting")
+    def cmd_set(self, rest):
+        if "=" not in rest:
+            raise AppError("/set: Syntax error, expected name=value")
+        opt, _, val = rest.partition("=")
+        self.set_config(opt, val)
+
+    @slash("quit", "exit the program")
+    def cmd_quit(self):
+        raise QuitEvent("/quit")
+
+    @slash("help", "show this help")
+    def help_commands(self):
+        """Print the list of the available slash commands"""
+        entries = []
+        for cmd, _ in self.slash_commands.values():
+            entry = f"/{cmd.name}" + (f" {cmd.metavar}" if cmd.metavar else "")
+            entries.append((entry, cmd.doc))
+        width = max(len(entry) for entry, _ in entries)
+        for entry, doc in entries:
+            print(f"{entry:<{width}} {doc}")
+
     def slash_command(self, user_input):
-        "Execute a slash command"
-        #FIXME too much hardcoded
-        args = user_input.split(None, 1)
-        cmd = args.pop(0)
-        arg = args[0].strip() if args else None
-        if cmd in "/help" or cmd in "/?":
-            for h in self.slash_commands:
-                print(h)
-        elif cmd in "/file":
-            import shlex
-            args = shlex.split(arg)
-            if not args:
-                raise AppError("/file: Missing paths")
-            for f in args:
-                asset = Asset(f)
-                self.files.append(asset)
-        elif cmd in "/tools":
-            list_tools()
-        elif cmd in "/config":
-            for k, v in vars(self.config).items():
-                print(f"{k}: {repr(v)}")
-        elif cmd in "/compact":
-            self.compact()
-        elif cmd in "/models":
-            self.list_models()
-        elif cmd in "/history":
-            self.list_history()
-        elif cmd in "/full-history":
-            self.list_full_history()
-        elif cmd in "/redo":
-            if not self.rollback("assistant"):
-                raise AppError("/redo: No assistant message to redo")
-            self.list_history()
-        elif cmd in "/undo":
-            if not self.rollback():
-                raise AppError("/undo: No user message to undo")
-            self.list_history()
-        elif cmd in "/pass":
-            if not self.rollforward():
-                raise AppError("/pass: Already at latest message")
-            self.list_history()
-        elif cmd in "/edit":
-            self.edit()
-        elif cmd in "/save":
-            if not arg:
-                raise AppError("/save: Missing filename")
-            self.save_chat(arg)
-        elif cmd in "/load":
-            if not arg:
-                raise AppError("/load: Missing filename")
-            self.load_chat(arg)
-        elif cmd in "/clear":
-            self.reset_messages([self.prepare_system_prompt()])
-        elif cmd in "/goto":
-            if not arg:
-                raise AppError("/goto: Missing message label")
-            self.goto(arg)
-        elif cmd in "/metrics":
-            for k, v in self.metrics.total.items():
-                print(f"{k}: {repr(v)}")
-        elif cmd in "/set":
-            if not arg:
-                raise AppError("/set: Missing setting")
-            args = arg.split('=', 1)
-            if len(args) != 2:
-                raise AppError("/set: Syntax error, expected name=value")
-            else:
-                self.set_config(*args)
-        elif cmd in "/skills":
-            self.list_skills()
-        elif cmd in "/quit":
-            raise QuitEvent("/quit")
-        elif re.match(r"/\d+\w*", cmd):
-            # goto shortuct
-            self.goto(cmd[1:])
-        else:
+        """Dispatch a /slash command to the @slash method that handles it"""
+        parts = user_input.split(None, 1)
+        name = parts[0][1:]
+        arg = parts[1].strip() if len(parts) > 1 else ""
+        if not name:
+            # A bare / is a shortcut for /help
+            return self.help_commands()
+        if name == "?":
+            name = "help"
+        cmd = self.slash_commands.get(name)
+        if cmd is None:
+            # Allow a unique prefix, e.g. /he for /help
+            candidates = [c for n, c in self.slash_commands.items() if n.startswith(name)]
+            if len(candidates) == 1:
+                cmd = candidates[0]
+            elif candidates:
+                raise AppError(f"{user_input}: Ambiguous slash command. Use /help for help.")
+        if cmd is None and re.fullmatch(r"\d+\w*", name):
+            # Shortcut: /5c == /goto 5c
+            return self.goto(name)
+        if cmd is None:
             raise AppError(f"{user_input}: Unknown slash command. Use /help for help.")
+        slash_cmd, fn = cmd
+        if slash_cmd.metavar and not arg:
+            raise AppError(f"/{slash_cmd.name}: Missing {slash_cmd.missing or 'argument'}")
+        return fn(self, arg) if slash_cmd.metavar else fn(self)
 
     def set_config(self, opt, val):
         "Dynamically change a config option"
@@ -353,17 +347,11 @@ class SlashCompleter(prompt_toolkit.completion.Completer):
     """A completer for slash commands.
     For some reasons, the provided completers do not like 'words' with / at the beginning"""
     def __init__(self, llme):
-        self.llme = llme # Strongly coupled, I allow it
         self.nesting = {}
-        for command in self.llme.slash_commands:
-            words = command.split()
-            command = words[0][1:]
-            if words[1] == "FILE":
-                self.nesting[command] = prompt_toolkit.completion.PathCompleter(expanduser=True)
-            else:
-                self.nesting[command] = None
+        for cmd, fn in llme.slash_commands.values():
+            self.nesting[cmd.name] = prompt_toolkit.completion.PathCompleter(expanduser=True) if cmd.complete == "path" else None
         notsettable = ["config", "plugins", "version", "dump_config", "list_tools", "list_models", "prompts"]
-        settings = {x + "=" for x in vars(self.llme.config) if x not in notsettable}
+        settings = {x + "=" for x in vars(llme.config) if x not in notsettable}
         self.nesting["set"] = settings
 
         self.completer = prompt_toolkit.completion.NestedCompleter.from_nested_dict(self.nesting)

@@ -8,6 +8,7 @@ import requests
 from termcolor import colored, cprint
 
 from . import skills
+from .slash import slash
 from .errors import AppError, CancelEvent, QuitEvent
 from .server import extract_requests_error
 from .terminal import Spinner
@@ -196,6 +197,7 @@ class LoopMixin:
         return {"role": "system", "content": system_prompt.strip()}
 
 
+    @slash("compact", "summarize the history and restart fresh")
     def compact(self):
         """Force the summarization of the conversation"""
         compaction_prompt = self.config.compaction_prompt
