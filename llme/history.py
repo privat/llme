@@ -76,25 +76,34 @@ class HistoryMixin:
     def build_message_object(self, message):
         """Add a message to the history"""
 
-        n = len(self.history)
-        append = True
         meta = message.get("llme-meta")
+        parent = None
         if meta is not None:
             if parent_id := meta.get("parent"):
                 parent = self.get_message_by_id(parent_id)
                 if parent is None:
                     logger.error("Parent message not found: %s", parent_id)
-                else:
-                    gen = parent.generation
-                    sibling = parent.children
-                    if n > 0 and parent != self.history[n-1]:
-                        append = False
-        if n > 0:
-            parent = self.history[n-1]
+                elif not self.history or parent != self.history[-1]:
+                    # The saved parent is not the last message of the current
+                    # conversation (e.g. when loading a forked history):
+                    # reset the conversation to that parent so that message
+                    # numbers and generations stay consistent with the
+                    # saved ids.
+                    self.reset_to_history(parent)
+            elif "id" in meta:
+                # An id without a parent marks a root (e.g. a second system
+                # message after /clear in a session dump): the conversation
+                # restarts from this message.
+                self.reset_messages([])
+        if self.history:
+            if parent is None:
+                parent = self.history[-1]
+            n = len(self.history)
             gen = parent.generation
             sibling = parent.children
         else:
             parent = None
+            n = 0
             gen = 0
             sibling = self.roots
 
@@ -102,9 +111,8 @@ class HistoryMixin:
             for s in sibling:
                 if s.data == message:
                     # Already known, reuse it
-                    if append:
-                        self.history.append(s)
-                        self.current_generation = s.generation
+                    self.history.append(s)
+                    self.current_generation = s.generation
                     return s
             # Need a new generation number
             self.generations.append(message)
@@ -121,9 +129,8 @@ class HistoryMixin:
                     raise AppError(f"Can't open chat output file {self.config.chat_output}") from e
             self.chat_output_file.write(json.dumps(message) + "\n")
             self.chat_output_file.flush()
-        if append:
-            self.history.append(message_obj)
-            self.current_generation = gen
+        self.history.append(message_obj)
+        self.current_generation = gen
         return message_obj
 
     def add_message(self, message):
@@ -303,20 +310,32 @@ class HistoryMixin:
         self.raw_messages.clear()
         id_map = {}
         for message in messages:
+            meta = message.get("llme-meta")
             orig_id = message.get("id")
+            if orig_id is None and meta is not None:
+                orig_id = meta.get("id")
             if orig_id is not None:
-                del message["id"]
+                if "id" in message:
+                    del message["id"]
                 orig_parent = message.get("parent")
+                if orig_parent is None and meta is not None:
+                    orig_parent = meta.get("parent")
                 if orig_parent:
-                    del message["parent"]
+                    if "parent" in message:
+                        del message["parent"]
                     dest_parent = id_map.get(orig_parent)
                     if not dest_parent:
                         logger.error("Parent %s not found for %s", orig_parent, orig_id)
-                    else:
-                        message["parent"] = dest_parent
-            m = self.add_message(message)
-            if orig_id is not None:
+                    elif meta is not None:
+                        # The parent id refers to another message of this
+                        # file: remap it to the live id assigned to that
+                        # message during this load (e.g. /edit or /load
+                        # into a running conversation).
+                        meta["parent"] = dest_parent
+                m = self.add_message(message)
                 id_map[orig_id] = m.id
+            else:
+                self.add_message(message)
         logger.info("Reset %d messages", len(self.history))
 
     def chat_file_format(self, file):
