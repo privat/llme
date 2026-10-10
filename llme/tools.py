@@ -4,7 +4,6 @@ import inspect
 import json
 import logging
 import os
-import re
 import subprocess
 
 from termcolor import cprint
@@ -278,34 +277,38 @@ class ToolsMixin:
             contents = contents.encode()
         self.direct_run_command(f"cat > {path}", contents)
 
-    def update_file(self, path: str, regexp: str, new_content: str):
+    def update_file(self, path: str, begin: str, end: str, new_content: str):
         """Update the content of a file.
 
-        `regexp` matches the exact part to replace.
-        `new_content` is the new block of text, used verbatim.
+        Replace the part of the file from `begin` to the closest `end` (both
+        matched verbatim) with `new_content` (verbatim).
+        If `end` is empty, only `begin` is replaced.
 
-        Python re syntax is used with the flag re.MULTILINE (so ^ and $ match the begin and the end of a line)
-
-        `regexp` must match exactly once in the original file or an error is thrown.
-        The use of anti-greed operator `?` helps to select small parts.
+        `begin` must appear exactly once in the file, and `end` must appear
+        after `begin`, or an error is thrown.
 
         example:
 
-        * `update_file("README.md","^# Introduction$(.|\n)*?^# Usage$", "# Introduction\n\nlorem ipsum...\n\n# Usage")`
+        * `update_file("README.md", "# Introduction", "# Usage", "# Introduction\n\nlorem ipsum...\n\n# Usage")`
         """
-
         data = self.read_file(path)
-
-        regexp = re.compile(regexp.encode(), re.MULTILINE)
-        matches = list(regexp.finditer(data))
-        if len(matches) == 0:
-            raise Exception("regexp not matched")
-        if len(matches) > 1:
-            spans = ', '.join([str(m.span()) for m in matches])
-            raise Exception(f"multiple matches; found {len(matches)} spans {spans}")
-        new_data = regexp.sub(new_content.encode(), data)
-        deletions=matches[0].group()[:-1].count(b'\n')+1
-        insertions=new_content[:-1].count('\n')+1
+        begin_b = begin.encode()
+        end_b = end.encode()
+        count = data.count(begin_b)
+        if count != 1:
+            raise Exception(f"begin {begin!r} occurs {count} times in {path}; it must be unique")
+        i = data.index(begin_b)
+        if end:
+            j = data.find(end_b, i + len(begin_b))
+            if j < 0:
+                raise Exception(f"end {end!r} not found after begin in {path}")
+            j += len(end_b)
+        else:
+            j = i + len(begin_b)
+        old = data[i:j]
+        new_data = data[:i] + new_content.encode() + data[j:]
+        deletions = old[:-1].count(b'\n') + 1
+        insertions = new_content[:-1].count('\n') + 1
         self.write_file(path, new_data)
         message = f"{insertions} insertions(+), {deletions} deletions(-)"
         cprint(message, color="yellow")
