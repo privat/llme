@@ -3,7 +3,7 @@
 import logging
 import time
 
-import requests
+import httpx
 
 from termcolor import colored, cprint
 
@@ -138,7 +138,7 @@ class LoopMixin:
                 if response is not None:
                     return response.data
                 continue
-            except requests.exceptions.RequestException as e:
+            except httpx.HTTPError as e:
                 delay = self.get_throttling_delay(e)
                 if delay:
                     logger.error("Server error: %s", extract_requests_error(e))
@@ -147,7 +147,7 @@ class LoopMixin:
                 if self.config.batch:
                     raise
                 logger.error("Server error: %s", extract_requests_error(e))
-                if e.response is not None and e.response.status_code == 404:
+                if getattr(e, "response", None) is not None and e.response.status_code == 404:
                     models = self.get_models()
                     if models and self.model not in (m["id"] for m in models):
                         cprint(f"Info: current model ({self.model}) is not in the list. Check with /models, chose with /set model=...", "light_cyan")

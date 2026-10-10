@@ -39,7 +39,7 @@ from .tools import Asset, Tool, ToolsMixin, all_tools, list_tools, tool
 from .ui import SlashCompleter, UIMixin
 
 import prompt_toolkit
-import requests
+import httpx
 from termcolor import cprint
 try:
     from termcolor import can_colorize # Exported since v3.2.0
@@ -408,7 +408,7 @@ def main():
     except AppError as e:
         logger.error("%s", e)
         sys.exit(1)
-    except requests.exceptions.RequestException as e:
+    except httpx.HTTPError as e:
         logger.error("Server error: %s", extract_requests_error(e))
         sys.exit(1)
 
