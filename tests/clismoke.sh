@@ -3,7 +3,7 @@
 . "$(dirname "$0")/utils.sh"
 
 setup() {
-	copy README.md chat.json
+	copy README.md chat.json chat-fork.jsonl
 }
 
 t prompt01 llme --dummy hello world "$@" &&
@@ -133,6 +133,9 @@ t s-load1 llme --dummy hello2 '/load chat.json' world '/load chat.json' "$@" &&
 	validate_log "0a system" "1a user: hello2" "2a assistant" "0b system: You are assistant." "1b user: hello" "2b assistant: I'm assistant." "3b user: world" "4b assistant" "0c system: You are assistant." "1c user: hello" "2c assistant: I'm assistant."
 t s-load2 llme --dummy '/load chat.json' world "$@" &&
 	validate_log "0a system" "0b system: You are assistant." "1b user: hello" "2b assistant: I'm assistant." "3b user: world" "4b assistant"
+# A forked history (llme-meta parent links): the tree is restored as saved (1a and 1b are siblings) and the conversation resumes on the last branch.
+t s-loadfork1 llme --dummy -i chat-fork.jsonl next "$@" &&
+	validate_log "0a system" "1a user: haproxy" "1b user: exit" "2b assistant" "3b user: next" "4b assistant"
 et s-load3 llme --dummy '/load' world "$@" &&
 	validate_err "Missing filename"
 et s-load4 llme --dummy '/load a/bad/file' hello "$@" &&
@@ -356,7 +359,7 @@ t s-full-history2 llme --dummy hello /undo world /full-history "$@" &&
 # /edit         run EDITOR on the chat (save,editor,load)
 export EDITOR="sed -i 's/hello/world/'"
 t s-edit1 llme --dummy hello /edit hello "$@" &&
-	validate_log "0a system" "1a user: hello" "2a assistant" "1b user: world" "2b assistant" "2c assistant" "3c user: hello" "4c assistant"
+	validate_log "0a system" "1a user: hello" "2a assistant" "1b user: world" "2b assistant" "3b user: hello" "4b assistant"
 export EDITOR="sed -i 's/hello/world/'"
 t s-edit2 llme --dummy --system=hello /edit hello2 "$@" &&
 	validate_log "0a system: hello" "0b system: world" "1b user: hello2" "2b assistant"

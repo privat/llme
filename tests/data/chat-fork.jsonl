@@ -1,0 +1,4 @@
+{"role": "system", "content": "sys", "llme-meta": {"id": "0a"}}
+{"role": "user", "content": "haproxy", "llme-meta": {"id": "1a", "parent": "0a"}}
+{"role": "user", "content": "exit", "llme-meta": {"id": "1b", "parent": "0a"}}
+{"role": "assistant", "content": "Exit session.", "llme-meta": {"id": "2b", "parent": "1b"}}
