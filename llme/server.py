@@ -395,7 +395,7 @@ class ServerMixin:
                 # Some servers give Null for continue and "" for the uneventful finish reason
                 # Some other gives "" for continue and a non empty string for finish reason
                 # So do not trust anybody and continue the connection until the server closes it
-                logger.info("Chunk: finish reason: %s", finish_reason)
+                logger.debug("Chunk: finish reason: %s", finish_reason)
 
             timings = data.get("timings")
             if timings:
