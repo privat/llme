@@ -268,6 +268,10 @@ options:
   --raw-response-dump FILE
                         Export the full json message response
                         [raw_response_dump]
+  --dummy-responses FILE
+                        Mock the server responses with FILE: a json array, a
+                        single message, or a jsonl of --raw-response-dump
+                        outputs. No server needed [dummy_responses]
   --plugin PATH         Add additional tool (python file or directory)
                         [plugins]
   -H, --history-filename FILE
@@ -318,26 +322,26 @@ The command `/help` show the available slash commands.
 <!--slash-help-->
 ```console
 $ llme /help /quit
-/file FILE    attach a file for the next prompt
-/models       list available models
-/tools        list available tools
-/metrics      list current metrics
 /compact      summarize the history and restart fresh
+/skills       list available skills
+/models       list available models
 /history      list condensed conversation history
 /full-history list hierarchical conversation history (with forks)
-/redo         cancel and regenerate the last assistant message
-/undo         cancel the last user message (and the response) [PageUp]
-/pass         go forward in history (cancel /undo) [PageDown]
-/edit         run EDITOR on the chat (save,editor,load)
-/save FILE    save chat
-/load FILE    load chat
-/clear        clear the conversation history
-/goto M       jump at message M (e.g `/goto 5c` or just `/5c`
+/file FILE    attach a file for the next prompt
+/metrics      list current metrics
 /config       list configuration options
 /set OPT=VAL  change a config option
 /quit         exit the program
-/skills       list available skills
 /help         show this help
+/tools        list available tools
+/load FILE    load chat
+/save FILE    save chat
+/edit         run EDITOR on the chat (save,editor,load)
+/goto M       jump at message M (e.g `/goto 5c` or just `/5c`
+/undo         cancel the last user message (and the response) [PageUp]
+/redo         cancel and regenerate the last assistant message
+/pass         go forward in history (cancel /undo) [PageDown]
+/clear        clear the conversation history
 ```
 <!--/slash-help-->
 
