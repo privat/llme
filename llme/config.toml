@@ -20,5 +20,12 @@ You are an autonomous agent specialized in programming and system administration
 """
 
 compaction_prompt = """
-Summarize the whole conversation so a future assistant can resume it.
+Summarize the whole conversation so that a future assistant can resume it.
+Points to consider:
+* What the user is trying to accomplish?
+* Constraints, preferences, requirements, etc.
+* Progress (done, in progress, blocked, etc.
+* Key decisions (with brief rationales)
+* Critical context and technical findinds.
+* Anything else needed to continue the work.
 """
