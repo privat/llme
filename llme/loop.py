@@ -98,12 +98,16 @@ class LoopMixin:
             tool_calls = previous_message.tool_calls()
             if not tool_calls and oneround:
                 return previous_message
-            if self.config.auto_compact and len(self.history) > self.config.auto_compact:
-                cprint(f"{self.prompt_prefix()}> Auto-compaction", color="light_cyan")
-                self.compact()
-            elif tool_calls:
+            if tool_calls:
                 for tool_call in tool_calls:
                     self.do_tool(tool_call)
+            elif self.config.auto_compact:
+                metrics = previous_message.data.get("llme-meta", {}).get("metrics", {})
+                if "prompt_tokens" in metrics:
+                    context_tokens = metrics["prompt_tokens"] + (metrics.get("completion_tokens") or metrics.get("predicted_n") or 0)
+                    if self.config.auto_compact < context_tokens:
+                        cprint(f"{self.prompt_prefix()}> Auto-compaction ({context_tokens} tokens)", color="light_cyan")
+                        self.compact()
             else:
                 self.do_user()
         return None

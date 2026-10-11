@@ -235,8 +235,8 @@ options:
   --session SESSION     Resume a previous session
   --no-session          Do not save the session
   --auto-compact AUTO_COMPACT
-                        Automatically compact when that much rounds is reached
-                        (0 for disabled) [auto_compact]
+                        Automatically compact when the context reaches that
+                        many tokens (0 for disabled) [auto_compact]
   --temperature TEMPERATURE
                         Temperature of predictions [temperature]
   --extra-body YAML     YAML/JSON element merged with requests (ex: `--extra-
