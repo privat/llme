@@ -68,6 +68,7 @@ class LLME(HistoryMixin, ServerMixin, ToolsMixin, UIMixin, LoopMixin):
         self.files = [] # Attached file for the next request.
         self.answering_model = None
         self.chat_output_file = None
+        self.raw_response_dump_file = None # Kept-open jsonl file for raw responses
         self.token_budget = None
         self.dummy_responses_queue = None # Canned responses for --dummy-responses (lazily loaded)
         self.dummy_responses_index = 0 # Next canned response to return
@@ -160,6 +161,8 @@ class LLME(HistoryMixin, ServerMixin, ToolsMixin, UIMixin, LoopMixin):
         finally:
             if stdinfile:
                 os.unlink(stdinfile.name)
+            if self.raw_response_dump_file is not None:
+                self.raw_response_dump_file.close()
 
         if self.metrics.total:
             cprint(f"Total: {self.metrics.infoline(self.metrics.total, self)}", "light_grey")
@@ -305,7 +308,7 @@ def process_args():
     parser.add_argument(      "--list-tools", action="store_true", default=None, help="List available tools then exit")
     parser.add_argument(      "--dump-config", action="store_true", default=None, help="Print the effective config and quit")
     parser.add_argument(      "--raw-request-dump", metavar="FILE", help="Export the full POSTed json payload [raw_request_dump]")
-    parser.add_argument(      "--raw-response-dump", metavar="FILE", help="Export the full json message response [raw_response_dump]")
+    parser.add_argument(      "--raw-response-dump", metavar="FILE", help="Export the full json message response, one per line (jsonl) [raw_response_dump]")
     parser.add_argument(      "--dummy-responses", metavar="FILE", help="Mock the server responses with FILE: a json array, a single message, or a jsonl of --raw-response-dump outputs. No server needed [dummy_responses]")
     parser.add_argument(      "--plugin", metavar="PATH", action="append", dest="plugins", help="Add additional tool (python file or directory) [plugins]")
     parser.add_argument("-H", "--history-filename", metavar="FILE", help="Read/write command history from FILE [history_filename]")

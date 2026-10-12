@@ -286,6 +286,20 @@ class ServerMixin:
         return message
 
 
+    def dump_raw_response(self, message):
+        """Append the raw response message to the raw_response_dump file.
+        That file is a jsonl file: one complete json message per line.
+        The file is opened once in append mode and kept open."""
+        if not self.config.raw_response_dump:
+            return
+        if self.raw_response_dump_file is None:
+            try:
+                self.raw_response_dump_file = open(self.config.raw_response_dump, "a")
+            except OSError as e:
+                raise AppError(f"Can't open raw response dump {self.config.raw_response_dump}") from e
+        self.raw_response_dump_file.write(json.dumps(message) + "\n")
+        self.raw_response_dump_file.flush()
+
     def post_chat_completion(self, tools=None):
         """Prepare and send the POST request.
         Returns a response"""
@@ -440,9 +454,7 @@ class ServerMixin:
         cp.end()
         logger.debug("Chunk: Last one: %s", last_chunk)
         response.close()
-        if self.config.raw_response_dump:
-            with open(self.config.raw_response_dump, "w") as f:
-                json.dump(message, f, indent=2)
+        self.dump_raw_response(message)
         meta["model"] = self.model
         meta["answering_model"] = self.answering_model
         message["llme-meta"] = meta

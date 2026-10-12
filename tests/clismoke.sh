@@ -207,6 +207,14 @@ t s-config1 llme --dummy '/config' hello "$@" &&
 	smoke 'base_url' &&
 	validate_chat system hello assistant
 
+#  --raw-response-dump FILE
+#    Export the full json message response, one per line (jsonl) [raw_response_dump]
+t raw-response-dump1 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses.json" --raw-response-dump tmp.jsonl hello world "$@" &&
+	validate_with jq -s -e 'length == 2' "$WORKDIR/tmp.jsonl" &&
+	validate_with grep -q '"role": "assistant"' "$WORKDIR/tmp.jsonl"
+et raw-response-dump2 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses.json" --raw-response-dump a/bad/file hello "$@" &&
+	validate_err "No such file"
+
 #  --plugin PLUGINS      Add additional tool (python file or directory) [plugins]
 t plugin1 llme --dummy --plugin "$ORIGDIR/$TESTDIR/../examples/weather_plugin.py" hello "$@" &&
 	validate_chat system hello assistant

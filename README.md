@@ -266,8 +266,8 @@ options:
   --raw-request-dump FILE
                         Export the full POSTed json payload [raw_request_dump]
   --raw-response-dump FILE
-                        Export the full json message response
-                        [raw_response_dump]
+                        Export the full json message response, one per line
+                        (jsonl) [raw_response_dump]
   --dummy-responses FILE
                         Mock the server responses with FILE: a json array, a
                         single message, or a jsonl of --raw-response-dump

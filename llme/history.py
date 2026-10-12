@@ -264,7 +264,7 @@ class HistoryMixin:
         if not self.config.raw_request_dump:
             self.config.raw_request_dump = os.path.join(session_directory, f"{timestamp}-request.json")
         if not self.config.raw_response_dump:
-            self.config.raw_response_dump = os.path.join(session_directory, f"{timestamp}-response.json")
+            self.config.raw_response_dump = os.path.join(session_directory, f"{timestamp}-response.jsonl")
         conf_file = os.path.join(session_directory, f"{timestamp}-config.json")
         with open(conf_file, "w") as f:
             json.dump(vars(self.config), f, indent=2)
