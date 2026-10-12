@@ -194,6 +194,9 @@ et config3 llme -c '' hello "$@" &&
 	validate_err "No such file"
 et config4 llme -c chat.json hello "$@" &&
 	validate_err "Invalid config file"
+# B13 regression: boolean settings given as TOML integers (batch = 1)
+t config5 llme --dummy -c "$ORIGDIR/$TESTDIR/data/config-boolint.toml" hello "$@" &&
+	validate_chat system hello assistant
 
 #  --list-tools          List available tools then exit
 t list-tools1 llme --list-tools hello "$@" &&

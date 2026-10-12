@@ -124,6 +124,9 @@ def str2bool(s):
     "Convert a boolean value from a string in a config file or env var"
     if isinstance(s, bool):
        return s
+    if isinstance(s, (int, float)):
+       # TOML config files give real numbers, not strings
+       return bool(s)
     s = s.lower()
     if s in ('yes', 'true', '1', 'y', 't'):
         return True

@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [unreleased]
 
+### Fixed
+
+- str2bool() crashed with AttributeError on TOML integers or floats (ex: `batch = 1`)
+
 ## [v0.1.4] - 2025-11-07
 
 This release is more about the user experience and robustness.
