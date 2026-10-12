@@ -3,7 +3,7 @@
 . "$(dirname "$0")/utils.sh"
 
 setup() {
-	copy README.md chat.json chat-fork.jsonl corrupt.jsonl
+	copy README.md chat.json chat.jsonl chat-fork.jsonl corrupt.jsonl
 }
 
 t prompt01 llme --dummy hello world "$@" &&
@@ -120,6 +120,8 @@ et s-save4 llme --dummy '/save a/bad/file' hello "$@" &&
 
 #  -i, --chat-input CHAT_INPUT Continue a previous (exported) conversation
 t input1 llme --dummy -i chat.json world "$@" &&
+	validate_chat system hello assistant world assistant
+t input1b llme --dummy -i chat.jsonl world "$@" &&
 	validate_chat system hello assistant world assistant
 
 t input2 llme --dummy -i chat.json -i '' world "$@" &&

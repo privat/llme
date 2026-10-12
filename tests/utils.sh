@@ -55,7 +55,7 @@ result() {
 		url=
 		model=
 	fi
-	chat="$ORIGDIR/$LOGDIR/chat.json"
+	chat="$ORIGDIR/$LOGDIR/chat.jsonl"
 	if [ -f "$chat" ]; then
 		msgs=`jq -s '.|length' "$chat"`
 		words=`wc -w < "$chat"`
@@ -101,7 +101,7 @@ result() {
 
 # Check that the llm result matches the pattern $1 on the last line.
 answer() {
-	if jq -sr '.[-1].content' "$LOGDIR/chat.json" | sed '/^$/d' | tail -n1 | grep -x "$1"; then
+	if jq -sr '.[-1].content' "$LOGDIR/chat.jsonl" | sed '/^$/d' | tail -n1 | grep -x "$1"; then
 		result "PASS"
 	elif grep --color=always -i "$1" "$LOGDIR/out.txt" > >(head); then
 		result "ALMOST"
@@ -132,7 +132,7 @@ runllme() {
 
 	# interactive mode
 	if [ -n "$I" ]; then
-		ln -s "chat.json" "$LOGDIR/out.txt"
+		ln -s "chat.jsonl" "$LOGDIR/out.txt"
 		(
 			cd "$WORKDIR"
 			export LLME_BATCH=false
@@ -178,7 +178,7 @@ prepare() {
 	mkdir -p "$LOGDIR"
 	env | grep "^LLME_" > "$LOGDIR/env.txt"
 
-	export LLME_CHAT_OUTPUT=$ORIGDIR/$LOGDIR/chat.json
+	export LLME_CHAT_OUTPUT=$ORIGDIR/$LOGDIR/chat.jsonl
 	export LLME_EXPORT_METRICS=$ORIGDIR/$LOGDIR/metrics.json
 	export LLME_LOG_FILE=$ORIGDIR/$LOGDIR/log.txt
 	export LLME_RAW_REQUEST_DUMP=$ORIGDIR/$LOGDIR/raw_request.txt
@@ -259,7 +259,7 @@ et() {
 validate_chat() {
 	i=0
 	for re in "$@"; do
-		if ! content=$(jq -cs ".[$i]" "$LOGDIR/chat.json"); then
+		if ! content=$(jq -cs ".[$i]" "$LOGDIR/chat.jsonl"); then
 			result FAIL "bad jq"
 			return 1
 		fi
@@ -270,7 +270,7 @@ validate_chat() {
 		fi
 		((i++))
 	done
-	if ! content=$(jq -s "length" "$LOGDIR/chat.json"); then
+	if ! content=$(jq -s "length" "$LOGDIR/chat.jsonl"); then
 		result ALMOST "bad jq"
 		return 1
 	fi
@@ -290,7 +290,7 @@ validate_chat() {
 validate_log() {
 	i=0
 	for re in "$@"; do
-		if ! content=$(jq -csr ".[$i] | .[\"llme-meta\"].id + \" \" + .role + \": \" + (.content|tostring)" "$LOGDIR/chat.json"); then
+		if ! content=$(jq -csr ".[$i] | .[\"llme-meta\"].id + \" \" + .role + \": \" + (.content|tostring)" "$LOGDIR/chat.jsonl"); then
 			result FAIL "bad jq"
 			return 1
 		fi
@@ -301,7 +301,7 @@ validate_log() {
 		fi
 		((i++))
 	done
-	if ! content=$(jq -cs "length" "$LOGDIR/chat.json"); then
+	if ! content=$(jq -cs "length" "$LOGDIR/chat.jsonl"); then
 		result ALMOST "bad jq"
 		return 1
 	fi

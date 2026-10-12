@@ -33,6 +33,6 @@ tllme "31" bonjour "exécute la commande uptime" "calcule la factorielle de 10" 
 
 tllme "32" "Tell me a joke about LLMs" "$@" &&
 	smoke 'llm\|ai\|gpt'
-lastchat=$ORIGDIR/$LOGDIR/chat.json
+lastchat=$ORIGDIR/$LOGDIR/chat.jsonl
 tllme "33" -i "$lastchat" "What is the joke about?" "$@" &&
 	smoke 'llm\|ai\|gpt'
