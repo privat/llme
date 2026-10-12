@@ -243,6 +243,11 @@ t verbose3 llme --dummy -vvv hello "$@" &&
 	validate_err "level set to DEBUG"
 t ss-verbose1 llme --dummy '/set verbose=1' hello "$@" &&
 	validate_err "level set to INFO"
+# B17 regression: LLME_VERBOSE=3 was always interpreted as 1
+t verbose4 env LLME_VERBOSE=3 llme --dump-config "$@" &&
+	smoke '"verbose": 3'
+et verbose5 env LLME_VERBOSE=bad llme --dump-config "$@" &&
+	validate_err "Invalid value for verbose"
 
 #  --log-file LOG_FILE   Write logs to a file [log_file]
 t log-file1 llme --dummy --log-file tmp.log hello "$@" &&

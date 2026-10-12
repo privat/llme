@@ -153,6 +153,14 @@ def setconf(parser, args, name, value):
         value = str2bool(value)
         setattr(args, action.dest, value)
         return
+    elif isinstance(action, argparse._CountAction):
+        # The action would just increment by 1, ignoring the value
+        try:
+            value = int(value)
+        except (TypeError, ValueError):
+            raise AppError(f"Invalid value for {name}: {value}")
+        setattr(args, action.dest, value)
+        return
     elif action.type:
         value = action.type(value)
     action(parser, args, value)
