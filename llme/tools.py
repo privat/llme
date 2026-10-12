@@ -17,7 +17,7 @@ logger = logging.getLogger('llme')
 all_tools = {}
 
 # Conversion between python and json-schema types
-type_map = {int: "integer", str: "string"}
+type_map = {int: "integer", str: "string", float: "number", bool: "boolean", list: "array", dict: "object"}
 
 
 class Tool:
@@ -41,7 +41,11 @@ class Tool:
             res = {}
             params[n] = res
             if p.annotation != inspect._empty:
-                res["type"] = type_map[p.annotation]
+                if p.annotation in type_map:
+                    res["type"] = type_map[p.annotation]
+                else:
+                    logger.warning("Tool %s: unsupported annotation %r for parameter %s, using 'object'", self.name, p.annotation, n)
+                    res["type"] = "object"
             if p.default == inspect._empty:
                 reqs.append(n)
             else:

@@ -242,6 +242,11 @@ t plugin2 llme --dummy --plugin "$ORIGDIR/$TESTDIR/../examples" hello "$@" &&
 	validate_chat system hello assistant
 t plugin2b llme --list-tools --plugin "$ORIGDIR/$TESTDIR/../examples" hello "$@" &&
 	smoke 'weather(city: str)'
+# B3 regression: tools annotated with float/bool/list (json-schema types)
+t plugin4 llme --list-tools --plugin "$ORIGDIR/$TESTDIR/data/plugin-types.py" hello "$@" &&
+	smoke 'max_temp: float'
+t plugin5 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses.json" --raw-request-dump tmp.json --plugin "$ORIGDIR/$TESTDIR/data/plugin-types.py" hello "$@" &&
+	validate_with jq -e '.tools[] | select(.function.name=="wx") | .function.parameters.properties | {city: .city.type, max_temp: .max_temp.type, verbose: .verbose.type, tags: .tags.type} == {city: "string", max_temp: "number", verbose: "boolean", tags: "array"}' "$WORKDIR/tmp.json"
 et plugin3 llme --plugin bad hello "$@" &&
 	validate_err "No such file"
 
