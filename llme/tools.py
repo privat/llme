@@ -358,7 +358,6 @@ class ToolsMixin:
                 e = e.__cause__
             cprint(f"Error during {function['name']}: {e}", color="red")
             message = {"role": "tool", "content": f"Error during {function['name']}: {e}", "tool_call_id": tool_call["id"]}
-            self.add_message(message)
             return message
         if result is None:
             return None

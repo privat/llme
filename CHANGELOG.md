@@ -17,6 +17,8 @@ All notable changes to this project will be documented in this file.
 - plugin tools with float/bool/list/dict annotations crashed at startup (KeyError in the type map);
   unknown annotations now default to "object" with a warning
 - tool calls whose arguments are already a json object (not a string) crashed instead of running
+- on a tool error, the error message was added to the history twice, triggering a full
+  O(n) history reset at every tool failure
 
 ## [v0.1.4] - 2025-11-07
 

@@ -315,6 +315,11 @@ t tool-args1 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses-tool
 	smoke "DICT_ARGS_RAN" &&
 	validate_chat system hello assistant tool assistant
 
+# B5 regression: a tool error must not add the message twice (which reset the whole history)
+t tool-err1 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses-toolcall-error.jsonl" --yolo --log-file tmp.log hello "$@" &&
+	smoke "Error during update_file" &&
+	validate_with [ "$(grep -c 'Reset [0-9]* messages' "$WORKDIR/tmp.log")" -eq 0 ]
+
 # args
 t args0 llme --dummy "$@" < /dev/null &&
 	pass
