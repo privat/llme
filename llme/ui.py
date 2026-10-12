@@ -95,7 +95,7 @@ class UIMixin:
         """Return a prompt from stdim"""
         try:
             if self.warmup:
-                self.warmup.start()
+                self.warmup.check()
             if self.message_index is not None:
                 default = self.history[self.message_index].content()
             else:

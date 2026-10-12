@@ -170,12 +170,14 @@ def extract_requests_error(e):
     return message
 
 class Warmup:
-    """ A small empty chat request.
-    It loads the model (if meeded) and checks that the server/model is ok.  Run in background while the user is typing its first prompt."""
+    """ A small chat request, sent while the user is typing its first prompt.
+    It loads the model (if needed) and starts filling the server context, with the model and the system prompt.
+    The warmup is purely advisory: If it is still running (or has failed) when the user submits its first prompt, the real request is sent anyway: the server processes both in parallel, and the warmup one is a single token.
+    """
 
     def __init__(self, llm):
-        """The thread is started a soon as possible.
-        But no signal is sent before start"""
+        """The thread is started as soon as possible.
+        But no failure is reported before check(), called before the first prompt input"""
         self.llm = llm
         self.thread = threading.Thread(target=self._process)
         self.thread.daemon = True
@@ -186,7 +188,7 @@ class Warmup:
         self.thread.start()
 
 
-    def start(self):
+    def check(self):
         """Stop the program if the warmup failed.
         Or start the watch."""
         with self.lock:
@@ -207,7 +209,7 @@ class Warmup:
     def _process(self):
         """ Thread,function.
         It justs wait for the completion of a small request.
-        If everything is fine then the thread will just terminate.Otherwise it will signal am event for the main thread.
+        If everything is fine then the thread will just terminate. Otherwise it will signal am event for the main thread.
         Note: because of httpx limitation there is no real way to cancel the request. This is mildly annoying."""
 
         url = f"{self.llm.config.base_url}/chat/completions"
@@ -221,23 +223,26 @@ class Warmup:
         }
         logger.info("warmup %s", url)
         try:
-            response = httpx.post(url=url, headers=self.llm.api_headers, json=json)
-            response.raise_for_status()
-            response.close()
+            # note: most of the warmup time is spend in httpx.get, response is only set when a response is transmitted
+            # there is no sane way to cancel it, unfortunately
+            response = httpx.post(url=url, headers=self.llm.api_headers, json=json, timeout=None)
+            response.raise_for_status() # Care for errors
+            response.close() # Do not care for content
         except httpx.HTTPError as e:
             # store, signal or ignore
             with self.lock:
                 logger.info("warmup: raise %s", e)
-                if self.stopped: # ignore
+                if self.stopped:
+                    # ignore (got first prompt, don't care about warmup anymore). Same error is likely to occur on the normal path anyway.
                     return
 
                 self.message = extract_requests_error(e)
-                if not self.started: # stored
+                if not self.started: # stored (fist prompt not asked yet)
                     return
 
-                # signal
+                # signal (currently asking for first prompt)
                 logger.error("%s", self.message)
-                # sys.stdin.clode() don't cancel readline
+                # sys.stdin.close() don't cancel readline
                 # sys.exit(1) don't stop the process
                 # both approaches are not that much thread-safe
                 # The remaining route is to send a signal that will interrupt the main thread
