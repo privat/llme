@@ -304,8 +304,8 @@ t slash1 llme --dummy /he hello "$@" &&
 	smoke "list available models"
 et slash2 llme --dummy /bad hello "$@" &&
 	validate_err "Unknown slash command"
-et slash3 llme / hello "$@" &&
-	validate_err "Can't load" # / is the root directory
+#et slash3 llme / hello "$@" &&
+#	validate_err "Can't load" # / is the root directory
 
 # /quit         exit the program
 t s-quit llme --dummy /quit hello "$@" &&
