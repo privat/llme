@@ -210,9 +210,10 @@ class LoopMixin:
 
         # Temporally disable tools
         response = self.do_assistant(tools=[])
-        if response["content"] == "":
+        content = response.get("content") if response else None
+        if not content:
             logger.error("Agent did not compact. Bad agent!")
             return
         system_prompt = self.prepare_system_prompt()
-        system_prompt["content"] += "\n\n" + response["content"]
+        system_prompt["content"] += "\n\n" + content
         self.reset_messages([system_prompt])

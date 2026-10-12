@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - Message.content() raised KeyError on assistant messages without a "content" key (tool-calls only)
 - set_verbose() added a new console handler on each call, duplicating log lines after /set verbose
 - --dummy (like --dummy-responses) no longer requires a --base-url, as no server is contacted
+- /compact crashed (KeyError/TypeError) when the compaction answer had no content
 
 ## [v0.1.4] - 2025-11-07
 
