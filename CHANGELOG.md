@@ -23,6 +23,7 @@ All notable changes to this project will be documented in this file.
   was not reached (the auto-compaction branch swallowed the next user prompt)
 - /models and --list-models crashed with an AttributeError traceback when the server was
   unreachable, instead of a clean error
+- stream_options was sent even in --bulk (stream=false) mode, which strict providers reject
 
 ## [v0.1.4] - 2025-11-07
 

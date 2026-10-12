@@ -315,8 +315,10 @@ class ServerMixin:
             "model": self.model,
             "messages": self.raw_messages,
             "stream": not self.config.bulk,
-            "stream_options": {"include_usage": True},
         }
+        if not self.config.bulk:
+            # Some providers (OpenAI) reject stream_options when stream is false
+            data["stream_options"] = {"include_usage": True}
         if self.config.tool_mode == "native":
             data_tools = []
             for n, tool in all_tools.items():

@@ -101,6 +101,12 @@ t plain2 llme --dummy --no-plain hello "$@" &&
 #  --bulk                Disable stream-mode. Not that useful but it helps debugging APIs [bulk]
 t bulk1 llme --dummy --bulk hello "$@" &&
 	validate_chat system hello assistant
+# B20 regression: stream_options must not be sent in --bulk (stream=false) mode
+t bulk2 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses.json" --bulk --raw-request-dump tmp.json hello "$@" &&
+	validate_with jq -e '.stream == false and (has("stream_options") | not)' "$WORKDIR/tmp.json"
+# ... and must be sent in stream mode
+t bulk3 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses.json" --raw-request-dump tmp.json hello "$@" &&
+	validate_with jq -e '.stream == true and .stream_options.include_usage == true' "$WORKDIR/tmp.json"
 
 #  -o, --chat-output CHAT_OUTPUT Export the full raw conversation in json
 t output1 llme --dummy -o tmp.json hello "$@" &&
