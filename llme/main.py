@@ -160,6 +160,8 @@ class LLME(HistoryMixin, ServerMixin, ToolsMixin, UIMixin, LoopMixin):
         finally:
             if stdinfile:
                 os.unlink(stdinfile.name)
+            if self.warmup is not None:
+                self.warmup.stop()
 
         if self.metrics.total:
             cprint(f"Total: {self.metrics.infoline(self.metrics.total, self)}", "light_grey")
