@@ -1,4 +1,4 @@
-"""OpenAI-compatible server communication: requests, streaming, metrics, warmup."""
+"""OpenAI-compatible server communication: httpx, streaming, metrics, warmup."""
 
 import json
 import logging
@@ -8,7 +8,7 @@ import sys
 import threading
 import time
 
-import requests
+import httpx
 
 from termcolor import cprint
 
@@ -58,6 +58,7 @@ def chunk_update(orig, delta, path=""):
 class SSEReader:
     """Utility class to read the Server-Sent Events (SSE) used in stream mode"""
     def __init__(self, response):
+        response.encoding = "utf-8" # explicit, do not trust the server
         self.iter_lines = response.iter_lines()
 
     def __iter__(self):
@@ -68,44 +69,43 @@ class SSEReader:
             line = next(self.iter_lines)
             if not line:
                 continue
-            if line[0] == 0x7b: # '{'
+            if line[0] == '{':
                 # special case of no streaming
-                data = json.loads(line.decode())
+                data = json.loads(line)
                 return data
             # Handle classic SSE
-            data = line.split(b':', 1)
-            if len(data) != 2:
+            event, sep, data = line.partition(':')
+            if not sep:
                 logger.warning(f"Chunk: Unexpected: %s", line)
                 continue
-            event, data = data
-            if event == b'':
-                if data == b'':
+            if event == '':
+                if data == '':
                     logger.debug("Chunk: keep alive")
                 else:
                     logger.info("Chunk: comment: %s", data)
                 continue
-            if event != b'data':
+            if event != 'data':
                 logger.warning(f"Chunk: Unexpected event type: %s", line)
                 continue
-            if data in [b'[DONE]', b' [DONE]']:
+            if data in ['[DONE]', ' [DONE]']:
                 # We continue the connection until the server closes it. We do not trust it.
                 continue
             try:
-                data = json.loads(data.decode())
+                data = json.loads(data)
                 return data
             except:
                 logger.warning("Chunk: Got a weird one: %s", data)
 
 class DummyResponse:
     """A fake streaming response built from a canned message.
-    It mimics the minimal interface of a streaming requests.Response
+    It mimics the minimal interface of a streaming httpx.Response
     (iter_lines, raise_for_status, close) so that the whole
     receive_chat_completion_message() code path is exercised as with a real
     server. Used with --dummy-responses to test without a server."""
     def __init__(self, message, model):
         # A whole message is just a big delta. Wrap it in a single SSE chunk.
         chunk = {"choices": [{"delta": message, "finish_reason": "stop"}], "model": model}
-        self._line = b"data: " + json.dumps(chunk).encode()
+        self._line = "data: " + json.dumps(chunk)
 
     def iter_lines(self):
         return iter([self._line])
@@ -139,11 +139,11 @@ def load_dummy_responses(path):
     return data
 
 def extract_requests_error(e):
-    """Common handling of requests error"""
-    logger.debug("requests error: %s", e)
+    """Common handling of httpx error"""
+    logger.debug("httpx error: %s", e)
     if e.request is None:
         return str(e)
-    if e.response is None:
+    if getattr(e, "response", None) is None: # httpx transport errors have no response
         return f"{e} ({e.request.url})"
     logger.debug("response headers: %s", e.response.headers)
 
@@ -170,12 +170,14 @@ def extract_requests_error(e):
     return message
 
 class Warmup:
-    """ A small empty chat request.
-    It loads the model (if meeded) and checks that the server/model is ok.  Run in background while the user is typing its first prompt."""
+    """ A small chat request, sent while the user is typing its first prompt.
+    It loads the model (if needed) and starts filling the server context, with the model and the system prompt.
+    The warmup is purely advisory: If it is still running (or has failed) when the user submits its first prompt, the real request is sent anyway: the server processes both in parallel, and the warmup one is a single token.
+    """
 
     def __init__(self, llm):
-        """The thread is started a soon as possible.
-        But no signal is sent before start"""
+        """The thread is started as soon as possible.
+        But no failure is reported before check(), called before the first prompt input"""
         self.llm = llm
         self.thread = threading.Thread(target=self._process)
         self.thread.daemon = True
@@ -186,7 +188,7 @@ class Warmup:
         self.thread.start()
 
 
-    def start(self):
+    def check(self):
         """Stop the program if the warmup failed.
         Or start the watch."""
         with self.lock:
@@ -207,9 +209,8 @@ class Warmup:
     def _process(self):
         """ Thread,function.
         It justs wait for the completion of a small request.
-        If everything is fine then the thread will just terminate.Otherwise it will signal am event for the main thread.
-        Note: because of requests limitation there is no real way to cancel the request. This is mildly annoying.
-        Maybe use httpx.AsyncClient or something else"""
+        If everything is fine then the thread will just terminate. Otherwise it will signal am event for the main thread.
+        Note: because of httpx limitation there is no real way to cancel the request. This is mildly annoying."""
 
         url = f"{self.llm.config.base_url}/chat/completions"
         json = {
@@ -222,22 +223,26 @@ class Warmup:
         }
         logger.info("warmup %s", url)
         try:
-            with requests.post(url=url, headers=self.llm.api_headers, json=json, stream=True) as response:
-                response.raise_for_status()
-        except requests.exceptions.RequestException as e:
+            # note: most of the warmup time is spend in httpx.get, response is only set when a response is transmitted
+            # there is no sane way to cancel it, unfortunately
+            response = httpx.post(url=url, headers=self.llm.api_headers, json=json, timeout=None)
+            response.raise_for_status() # Care for errors
+            response.close() # Do not care for content
+        except httpx.HTTPError as e:
             # store, signal or ignore
             with self.lock:
                 logger.info("warmup: raise %s", e)
-                if self.stopped: # ignore
+                if self.stopped:
+                    # ignore (got first prompt, don't care about warmup anymore). Same error is likely to occur on the normal path anyway.
                     return
 
                 self.message = extract_requests_error(e)
-                if not self.started: # stored
+                if not self.started: # stored (fist prompt not asked yet)
                     return
 
-                # signal
+                # signal (currently asking for first prompt)
                 logger.error("%s", self.message)
-                # sys.stdin.clode() don't cancel readline
+                # sys.stdin.close() don't cancel readline
                 # sys.exit(1) don't stop the process
                 # both approaches are not that much thread-safe
                 # The remaining route is to send a signal that will interrupt the main thread
@@ -256,9 +261,9 @@ class ServerMixin:
         url = f"{self.config.base_url}/models"
         logger.info("Get models from %s", url)
         try:
-            response = requests.get(url, headers=self.api_headers, timeout=self.config.timeout_http)
+            response = httpx.get(url, headers=self.api_headers, timeout=self.config.timeout_http)
             response.raise_for_status()
-        except requests.exceptions.RequestException as e:
+        except httpx.HTTPError as e:
             logger.error("Error getting models: %s", extract_requests_error(e))
             return None
         models = response.json()
@@ -334,11 +339,11 @@ class ServerMixin:
         if self.config.dummy_responses:
             logger.info("Dummy response from %s (no server contacted)", self.config.dummy_responses)
             return DummyResponse(self.next_dummy_response(), self.model)
-        return requests.post(
+        # httpx responses are always lazily read, so no stream= argument is needed
+        return httpx.post(
             url,
             json=data,
             headers=self.api_headers,
-            stream=not self.config.bulk,
             timeout=self.config.timeout_http,
         )
 
@@ -508,7 +513,7 @@ class ServerMixin:
 
     def get_throttling_delay(self, e):
         """Extract throttling delay from headers"""
-        if e.response is None:
+        if getattr(e, "response", None) is None: # httpx transport errors have no response
             return
         for h in ['retry-after', 'x-ratelimit-reset-requests', 'x-ratelimit-reset-tokens']:
             v = e.response.headers.get(h)

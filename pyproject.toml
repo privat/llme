@@ -18,7 +18,7 @@ classifiers = [
 ]
 dependencies = [
     "argcomplete",
-    "requests",
+    "httpx",
     "termcolor",
     "prompt-toolkit",
     "python-magic",

@@ -39,7 +39,7 @@ from .tools import Asset, Tool, ToolsMixin, all_tools, list_tools, tool
 from .ui import SlashCompleter, UIMixin
 
 import prompt_toolkit
-import requests
+import httpx
 from termcolor import cprint
 try:
     from termcolor import can_colorize # Exported since v3.2.0
@@ -165,6 +165,8 @@ class LLME(HistoryMixin, ServerMixin, ToolsMixin, UIMixin, LoopMixin):
                 self.chat_output_file.close()
             if self.raw_response_dump_file is not None:
                 self.raw_response_dump_file.close()
+            if self.warmup is not None:
+                self.warmup.stop()
 
         if self.metrics.total:
             cprint(f"Total: {self.metrics.infoline(self.metrics.total, self)}", "light_grey")
@@ -413,7 +415,7 @@ def main():
     except AppError as e:
         logger.error("%s", e)
         sys.exit(1)
-    except requests.exceptions.RequestException as e:
+    except httpx.HTTPError as e:
         logger.error("Server error: %s", extract_requests_error(e))
         sys.exit(1)
 
