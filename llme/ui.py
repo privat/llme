@@ -179,6 +179,9 @@ class UIMixin:
         "Print the list of models"
         print(f"Models of {self.config.base_url}:")
         models = self.get_models()
+        if not models:
+            # get_models() already logged the reason
+            raise AppError(f"Can't get models from {self.config.base_url}")
         models.sort(key = lambda x: x["id"])
         found = False
         for m in models:

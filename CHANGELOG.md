@@ -21,6 +21,8 @@ All notable changes to this project will be documented in this file.
   O(n) history reset at every tool failure
 - --auto-compact hung the main loop in an infinite 100% CPU spin when the token threshold
   was not reached (the auto-compaction branch swallowed the next user prompt)
+- /models and --list-models crashed with an AttributeError traceback when the server was
+  unreachable, instead of a clean error
 
 ## [v0.1.4] - 2025-11-07
 

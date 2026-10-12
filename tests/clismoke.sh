@@ -50,6 +50,9 @@ t url5 llme --dummy -u '' hello "$@" &&
 # URL ignored in dummy mode
 t url6 llme --dummy -u http://google.com hello "$@" &&
 	validate_chat system hello assistant
+# B6 regression: --list-models with an unreachable server must fail cleanly (no traceback)
+et url7 llme --no-session -u http://127.0.0.1:1/v1 -m foo --list-models --timeout-http 3 "$@" &&
+	validate_err "Error getting models"
 
 #  -m, --model MODEL     Model name [model]
 # dummy ignore the model
