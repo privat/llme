@@ -383,7 +383,8 @@ def process_args():
         for plugin in args.plugins:
             load_plugin(plugin)
 
-    if not args.base_url and not args.dummy_responses:
+    if not args.base_url and not args.dummy and not args.dummy_responses:
+        # --dummy and --dummy-responses never contact a server
         logger.error("Error: --base-url required and not defined the config file.")
         sys.exit(2)
 

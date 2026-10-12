@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - /undo could not cancel the first user message when it was at history index 0 (no system message)
 - Message.content() raised KeyError on assistant messages without a "content" key (tool-calls only)
 - set_verbose() added a new console handler on each call, duplicating log lines after /set verbose
+- --dummy (like --dummy-responses) no longer requires a --base-url, as no server is contacted
 
 ## [v0.1.4] - 2025-11-07
 

@@ -43,6 +43,9 @@ t url3 llme --dummy -u http://bad.example.com hello "$@" &&
 
 et url4 llme -u http:// hello "$@" &&
 	validate_err "Error getting models"
+# B16 regression: --dummy never contacts a server, --base-url must not be required
+t url5 llme --dummy -u '' hello "$@" &&
+	validate_chat system hello assistant
 
 # URL ignored in dummy mode
 t url6 llme --dummy -u http://google.com hello "$@" &&
