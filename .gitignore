@@ -9,3 +9,4 @@ dist/
 __pycache__
 *.egg-info
 tests/logs/
+uv.lock
