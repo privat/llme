@@ -19,6 +19,8 @@ All notable changes to this project will be documented in this file.
 - tool calls whose arguments are already a json object (not a string) crashed instead of running
 - on a tool error, the error message was added to the history twice, triggering a full
   O(n) history reset at every tool failure
+- --auto-compact hung the main loop in an infinite 100% CPU spin when the token threshold
+  was not reached (the auto-compaction branch swallowed the next user prompt)
 
 ## [v0.1.4] - 2025-11-07
 

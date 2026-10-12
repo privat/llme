@@ -165,6 +165,9 @@ t s-metrics llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses.json"
 # B2 regression: the compaction answer has no content, /compact must not crash
 t s-compact1 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses-compact.jsonl" hello /compact "$@" &&
 	validate_err "did not compact"
+# B1 regression: --auto-compact (threshold not reached) must not hang the main loop
+t auto-compact1 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses.jsonl" --auto-compact 100000 hello world "$@" &&
+	validate_chat system hello assistant world assistant
 
 #  -s, --system SYSTEM_PROMPT System prompt [system_prompt]
 t system1 llme --dummy -s hello world "$@" &&
