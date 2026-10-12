@@ -24,6 +24,8 @@ All notable changes to this project will be documented in this file.
 - /models and --list-models crashed with an AttributeError traceback when the server was
   unreachable, instead of a clean error
 - stream_options was sent even in --bulk (stream=false) mode, which strict providers reject
+- the metrics infoline divided by zero when the prompt/predicted durations were 0
+  (ex: a fully cached prompt)
 
 ## [v0.1.4] - 2025-11-07
 
