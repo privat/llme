@@ -161,6 +161,8 @@ class LLME(HistoryMixin, ServerMixin, ToolsMixin, UIMixin, LoopMixin):
         finally:
             if stdinfile:
                 os.unlink(stdinfile.name)
+            if self.chat_output_file is not None:
+                self.chat_output_file.close()
             if self.raw_response_dump_file is not None:
                 self.raw_response_dump_file.close()
 
