@@ -26,6 +26,8 @@ All notable changes to this project will be documented in this file.
 - stream_options was sent even in --bulk (stream=false) mode, which strict providers reject
 - the metrics infoline divided by zero when the prompt/predicted durations were 0
   (ex: a fully cached prompt)
+- prepare_system_prompt() crashed with a TypeError when no system prompt was configured
+  (no config file providing one), which broke /clear and /compact
 
 ## [v0.1.4] - 2025-11-07
 
