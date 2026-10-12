@@ -53,7 +53,7 @@ class Message:
 
     def content(self):
         """The text content of a message"""
-        content = self.data["content"]
+        content = self.data.get("content")
         if content is None:
             return ""
         if isinstance(content, str):

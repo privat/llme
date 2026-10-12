@@ -379,6 +379,11 @@ t s-history2 llme --dummy hello /undo world /history "$@" &&
 	smoke "1 user: world" &&
 	validate_log "0a system" "1a user: hello" "2a assistant" "1b user: world" "2b assistant"
 
+# B4 regression: a tool-calls-only assistant message without a "content" key
+t s-history3 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses-toolcall-nocontent.jsonl" --yolo hello /history "$@" &&
+	smoke "DUMMY_TOOL_RAN" &&
+	validate_chat system hello assistant tool assistant
+
 # /full-history list hierarchical conversation history (with forks)
 t s-full-history1 llme --dummy hello /full-history "$@" &&
 	smoke "1a user: hello" &&

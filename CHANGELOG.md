@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - LLME_VERBOSE=N (and other count settings from config files or env) was always interpreted as 1
 - append settings (skills_path, config, plugins) given as TOML arrays crashed with TypeError
 - /undo could not cancel the first user message when it was at history index 0 (no system message)
+- Message.content() raised KeyError on assistant messages without a "content" key (tool-calls only)
 
 ## [v0.1.4] - 2025-11-07
 
