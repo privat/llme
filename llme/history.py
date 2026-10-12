@@ -383,7 +383,7 @@ class HistoryMixin:
                 break
             if message.role() in roles:
                 candidate = i
-        if not candidate:
+        if candidate is None:
             return None
         self.message_index = candidate
         return self.history[candidate]

@@ -340,6 +340,9 @@ t s-undo1 llme --dummy hello /undo world /undo "$@" &&
 
 et s-undo2 llme --dummy /undo hello "$@" &&
 	validate_err "No user message to undo"
+# B12 regression: /undo on the first user message (index 0, no system message)
+t s-undo3 llme --dummy -s '' hello /undo "$@" &&
+	validate_log "0a user: hello" "1a assistant"
 
 # /pass         go forward in history (cancel /undo) [PageDown]
 t s-pass1 llme --dummy hello /undo /pass world "$@" &&

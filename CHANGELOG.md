@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - str2bool() crashed with AttributeError on TOML integers or floats (ex: `batch = 1`)
 - LLME_VERBOSE=N (and other count settings from config files or env) was always interpreted as 1
 - append settings (skills_path, config, plugins) given as TOML arrays crashed with TypeError
+- /undo could not cancel the first user message when it was at history index 0 (no system message)
 
 ## [v0.1.4] - 2025-11-07
 
