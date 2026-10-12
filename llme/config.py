@@ -161,6 +161,11 @@ def setconf(parser, args, name, value):
             raise AppError(f"Invalid value for {name}: {value}")
         setattr(args, action.dest, value)
         return
+    elif isinstance(action, argparse._AppendAction) and isinstance(value, list):
+        # A config file gives a TOML array: extend the list, don't nest it
+        items = getattr(args, action.dest, None) or []
+        setattr(args, action.dest, list(items) + list(value))
+        return
     elif action.type:
         value = action.type(value)
     action(parser, args, value)

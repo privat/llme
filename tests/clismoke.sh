@@ -197,6 +197,9 @@ et config4 llme -c chat.json hello "$@" &&
 # B13 regression: boolean settings given as TOML integers (batch = 1)
 t config5 llme --dummy -c "$ORIGDIR/$TESTDIR/data/config-boolint.toml" hello "$@" &&
 	validate_chat system hello assistant
+# B10 regression: append settings given as TOML lists (skills_path = [ ... ])
+t config6 llme --dummy -c "$ORIGDIR/$TESTDIR/data/config-skillslist.toml" hello "$@" &&
+	validate_chat system hello assistant
 
 #  --list-tools          List available tools then exit
 t list-tools1 llme --list-tools hello "$@" &&
