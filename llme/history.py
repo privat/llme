@@ -280,10 +280,10 @@ class HistoryMixin:
         logger.info("Loading conversation from %s", file)
         if not format:
             format = self.chat_file_format(file)
+        import yaml
         try:
             with open(file, "r") as f:
                 if format == "yaml":
-                    import yaml
                     messages = yaml.safe_load(f)
                 elif format == "jsonl":
                     messages = []
@@ -296,7 +296,7 @@ class HistoryMixin:
                         logger.error("Unknown format %s. Default as json", format)
                     messages = json.load(f)
             self.reset_messages(messages)
-        except OSError as e:
+        except (OSError, json.JSONDecodeError, yaml.YAMLError) as e:
             raise AppError(f"Can't load chat from {file}") from e
 
     def get_message_by_id(self, message_id):

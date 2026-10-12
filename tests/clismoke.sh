@@ -3,7 +3,7 @@
 . "$(dirname "$0")/utils.sh"
 
 setup() {
-	copy README.md chat.json chat-fork.jsonl
+	copy README.md chat.json chat-fork.jsonl corrupt.jsonl
 }
 
 t prompt01 llme --dummy hello world "$@" &&
@@ -127,6 +127,8 @@ t input2 llme --dummy -i chat.json -i '' world "$@" &&
 
 et input3 llme --dummy -i a/bad/file hello "$@" &&
 	validate_err "No such file"
+et input4 llme --dummy -i corrupt.jsonl hello "$@" &&
+	validate_err "Can't load chat"
 # /load FILE    load chat
 # The session log is append-only: the loaded messages are added, not replacing.
 t s-load1 llme --dummy hello2 '/load chat.json' world '/load chat.json' "$@" &&
