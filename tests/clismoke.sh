@@ -246,6 +246,9 @@ t verbose3 llme --dummy -vvv hello "$@" &&
 	validate_err "level set to DEBUG"
 t ss-verbose1 llme --dummy '/set verbose=1' hello "$@" &&
 	validate_err "level set to INFO"
+# B7 regression: /set verbose must not add a second console handler
+t ss-verbose2 llme --dummy -v hello '/set verbose=2' "$@" &&
+	validate_with [ "$(grep -c 'Log level set to DEBUG' "$LOGDIR/err.txt")" -eq 1 ]
 # B17 regression: LLME_VERBOSE=3 was always interpreted as 1
 t verbose4 env LLME_VERBOSE=3 llme --dump-config "$@" &&
 	smoke '"verbose": 3'

@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 - append settings (skills_path, config, plugins) given as TOML arrays crashed with TypeError
 - /undo could not cancel the first user message when it was at history index 0 (no system message)
 - Message.content() raised KeyError on assistant messages without a "content" key (tool-calls only)
+- set_verbose() added a new console handler on each call, duplicating log lines after /set verbose
 
 ## [v0.1.4] - 2025-11-07
 
