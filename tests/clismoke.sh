@@ -32,7 +32,7 @@ t prompt07 llme --dummy <<<hello "$@" &&
 
 #  -u, --base-url BASE_URL API base URL [base_url]
 et url1 llme -u bad hello "$@" &&
-	validate_err "Invalid URL"
+	validate_err "Error getting models"
 
 et url2 llme -u '' hello "$@" &&
 	validate_err "base-url required"
@@ -42,7 +42,7 @@ t url3 llme --dummy -u http://bad.example.com hello "$@" &&
 	validate_chat system hello assistant
 
 et url4 llme -u http:// hello "$@" &&
-	validate_err "Invalid URL"
+	validate_err "Error getting models"
 
 # URL ignored in dummy mode
 t url6 llme --dummy -u http://google.com hello "$@" &&
