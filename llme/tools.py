@@ -332,13 +332,17 @@ class ToolsMixin:
             cprint(f"Unknown tool {function['name']}", color="red")
             message = {"role": "tool", "content": f"Error: unknown tool {function['name']}. Available tools: {', '.join(all_tools)}", "tool_call_id": tool_call["id"]}
             return message
-        try:
-            args = json.loads(function["arguments"])
-        except json.JSONDecodeError as e:
-            logger.debug("Tool arguments error: %r", e)
-            cprint(f"{self.prompt_prefix()}: Bad tool arguments for {function['name']}: {e}", color="red")
-            message = {"role": "tool", "content": f"Error: bad tool arguments {function['name']}. {e}", "tool_call_id": tool_call["id"]}
-            return message
+        # Some providers send the arguments already parsed (a json object, not a string)
+        raw_args = function.get("arguments")
+        if not isinstance(raw_args, dict):
+            try:
+                raw_args = json.loads(raw_args)
+            except json.JSONDecodeError as e:
+                logger.debug("Tool arguments error: %r", e)
+                cprint(f"{self.prompt_prefix()}: Bad tool arguments for {function['name']}: {e}", color="red")
+                message = {"role": "tool", "content": f"Error: bad tool arguments {function['name']}. {e}", "tool_call_id": tool_call["id"]}
+                return message
+        args = raw_args
         logger.info(f"CALL %s(%s)", tool.name, args)
         try:
             result = tool.fun(**args)

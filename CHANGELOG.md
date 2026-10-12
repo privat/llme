@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
 - /compact crashed (KeyError/TypeError) when the compaction answer had no content
 - plugin tools with float/bool/list/dict annotations crashed at startup (KeyError in the type map);
   unknown annotations now default to "object" with a warning
+- tool calls whose arguments are already a json object (not a string) crashed instead of running
 
 ## [v0.1.4] - 2025-11-07
 

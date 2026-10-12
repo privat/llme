@@ -310,6 +310,11 @@ t nav_tools0 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses-tool
 t nav_tools1 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses-toolcalls.json" hello /undo "$@" &&
 	validate_log "0a system" "1a user: hello" "2a assistant" "3a tool:.*DUMMY_TOOL1_RAN" "4a tool:.*DUMMY_TOOL2_RAN" "5a assistant" "4b tool:.*Confirmation unavailable in batch mode" "5b assistant"
 
+# B18 regression: a tool call whose arguments are already a json object (not a string)
+t tool-args1 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses-toolcall-dictargs.jsonl" --yolo hello "$@" &&
+	smoke "DICT_ARGS_RAN" &&
+	validate_chat system hello assistant tool assistant
+
 # args
 t args0 llme --dummy "$@" < /dev/null &&
 	pass

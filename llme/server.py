@@ -404,7 +404,11 @@ class ServerMixin:
                     f = tool_call["function"]
                     if "name" in f:
                         cp.print(f["name"], color="yellow", id=idx)
-                    cp.print_escaped(f["arguments"], color="yellow", string_color="light_yellow", id=idx)
+                    arguments = f["arguments"]
+                    if not isinstance(arguments, str):
+                        # Some providers send the arguments already parsed (a json object)
+                        arguments = json.dumps(arguments)
+                    cp.print_escaped(arguments, color="yellow", string_color="light_yellow", id=idx)
 
             finish_reason = choice0.get('finish_reason')
             if finish_reason:
