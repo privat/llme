@@ -16,10 +16,5 @@ jobs:
         with:
           python-version: '3.13'
 
-      - name: Install llme
-        run: |
-          pip install -U pip
-          pip install -e .
-
       - name: Run server-free smoke tests
         run: bash tests/clismoke.sh
