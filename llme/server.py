@@ -105,6 +105,8 @@ class DummyResponse:
     def __init__(self, message, model):
         # A whole message is just a big delta. Wrap it in a single SSE chunk.
         chunk = {"choices": [{"delta": message, "finish_reason": "stop"}], "model": model}
+        if "timings" in message:
+            chunk["timings"] = message["timings"]
         self._line = "data: " + json.dumps(chunk)
 
     def iter_lines(self):

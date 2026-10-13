@@ -168,6 +168,8 @@ t s-compact1 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses-comp
 # B1 regression: --auto-compact (threshold not reached) must not hang the main loop
 t auto-compact1 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses.jsonl" --auto-compact 100000 hello world "$@" &&
 	validate_chat system hello assistant world assistant
+t auto-compact2 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses-auto-compact.jsonl" --auto-compact 10 --compaction-prompt "summarize this" hello world "$@" &&
+	validate_log "0a system" "1a user: hello" "2a assistant" "3a user:.*summarize this" "4a assistant.*summary" "summary" "1b user: world" "2b assistant"
 
 #  -s, --system SYSTEM_PROMPT System prompt [system_prompt]
 t system1 llme --dummy -s hello world "$@" &&
