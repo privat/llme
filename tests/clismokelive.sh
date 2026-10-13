@@ -4,17 +4,12 @@
 
 . "$(dirname "$0")/utils.sh"
 
-# copy the data files needed by the tests to the workdir
-setup() {
-	copy README.md chat.json
-}
-
 #  -u, --base-url BASE_URL API base URL [base_url]
 et url3 llme -u http://bad.example.com hello "$@" &&
-	validate_err "Failed to resolve"
+	validate_err "Temporary failure"
 
-et url6 llme -u http://google.com hello "$@" &&
-	validate_err "404"
+et url6 llme -u https://google.com hello "$@" &&
+	validate_err "301"
 
 #  -m, --model MODEL     Model name [model]
 et model1 llme -m bad hello "$@" &&
