@@ -1,7 +1,19 @@
 #!/bin/sh
 # Wrapper: run the local (dev) version of llme, not the one installed in PATH.
-# Resolution: project venv -> uv -> PATH (e.g. CI after `pip install -e .`).
+# Resolution: project venv -> uv -> pip3
+# Note: once the venv installed, uv and pip3 paths are shortcut
 root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-[ -x "$root/.venv/bin/llme" ] && exec "$root/.venv/bin/llme" "$@"
-[ -f "$root/pyproject.toml" ] && command -v uv >/dev/null 2>&1 && exec uv --project "$root" run llme "$@"
-exec llme "$@"
+if [ -x "$root/.venv/bin/llme" ]; then
+	exec "$root/.venv/bin/llme" "$@"
+elif command -v uv >/dev/null 2>&1; then
+	exec uv --project "$root" run llme "$@"
+elif command -v pip3 >/dev/null 2>&1; then
+	python3 -m venv "$root/.venv" &&
+	. "$root/.venv/bin/activate" &&
+	pip3 install --upgrade pip &&
+	pip3 install -e "$root" &&
+	exec "$root/.venv/bin/llme" "$@"
+else
+	echo "Weird python env. Install uv." >&2
+	exit 1
+fi
