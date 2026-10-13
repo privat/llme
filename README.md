@@ -71,6 +71,15 @@ pipx install -e ./llme
 llme --help
 ```
 
+Or, without installing, run the local dev version through the wrapper (uses the
+project venv, created on the fly by `uv` if missing):
+
+```bash
+git clone https://github.com/privat/llme.git
+cd llme
+./bin/llme --help
+```
+
 ## Usage
 
 ### Run an interactive chat session

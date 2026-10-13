@@ -15,8 +15,11 @@ export UTILID=${UTILID:-$UTILDATE-$$-$RANDOM} # so all runs from a same initial 
 # The final errorcode
 errorcode=${errorcode:-0}
 
-# The llme tool to check
-LLME="${LLME:-llme}"
+# The llme tool to check.
+# Default: local dev version (bin/llme wrapper), not the one installed in PATH.
+# Override: LLME=/path/to/llme (e.g. LLME=$(command -v llme) for the installed one)
+export PROJECT_ROOT=$(cd "$TESTDIR/.." && pwd)
+LLME="${LLME:-$PROJECT_ROOT/bin/llme}"
 if ! command -v "$LLME" >/dev/null; then
 	echo "llme not found: $LLME" >&2
 	exit 1
@@ -158,6 +161,7 @@ before_run() {
 	elif [ -d .venv ]; then
 		. .venv/bin/activate
 	fi
+	export PATH="$PROJECT_ROOT/bin:$PATH" # bare `llme` in test bodies -> local dev version
 }
 
 # Create LOGDIR and WORKDIR.

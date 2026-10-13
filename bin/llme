@@ -1,0 +1,7 @@
+#!/bin/sh
+# Wrapper: run the local (dev) version of llme, not the one installed in PATH.
+# Resolution: project venv -> uv -> PATH (e.g. CI after `pip install -e .`).
+root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+[ -x "$root/.venv/bin/llme" ] && exec "$root/.venv/bin/llme" "$@"
+[ -f "$root/pyproject.toml" ] && command -v uv >/dev/null 2>&1 && exec uv --project "$root" run llme "$@"
+exec llme "$@"
