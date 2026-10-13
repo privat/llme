@@ -343,8 +343,7 @@ class ServerMixin:
         if self.config.dummy_responses:
             logger.info("Dummy response from %s (no server contacted)", self.config.dummy_responses)
             return DummyResponse(self.next_dummy_response(), self.model)
-        # httpx responses are always lazily read, so no stream= argument is needed
-        return httpx.post(
+        return httpx.stream("POST",
             url,
             json=data,
             headers=self.api_headers,
@@ -482,16 +481,24 @@ class ServerMixin:
         self.completion_metrics["message_n"] = 1 # only one
 
         with Spinner("light_blue", self.config.plain):
-            response = self.post_chat_completion(tools)
-            response.raise_for_status()
+            response_stream = self.post_chat_completion(tools)
 
-        response_time = time.perf_counter()
-        self.completion_metrics["response_ms"] = (response_time - start_time) * 1000.0
+        with response_stream as response:
+            try:
+                with Spinner("light_blue", self.config.plain):
+                    response.raise_for_status()
 
-        if not self.config.plain:
-            cprint(f"{self.prompt_prefix()}< ", "light_blue", end='', flush=True)
+                response_time = time.perf_counter()
+                self.completion_metrics["response_ms"] = (response_time - start_time) * 1000.0
 
-        message = self.receive_chat_completion_message(response)
+                if not self.config.plain:
+                    cprint(f"{self.prompt_prefix()}< ", "light_blue", end='', flush=True)
+
+                message = self.receive_chat_completion_message(response)
+            except httpx.HTTPStatusError:
+                response.read()
+                raise
+
         message_time = time.perf_counter()
         self.completion_metrics["total_ms"] = (message_time - start_time) * 1000.0
         meta = message["llme-meta"]
