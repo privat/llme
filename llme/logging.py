@@ -12,6 +12,10 @@ def set_verbose(level):
     "Assign a global verbose level (in number of -v)"
     if level is None:
         level = 0
+    # Replace any existing console handler, or the lines would be duplicated
+    for h in [h for h in logger.handlers
+              if isinstance(h, logging.StreamHandler) and not isinstance(h, logging.FileHandler)]:
+        logger.removeHandler(h)
     consolehandler = logging.StreamHandler(sys.stderr)
     consolehandler.setFormatter(ColorFormatter())
     logger.addHandler(consolehandler)

@@ -1,0 +1,2 @@
+# B13 regression: a TOML integer for a boolean setting
+batch = 1

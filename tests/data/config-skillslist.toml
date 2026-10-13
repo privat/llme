@@ -1,0 +1,2 @@
+# B10 regression: skills_path given as a TOML list
+skills_path = ["/nonexistent-skills"]

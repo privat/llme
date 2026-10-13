@@ -53,7 +53,7 @@ class Message:
 
     def content(self):
         """The text content of a message"""
-        content = self.data["content"]
+        content = self.data.get("content")
         if content is None:
             return ""
         if isinstance(content, str):
@@ -383,7 +383,7 @@ class HistoryMixin:
                 break
             if message.role() in roles:
                 candidate = i
-        if not candidate:
+        if candidate is None:
             return None
         self.message_index = candidate
         return self.history[candidate]

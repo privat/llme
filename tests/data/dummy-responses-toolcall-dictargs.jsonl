@@ -1,0 +1,2 @@
+{"role":"assistant","tool_calls":[{"index":0,"id":"t1","type":"function","function":{"name":"run_command","arguments":{"command":"echo DICT_ARGS_RAN"}}}]}
+{"role":"assistant","content":"The tool ran with dict arguments."}

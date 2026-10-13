@@ -209,12 +209,15 @@ class Metrics:
             used = self.predicted_n() - llme.token_budget_start
             info.append(f"budget:%dt/%dt %.0f%%" % (used, llme.token_budget, 100.0 * used / llme.token_budget))
         if "cache_n" in d:
+            # The durations can be zero (ex: a fully cached prompt)
+            prompt_rate = (1000.0 * d["prompt_n"] / d["prompt_ms"]) if d.get("prompt_ms") else 0.0
+            predicted_rate = (1000.0 * d["predicted_n"] / d["predicted_ms"]) if d.get("predicted_ms") else 0.0
             info.append(f"cache:%dt prompt:%dt %.2ft/s predicted:%dt %.2ft/s" % (
                 d["cache_n"],
                 d["prompt_n"],
-                1000.0 * d["prompt_n"] / d["prompt_ms"],
+                prompt_rate,
                 d["predicted_n"],
-                1000.0 * d["predicted_n"] / d["predicted_ms"],
+                predicted_rate,
             ))
         elif "prompt_tokens" in d:
             info.append(f"prompt:%dt predicted:%dt" % (
@@ -383,7 +386,8 @@ def process_args():
         for plugin in args.plugins:
             load_plugin(plugin)
 
-    if not args.base_url and not args.dummy_responses:
+    if not args.base_url and not args.dummy and not args.dummy_responses:
+        # --dummy and --dummy-responses never contact a server
         logger.error("Error: --base-url required and not defined the config file.")
         sys.exit(2)
 

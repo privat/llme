@@ -4,6 +4,31 @@ All notable changes to this project will be documented in this file.
 
 ## [unreleased]
 
+### Fixed
+
+- str2bool() crashed with AttributeError on TOML integers or floats (ex: `batch = 1`)
+- LLME_VERBOSE=N (and other count settings from config files or env) was always interpreted as 1
+- append settings (skills_path, config, plugins) given as TOML arrays crashed with TypeError
+- /undo could not cancel the first user message when it was at history index 0 (no system message)
+- Message.content() raised KeyError on assistant messages without a "content" key (tool-calls only)
+- set_verbose() added a new console handler on each call, duplicating log lines after /set verbose
+- --dummy (like --dummy-responses) no longer requires a --base-url, as no server is contacted
+- /compact crashed (KeyError/TypeError) when the compaction answer had no content
+- plugin tools with float/bool/list/dict annotations crashed at startup (KeyError in the type map);
+  unknown annotations now default to "object" with a warning
+- tool calls whose arguments are already a json object (not a string) crashed instead of running
+- on a tool error, the error message was added to the history twice, triggering a full
+  O(n) history reset at every tool failure
+- --auto-compact hung the main loop in an infinite 100% CPU spin when the token threshold
+  was not reached (the auto-compaction branch swallowed the next user prompt)
+- /models and --list-models crashed with an AttributeError traceback when the server was
+  unreachable, instead of a clean error
+- stream_options was sent even in --bulk (stream=false) mode, which strict providers reject
+- the metrics infoline divided by zero when the prompt/predicted durations were 0
+  (ex: a fully cached prompt)
+- prepare_system_prompt() crashed with a TypeError when no system prompt was configured
+  (no config file providing one), which broke /clear and /compact
+
 ## [v0.1.4] - 2025-11-07
 
 This release is more about the user experience and robustness.

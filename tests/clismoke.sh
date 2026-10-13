@@ -43,10 +43,16 @@ t url3 llme --dummy -u http://bad.example.com hello "$@" &&
 
 et url4 llme -u http:// hello "$@" &&
 	validate_err "Error getting models"
+# B16 regression: --dummy never contacts a server, --base-url must not be required
+t url5 llme --dummy -u '' hello "$@" &&
+	validate_chat system hello assistant
 
 # URL ignored in dummy mode
 t url6 llme --dummy -u http://google.com hello "$@" &&
 	validate_chat system hello assistant
+# B6 regression: --list-models with an unreachable server must fail cleanly (no traceback)
+et url7 llme --no-session -u http://127.0.0.1:1/v1 -m foo --list-models --timeout-http 3 "$@" &&
+	validate_err "Error getting models"
 
 #  -m, --model MODEL     Model name [model]
 # dummy ignore the model
@@ -95,6 +101,12 @@ t plain2 llme --dummy --no-plain hello "$@" &&
 #  --bulk                Disable stream-mode. Not that useful but it helps debugging APIs [bulk]
 t bulk1 llme --dummy --bulk hello "$@" &&
 	validate_chat system hello assistant
+# B20 regression: stream_options must not be sent in --bulk (stream=false) mode
+t bulk2 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses.json" --bulk --raw-request-dump tmp.json hello "$@" &&
+	validate_with jq -e '.stream == false and (has("stream_options") | not)' "$WORKDIR/tmp.json"
+# ... and must be sent in stream mode
+t bulk3 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses.json" --raw-request-dump tmp.json hello "$@" &&
+	validate_with jq -e '.stream == true and .stream_options.include_usage == true' "$WORKDIR/tmp.json"
 
 #  -o, --chat-output CHAT_OUTPUT Export the full raw conversation in json
 t output1 llme --dummy -o tmp.json hello "$@" &&
@@ -158,6 +170,16 @@ t s-metrics llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses.json"
 	smoke "message_n: 1" &&
 	validate_chat system hello assistant
 
+# /compact      summarize the history and restart fresh
+# B2 regression: the compaction answer has no content, /compact must not crash
+t s-compact1 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses-compact.jsonl" hello /compact "$@" &&
+	validate_err "did not compact"
+# B1 regression: --auto-compact (threshold not reached) must not hang the main loop
+t auto-compact1 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses.jsonl" --auto-compact 100000 hello world "$@" &&
+	validate_chat system hello assistant world assistant
+t auto-compact2 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses-auto-compact.jsonl" --auto-compact 10 --compaction-prompt "summarize this" hello world "$@" &&
+	validate_log "0a system" "1a user: hello" "2a assistant" "3a user:.*summarize this" "4a assistant.*summary" "summary" "1b user: world" "2b assistant"
+
 #  -s, --system SYSTEM_PROMPT System prompt [system_prompt]
 t system1 llme --dummy -s hello world "$@" &&
 	validate_chat hello world assistant
@@ -194,6 +216,12 @@ et config3 llme -c '' hello "$@" &&
 	validate_err "No such file"
 et config4 llme -c chat.json hello "$@" &&
 	validate_err "Invalid config file"
+# B13 regression: boolean settings given as TOML integers (batch = 1)
+t config5 llme --dummy -c "$ORIGDIR/$TESTDIR/data/config-boolint.toml" hello "$@" &&
+	validate_chat system hello assistant
+# B10 regression: append settings given as TOML lists (skills_path = [ ... ])
+t config6 llme --dummy -c "$ORIGDIR/$TESTDIR/data/config-skillslist.toml" hello "$@" &&
+	validate_chat system hello assistant
 
 #  --list-tools          List available tools then exit
 t list-tools1 llme --list-tools hello "$@" &&
@@ -228,6 +256,11 @@ t plugin2 llme --dummy --plugin "$ORIGDIR/$TESTDIR/../examples" hello "$@" &&
 	validate_chat system hello assistant
 t plugin2b llme --list-tools --plugin "$ORIGDIR/$TESTDIR/../examples" hello "$@" &&
 	smoke 'weather(city: str)'
+# B3 regression: tools annotated with float/bool/list (json-schema types)
+t plugin4 llme --list-tools --plugin "$ORIGDIR/$TESTDIR/data/plugin-types.py" hello "$@" &&
+	smoke 'max_temp: float'
+t plugin5 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses.json" --raw-request-dump tmp.json --plugin "$ORIGDIR/$TESTDIR/data/plugin-types.py" hello "$@" &&
+	validate_with jq -e '.tools[] | select(.function.name=="wx") | .function.parameters.properties | {city: .city.type, max_temp: .max_temp.type, verbose: .verbose.type, tags: .tags.type} == {city: "string", max_temp: "number", verbose: "boolean", tags: "array"}' "$WORKDIR/tmp.json"
 et plugin3 llme --plugin bad hello "$@" &&
 	validate_err "No such file"
 
@@ -240,6 +273,14 @@ t verbose3 llme --dummy -vvv hello "$@" &&
 	validate_err "level set to DEBUG"
 t ss-verbose1 llme --dummy '/set verbose=1' hello "$@" &&
 	validate_err "level set to INFO"
+# B7 regression: /set verbose must not add a second console handler
+t ss-verbose2 llme --dummy -v hello '/set verbose=2' "$@" &&
+	validate_with [ "$(grep -c 'Log level set to DEBUG' "$LOGDIR/err.txt")" -eq 1 ]
+# B17 regression: LLME_VERBOSE=3 was always interpreted as 1
+t verbose4 env LLME_VERBOSE=3 llme --dump-config "$@" &&
+	smoke '"verbose": 3'
+et verbose5 env LLME_VERBOSE=bad llme --dump-config "$@" &&
+	validate_err "Invalid value for verbose"
 
 #  --log-file LOG_FILE   Write logs to a file [log_file]
 t log-file1 llme --dummy --log-file tmp.log hello "$@" &&
@@ -282,6 +323,16 @@ t nav_tools0 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses-tool
 	validate_log "0a system" "1a user: hello" "2a assistant" "3a tool:.*DUMMY_TOOL1_RAN" "4a tool:.*DUMMY_TOOL2_RAN" "5a assistant"
 t nav_tools1 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses-toolcalls.json" hello /undo "$@" &&
 	validate_log "0a system" "1a user: hello" "2a assistant" "3a tool:.*DUMMY_TOOL1_RAN" "4a tool:.*DUMMY_TOOL2_RAN" "5a assistant" "4b tool:.*Confirmation unavailable in batch mode" "5b assistant"
+
+# B18 regression: a tool call whose arguments are already a json object (not a string)
+t tool-args1 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses-toolcall-dictargs.jsonl" --yolo hello "$@" &&
+	smoke "DICT_ARGS_RAN" &&
+	validate_chat system hello assistant tool assistant
+
+# B5 regression: a tool error must not add the message twice (which reset the whole history)
+t tool-err1 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses-toolcall-error.jsonl" --yolo --log-file tmp.log hello "$@" &&
+	smoke "Error during update_file" &&
+	validate_with [ "$(grep -c 'Reset [0-9]* messages' "$WORKDIR/tmp.log")" -eq 0 ]
 
 # args
 t args0 llme --dummy "$@" < /dev/null &&
@@ -329,6 +380,9 @@ t s-undo1 llme --dummy hello /undo world /undo "$@" &&
 
 et s-undo2 llme --dummy /undo hello "$@" &&
 	validate_err "No user message to undo"
+# B12 regression: /undo on the first user message (index 0, no system message)
+t s-undo3 llme --dummy -s '' hello /undo "$@" &&
+	validate_log "0a user: hello" "1a assistant"
 
 # /pass         go forward in history (cancel /undo) [PageDown]
 t s-pass1 llme --dummy hello /undo /pass world "$@" &&
@@ -364,6 +418,11 @@ t s-history1 llme --dummy hello /history "$@" &&
 t s-history2 llme --dummy hello /undo world /history "$@" &&
 	smoke "1 user: world" &&
 	validate_log "0a system" "1a user: hello" "2a assistant" "1b user: world" "2b assistant"
+
+# B4 regression: a tool-calls-only assistant message without a "content" key
+t s-history3 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses-toolcall-nocontent.jsonl" --yolo hello /history "$@" &&
+	smoke "DUMMY_TOOL_RAN" &&
+	validate_chat system hello assistant tool assistant
 
 # /full-history list hierarchical conversation history (with forks)
 t s-full-history1 llme --dummy hello /full-history "$@" &&

@@ -124,6 +124,9 @@ def str2bool(s):
     "Convert a boolean value from a string in a config file or env var"
     if isinstance(s, bool):
        return s
+    if isinstance(s, (int, float)):
+       # TOML config files give real numbers, not strings
+       return bool(s)
     s = s.lower()
     if s in ('yes', 'true', '1', 'y', 't'):
         return True
@@ -149,6 +152,19 @@ def setconf(parser, args, name, value):
         # Special case for bool, as the action just store True
         value = str2bool(value)
         setattr(args, action.dest, value)
+        return
+    elif isinstance(action, argparse._CountAction):
+        # The action would just increment by 1, ignoring the value
+        try:
+            value = int(value)
+        except (TypeError, ValueError):
+            raise AppError(f"Invalid value for {name}: {value}")
+        setattr(args, action.dest, value)
+        return
+    elif isinstance(action, argparse._AppendAction) and isinstance(value, list):
+        # A config file gives a TOML array: extend the list, don't nest it
+        items = getattr(args, action.dest, None) or []
+        setattr(args, action.dest, list(items) + list(value))
         return
     elif action.type:
         value = action.type(value)

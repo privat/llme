@@ -105,6 +105,8 @@ class DummyResponse:
     def __init__(self, message, model):
         # A whole message is just a big delta. Wrap it in a single SSE chunk.
         chunk = {"choices": [{"delta": message, "finish_reason": "stop"}], "model": model}
+        if "timings" in message:
+            chunk["timings"] = message["timings"]
         self._line = "data: " + json.dumps(chunk)
 
     def iter_lines(self):
@@ -313,8 +315,10 @@ class ServerMixin:
             "model": self.model,
             "messages": self.raw_messages,
             "stream": not self.config.bulk,
-            "stream_options": {"include_usage": True},
         }
+        if not self.config.bulk:
+            # Some providers (OpenAI) reject stream_options when stream is false
+            data["stream_options"] = {"include_usage": True}
         if self.config.tool_mode == "native":
             data_tools = []
             for n, tool in all_tools.items():
@@ -404,7 +408,11 @@ class ServerMixin:
                     f = tool_call["function"]
                     if "name" in f:
                         cp.print(f["name"], color="yellow", id=idx)
-                    cp.print_escaped(f["arguments"], color="yellow", string_color="light_yellow", id=idx)
+                    arguments = f["arguments"]
+                    if not isinstance(arguments, str):
+                        # Some providers send the arguments already parsed (a json object)
+                        arguments = json.dumps(arguments)
+                    cp.print_escaped(arguments, color="yellow", string_color="light_yellow", id=idx)
 
             finish_reason = choice0.get('finish_reason')
             if finish_reason:
