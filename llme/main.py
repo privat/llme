@@ -134,7 +134,8 @@ class LLME(HistoryMixin, ServerMixin, ToolsMixin, UIMixin, LoopMixin):
 
         if self.config.chat_input:
             self.load_chat(self.config.chat_input)
-        elif self.config.system_prompt or self.config.system_prompt_template:
+        elif self.config.system_prompt:
+            # No system prompt (even if there is a template)
             self.add_message(self.prepare_system_prompt())
 
         stdinfile = None
