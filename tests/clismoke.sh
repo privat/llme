@@ -31,8 +31,11 @@ t prompt07 llme --dummy <<<hello "$@" &&
 	validate_chat system hello assistant
 
 #  -u, --base-url BASE_URL API base URL [base_url]
-et url1 llme -u bad hello "$@" &&
+et url1 llme -u bad -m "" hello "$@" &&
 	validate_err "Error getting models"
+
+et url1b llme -u bad -m "bad" hello "$@" &&
+	validate_err "Server error"
 
 et url2 llme -u '' hello "$@" &&
 	validate_err "base-url required"
@@ -41,9 +44,12 @@ et url2 llme -u '' hello "$@" &&
 t url3 llme --dummy -u http://bad.example.com hello "$@" &&
 	validate_chat system hello assistant
 
-et url4 llme -u http:// hello "$@" &&
+et url4 llme -u http:// -m "" hello "$@" &&
 	validate_err "Error getting models"
-# B16 regression: --dummy never contacts a server, --base-url must not be required
+
+et url4b llme -u http:// -m "bad" hello "$@" &&
+	validate_err "Server error"
+
 t url5 llme --dummy -u '' hello "$@" &&
 	validate_chat system hello assistant
 
