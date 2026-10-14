@@ -109,6 +109,12 @@ class DummyResponse:
             chunk["timings"] = message["timings"]
         self._line = "data: " + json.dumps(chunk)
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        return False
+
     def iter_lines(self):
         return iter([self._line])
 
