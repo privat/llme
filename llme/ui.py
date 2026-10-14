@@ -362,6 +362,9 @@ class SlashCompleter(prompt_toolkit.completion.Completer):
     """A completer for slash commands.
     For some reasons, the provided completers do not like 'words' with / at the beginning"""
     def __init__(self, llme):
+        self.commands = llme.slash_commands
+
+        # nesting completer: a dict associates a command to a sub-completer
         self.nesting = {}
         for cmd, fn in llme.slash_commands.values():
             self.nesting[cmd.name] = prompt_toolkit.completion.PathCompleter(expanduser=True) if cmd.complete == "path" else None
@@ -375,4 +378,17 @@ class SlashCompleter(prompt_toolkit.completion.Completer):
         if not document.text.startswith("/"):
             return
         new_document = prompt_toolkit.document.Document(text=document.text[1:], cursor_position=len(document.text)-1)
+        if " " not in new_document.text_before_cursor:
+            # Completing a command (no space implies first word)
+            word = new_document.get_word_before_cursor()
+            # Completing a command name: show the command signature and its help
+            for name, (cmd, fn) in self.commands.items():
+                if name.startswith(word):
+                    display = "/" + name
+                    if cmd.metavar: # argument?
+                        name += " " # inject a space after the command name (on completion)
+                        display += " " + cmd.metavar # inject the metavar name in the menu
+                    yield prompt_toolkit.completion.Completion(name, start_position=-len(word), display=display, display_meta=cmd.doc)
+            return
+        # Completing an argument: delegate to the nested completer
         yield from self.completer.get_completions(new_document, complete_event)
