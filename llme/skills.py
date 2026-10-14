@@ -63,20 +63,6 @@ def parse_skill_md(content: str) -> tuple[dict, str]:
         logger.warning(f"Failed to parse YAML frontmatter in SKILL.md: {e}")
         return {}, content
 
-def prompt_for_skills(skills):
-    lines = [
-            "## Skills\n",
-            "The following skills provide specialized instructions for specific tasks.",
-            "Use the read tool to load a skill's file when the task matches its description.",
-            "When a skill file references a relative path, resolve it against the skill directory (parent of SKILL.md / dirname of the path) and use that absolute path in tool commands.",
-            "",
-        ]
-
-    for name, s in skills.items():
-        lines.append(f"Name: {s.name}\nDescription: {s.desc}\nFile: {s.dirpath}/SKILL.md\n")
-    return '\n'.join(lines)
-
-
 def discover_skills(directories):
     skills = {}
     for basedir in directories:

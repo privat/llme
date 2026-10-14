@@ -5,6 +5,8 @@ import time
 
 import httpx
 
+import jinja2
+import jinja2.sandbox
 from termcolor import colored, cprint
 
 from . import skills
@@ -182,24 +184,40 @@ class LoopMixin:
                 break
 
 
-    def prepare_system_prompt(self):
-        """Build the system message"""
-        # The system prompt is optional (ex: no config file provides one)
-        system_prompt = self.config.system_prompt or ""
+    def prepare_system_prompt(self, **more_context):
+        """Build the system message from the system prompt template."""
         if self.config.tool_mode == "markdown":
-            tool = all_tools["run_command"]
-            system_prompt += f"""\n## Tool run_command\n\nRun shell commands with a fenced code block and a `run` label. Format:\n\n```run $command\n$stdin\n```\n\nExample 1, list files:\n\n```run ls\n```\n\nExample 2, read file.txt:\n\n```run cat file.txt\n```\n\nExample 3, write "Hello" to file.txt\n\n```run cat > file.txt\nHello\n```\n\nExample 4, run a python script:\n\n```run python\nprint('Hello World')\n```\n\n"""
-            system_prompt += tool.doc
-
+            tools = [ tool for tool in all_tools.values() if tool.markdown ]
+        else:
+            tools = None
         self.skills = skills.discover_skills(self.config.skills_path)
-        if self.skills:
-            system_prompt += "\n" + skills.prompt_for_skills(self.skills)
-
         date = self.direct_run_command("date").decode().strip()
         pwd = self.direct_run_command("pwd").decode().strip()
-        system_prompt += f"\n## Contextual information\n\ndate: {date}\npwd: {pwd}\n"
 
-        return {"role": "system", "content": system_prompt.strip()}
+        context = {
+                "system_prompt": self.config.system_prompt,
+                "tools": tools,
+                "skills": self.skills.values(),
+                "date": date,
+                "pwd": pwd,
+                "compaction_summary": None,
+        }
+        context.update(more_context)
+
+        template = self.config.system_prompt_template or "{{system_prompt}}{%if compaction_summary%}\n\n{{compaction_summary}}{%endif%}"
+        env = jinja2.sandbox.SandboxedEnvironment(
+            trim_blocks=True,
+            lstrip_blocks=True,
+            keep_trailing_newline=False,
+            autoescape=False,
+            undefined=jinja2.StrictUndefined,
+        )
+        try:
+            rendered = env.from_string(template).render(context)
+        except Exception as e:
+            raise AppError(f"System prompt template error") from e
+
+        return {"role": "system", "content": rendered.strip()}
 
 
     @slash("compact", "summarize the history and restart fresh")
@@ -215,6 +233,4 @@ class LoopMixin:
         if not content:
             logger.error("Agent did not compact. Bad agent!")
             return
-        system_prompt = self.prepare_system_prompt()
-        system_prompt["content"] += "\n\n" + content
-        self.reset_messages([system_prompt])
+        self.reset_messages([self.prepare_system_prompt(compaction_summary=content)])

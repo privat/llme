@@ -26,6 +26,7 @@ class Tool:
         self.name = fun.__name__
         self.fun = fun
         self.doc = inspect.cleandoc(fun.__doc__)
+        self.markdown = getattr(fun, "markdown", None) # Extra usage block for the markdown tool mode (set as an attribute of the function)
         self.has_parts = has_parts # Might return an array  of content parts
         all_tools[self.name] = self
         self.build_schema()
@@ -234,6 +235,9 @@ class ToolsMixin:
         result += f"stdout:\n{content}\n"
 
         return result
+
+    # How run_command is exposed to the LLM in the markdown tool mode (rendered in the system prompt by the system prompt template).
+    run_command.markdown = """Run shell commands with a fenced code block and a `run` label. Format:\n\n```run $command\n$stdin\n```\n\nExample 1, list files:\n\n```run ls\n```\n\nExample 2, read file.txt:\n\n```run cat file.txt\n```\n\nExample 3, write "Hello" to file.txt\n\n```run cat > file.txt\nHello\n```\n\nExample 4, run a python script:\n\n```run python\nprint('Hello World')\n```"""
 
     def direct_run_command(self, command, input="", check=True):
         """Because of possible (sand)boxing, access to the agent environment must be indirect"""

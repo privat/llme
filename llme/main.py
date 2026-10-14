@@ -134,7 +134,7 @@ class LLME(HistoryMixin, ServerMixin, ToolsMixin, UIMixin, LoopMixin):
 
         if self.config.chat_input:
             self.load_chat(self.config.chat_input)
-        elif self.config.system_prompt:
+        elif self.config.system_prompt or self.config.system_prompt_template:
             self.add_message(self.prepare_system_prompt())
 
         stdinfile = None
@@ -297,6 +297,7 @@ def process_args():
     parser.add_argument("-i", "--chat-input", metavar="FILE", help="Continue a previous (exported) conversation")
     parser.add_argument(      "--export-metrics", metavar="FILE", help="Export metrics, usage, etc. in json")
     parser.add_argument("-s", "--system", dest="system_prompt", help="System prompt [system_prompt]")
+    parser.add_argument(      "--system-prompt-template", help="System prompt Jinja2 template [system_prompt_template]")
     parser.add_argument(      "--dump-system-prompt", action="store_true", default=None, help="Print the rendered system prompt and quit")
     parser.add_argument(      "--session", type=str, default=None, help="Resume a previous session")
     parser.add_argument(      "--no-session", action="store_true", default=None, help="Do not save the session")

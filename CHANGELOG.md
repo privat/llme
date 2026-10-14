@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [unreleased]
 
+### Added
+
+- `--system-prompt-template`: the system prompt is now built from a configurable Jinja2 template
+- `--dump-system-prompt` to print the rendered system prompt and quit
+
 ### Fixed
 
 - str2bool() crashed with AttributeError on TOML integers or floats (ex: `batch = 1`)

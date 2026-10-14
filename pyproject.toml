@@ -24,6 +24,7 @@ dependencies = [
     "prompt-toolkit",
     "python-magic",
     "pyyaml",
+    "jinja2",
 ]
 
 [project.urls]

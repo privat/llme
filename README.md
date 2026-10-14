@@ -113,6 +113,12 @@ The REPL interface allows you to navigate in the conversation history, fork it, 
 It's easy to replay token generation, try different prompts, update parameters, or gaslight the assistant.
 
 
+### System prompt template
+
+The system prompt is built from a Jinja2 template that receives the prompt elements as variables (see `--system-prompt-template`).
+The core of the system prompt text is set by `--system`.
+
+
 ### Run one-shot queries
 
 Each prompt is run in order in the same chat session.
@@ -241,6 +247,9 @@ options:
                         Export metrics, usage, etc. in json
   -s, --system SYSTEM_PROMPT
                         System prompt [system_prompt]
+  --system-prompt-template SYSTEM_PROMPT_TEMPLATE
+                        System prompt Jinja2 template [system_prompt_template]
+  --dump-system-prompt  Print the rendered system prompt and quit
   --session SESSION     Resume a previous session
   --no-session          Do not save the session
   --auto-compact AUTO_COMPACT

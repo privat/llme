@@ -29,3 +29,44 @@ Points to consider:
 * Critical context and technical findinds.
 * Anything else needed to continue the work.
 """
+
+system_prompt_template = """
+{% if system_prompt %}
+{{ system_prompt | trim }}
+
+{% endif %}
+{% if tools %}
+{% for tool in tools %}
+## Tool `{{ tool.name }}`
+
+{{ tool.doc }}
+{% if tool.markdown %}
+
+{{ tool.markdown | trim }}
+{% endif %}
+
+{% endfor %}
+{% endif %}
+{% if skills %}
+## Skills
+
+The following skills provide specialized instructions for specific tasks.
+Use the read tool to load a skill's file when the task matches its description.
+When a skill file references a relative path, resolve it against the skill directory (parent of SKILL.md / dirname of the path) and use that absolute path in tool commands.
+
+{% for skill in skills %}
+Name: {{ skill.name }}
+Description: {{ skill.desc }}
+File: {{ skill.path }}
+
+{% endfor %}
+{% endif %}
+## Contextual information
+
+date: {{ date }}
+pwd: {{ pwd }}
+{% if compaction_summary %}
+
+{{ compaction_summary }}
+{% endif %}
+"""
