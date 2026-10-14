@@ -28,7 +28,7 @@ import sys
 from . import skills
 
 from .slash import all_slash_commands
-from .config import YAMLAction, config_completer, resolve_config
+from .config import Config, YAMLAction, config_completer, resolve_config
 from .errors import AppError
 from .history import HistoryMixin
 from .logging import set_verbose
@@ -273,7 +273,6 @@ def model_completer(prefix, parsed_args, parser, **kwargs):
     # Models list depend on the other options (config and url), so parse them before!
     resolve_config(parser, parsed_args)
     llme = LLME(parsed_args)
-    llme.argparser = parser # FIXME too much hacky
     models = llme.get_models()
     if not models:
         return ()
@@ -344,7 +343,8 @@ def process_args():
 
     argcomplete.autocomplete(parser)
 
-    args = parser.parse_intermixed_args()
+    config = Config(parser)
+    args = parser.parse_intermixed_args(namespace=config)
     if args.version:
         show_version()
         sys.exit(0)
@@ -373,7 +373,7 @@ def process_args():
         os.environ["FORCE_COLOR"] = "True" # https://force-color.org/
 
     set_verbose(args.verbose)
-    logger.debug("Given arguments %s", {k:v for k,v in vars(args).items() if v is not None})
+    logger.debug("Given arguments %s", {k:v for k,v in args.to_dict().items() if v is not None})
 
     args.plain = args_plain
     if args.log_file:
@@ -389,7 +389,7 @@ def process_args():
     resolve_config(parser, args)
 
     if args.dump_config:
-        json.dump(vars(args), sys.stdout, indent=2)
+        json.dump(args.to_dict(), sys.stdout, indent=2)
         sys.exit(0)
 
     if args.completion:
@@ -413,7 +413,7 @@ def process_args():
     if args.history_filename is None:
         args.history_filename = os.path.expanduser("~/.config/llme/history")
 
-    return parser, args
+    return config
 
 
 def register_builtin_tools(llme):
@@ -426,9 +426,8 @@ def register_builtin_tools(llme):
 def main():
     """The main CLI entry point."""
     try:
-        argparser, config = process_args()
+        config = process_args()
         llme = LLME(config)
-        llme.argparser = argparser # FIXME too much hacky
         register_builtin_tools(llme)
         if config.list_tools:
             list_tools()

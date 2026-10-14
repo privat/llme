@@ -9,7 +9,6 @@ from termcolor import cprint, colored
 
 from . import skills
 from .slash import slash
-from .config import setconf
 from .errors import AppError, CancelEvent, QuitEvent
 from .logging import set_verbose
 from .tools import Asset
@@ -272,7 +271,7 @@ class UIMixin:
 
     @slash("config", "list configuration options")
     def cmd_config(self):
-        for k, v in vars(self.config).items():
+        for k, v in self.config.to_dict().items():
             print(f"{k}: {repr(v)}")
 
     @slash("set", "change a config option", metavar="OPT=VAL", missing="setting")
@@ -329,8 +328,7 @@ class UIMixin:
         "Dynamically change a config option"
         opt = opt.strip()
         val = val.strip()
-        config = vars(self.config)
-        opts = [ k for k in config  if k.startswith(opt)]
+        opts = [ k for k in self.config.to_dict() if k.startswith(opt)]
         if not opts:
             raise AppError(f"Unknown setting: {opt}")
         if len(opts) > 1:
@@ -343,8 +341,7 @@ class UIMixin:
         elif opt == "model":
             self.model = val
         logger.info("set %s: %r", opt, val)
-        # FIXME this is a bit of a hack
-        setconf(self.argparser, self.config, opt, val)
+        self.config.set(opt, val)
 
 class SlashCompleter(prompt_toolkit.completion.Completer):
     """A completer for slash commands.
@@ -354,7 +351,7 @@ class SlashCompleter(prompt_toolkit.completion.Completer):
         for cmd, fn in llme.slash_commands.values():
             self.nesting[cmd.name] = prompt_toolkit.completion.PathCompleter(expanduser=True) if cmd.complete == "path" else None
         notsettable = ["config", "plugins", "version", "dump_config", "list_tools", "list_models", "prompts"]
-        settings = {x + "=" for x in vars(llme.config) if x not in notsettable}
+        settings = {x + "=" for x in llme.config.to_dict() if x not in notsettable}
         self.nesting["set"] = settings
 
         self.completer = prompt_toolkit.completion.NestedCompleter.from_nested_dict(self.nesting)

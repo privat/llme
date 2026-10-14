@@ -267,7 +267,7 @@ class HistoryMixin:
             self.config.raw_response_dump = os.path.join(session_directory, f"{timestamp}-response.jsonl")
         conf_file = os.path.join(session_directory, f"{timestamp}-config.json")
         with open(conf_file, "w") as f:
-            json.dump(vars(self.config), f, indent=2)
+            json.dump(self.config.to_dict(), f, indent=2)
         logfile = os.path.join(session_directory, f"{timestamp}.log")
         filehandler = logging.FileHandler(logfile)
         filehandler.setLevel(logging.DEBUG)

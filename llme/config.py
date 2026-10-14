@@ -170,6 +170,22 @@ def setconf(parser, args, name, value):
         value = action.type(value)
     action(parser, args, value)
 
+class Config(argparse.Namespace):
+    """The effective configuration.
+    It is a plain argparse namespace with an attribute for the original parser that holds the meta-information (help, type, etc)
+    """
+    def __init__(self, parser=None, **kwargs):
+        super().__init__(**kwargs)
+        self.parser = parser
+
+    def set(self, name, value):
+        """Dynamically change a setting, with type conversion"""
+        setconf(self.parser, self, name, value)
+
+    def to_dict(self):
+        """The settings as a plain dict (dumping, logging)."""
+        return {k: v for k, v in vars(self).items() if k != "parser"}
+
 class YAMLAction(argparse.Action):
     """Special action that takes, parse and deep-merge YAML-ish arguments"""
     def __call__(self, parser, namespace, values, option_string=None):
