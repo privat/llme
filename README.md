@@ -6,14 +6,16 @@ A simple, command-line chat client compatible with the OpenAI API.
 
 *(or "I just want to quickly test my model hosted with llama.cpp but don't want to spin up openwebui")*
 
-
 ## Features
 
-- **OpenAI API Compatible:** Works with any self-hosted LLM platform that supports OpenAI chat completions API.
-- **Extremely simple:** Single file, no installation required (but installation is still available).
-- **Command-line interface:** Run it from the terminal.
-- **No TUI bloat:** Just plain unprocessed markdown, readline, and some colors.
-- **Tools included:** Ask it to act on your file system and edit files (yolo).
+- **OpenAI API compatible:** Works with any server implementing the OpenAI chat completions API (llama.cpp, ollama, or others).
+- **Extremely simple:** A small, readable code base. A few files, no web UI, no framework, no magic.
+- **No TUI bloat:** An effective REPL with plain unprocessed markdown on a TTY (still with completion, history, keybindings), one-shot queries, several prompts in sequence, piped data, and some colors (can be disabled).
+- **Prompt engineered:** Navigate, fork, save, load, and even edit the conversation history; undo, redo, regenerate responses, or gaslight the assistant.
+- **No magic, no secrets:** If it happens, you can see it. No hidden prompts. And many logs available to debug what is really happening.
+- **Configurable everywhere:** Sane defaults but every option can be set troughs config files, environment variables, command line options, or live, mid-chat (with `/set`).
+- **Tools included (yolo):** The LLM gets a real shell, a Python interpreter, and file editing. Commands can be run in a sandbox or a remote box with a `--box` wrapper: a container, `ssh`, your own script (no half-baked solution; just use the standard tools).
+- **Stuff you expect:** Multimodal, slash commands, skills, custom tools, etc.
 
 The basic idea is that LLMs are trained on code and OS configuration and already (machine) learnt to select the probable tools to use and actions to take.
 Therefore, there is no need to teach them to use made-up function and tools with bad json schemas.
@@ -30,19 +32,18 @@ Example with llama.cpp if you use homebrew. Look at https://github.com/ggerganov
 
 ```bash
 brew install llama.cpp
-llama-server -hf unsloth/Qwen3-Coder-30B-A3B-Instruct-GGUF --ctx-size 0 --jinja
+llama-server -hf unsloth/Qwen3.8-27B-GGUF --ctx-size 0 --jinja
 ```
 
 Example with ollama. Look at https://ollama.com/download for other options
 
 ```
 curl -fsSL https://ollama.com/install.sh | sh
-ollama pull qwen3-coder:30b
+ollama pull qwen3.8
 ```
 
-Qwen3-Coder-30b is a nice model.
+Qwen3.8-27B is a nice model.
 Smaller models can also works.
-See the [benchmark](benchmark.md) for a comparison.
 
 
 ### llme
@@ -71,8 +72,7 @@ pipx install -e ./llme
 llme --help
 ```
 
-Or, without installing, run the local dev version through the wrapper (uses the
-project venv, created on the fly by `uv` if missing):
+Or, without installing, run the local dev version through the wrapper (uses the project venv, created on the fly by `uv` if missing):
 
 ```bash
 git clone https://github.com/privat/llme.git
@@ -105,12 +105,6 @@ Look at [config.toml](llme/config.toml) for an example.
 More about options and configs below.
 
 I assume, from now, that there is a config file...
-
-
-### Prompt engineered
-
-The REPL interface allows you to navigate in the conversation history, fork it, and even edit it.
-It's easy to replay token generation, try different prompts, update parameters, or gaslight the assistant.
 
 
 ### System prompt template
@@ -457,7 +451,7 @@ PR are welcome!
 * Customization and models
   * [x] config files
   * [x] config with env vars
-  * [ ] type check / conversion
+  * [x] type check / conversion
   * [x] plugin system
   * [ ] better tool selection
   * [x] temperature
@@ -474,7 +468,7 @@ PR are welcome!
   * [x] better logging
   * [x] tests suites
   * [x] robustness and error handling
-  * [ ] better separation of CLI and LLM
+  * [x] better separation of CLI and LLM
   * [ ] better libification
 * Misc
   * [x] README
