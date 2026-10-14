@@ -3,7 +3,7 @@
 . "$(dirname "$0")/utils.sh"
 
 setup() {
-	copy README.md chat.json chat.jsonl chat-fork.jsonl corrupt.jsonl
+	copy README.md chat.json chat.jsonl chat-fork.jsonl corrupt.jsonl AGENTS.md
 }
 
 t prompt01 llme --dummy hello world "$@" &&
@@ -488,5 +488,16 @@ et tpl8 llme --dummy --system-prompt-template '{% if %}' --dump-system-prompt "$
 t tpl9 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses-compact.jsonl" --system-prompt-template 'SUMMARY: {{ compaction_summary }}' hello /compact "$@" &&
 
 	validate_chat "SUMMARY: None" "hello" "assistant" "user" "SUMMARY-TEXT" "SUMMARY: SUMMARY-TEXT"
+
+t agents1 llme --dummy --dump-system-prompt "$@" &&
+	smoke "DUMMY-AGENTS-MD"
+t agents2 llme --dummy --no-agents-md --dump-system-prompt "$@" &&
+	validate_with [ -z "$(grep "DUMMY-AGENTS-MD" "$LOGDIR/out.txt")" ]
+t agents3 sh -c 'rm AGENTS.md && llme --dummy --dump-system-prompt "$@"' sh "$@" &&
+	validate_with [ -z "$(grep "DUMMY-AGENTS-MD" "$LOGDIR/out.txt")" ]
+t agents4 llme --dummy hello "$@" &&
+	validate_chat "DUMMY-AGENTS-MD" hello assistant
+t agents5 sh -c 'mkdir sub && cd sub && llme --dummy --dump-system-prompt "$@"' sh "$@" &&
+	smoke "DUMMY-AGENTS-MD"
 
 exit "$errorcode"

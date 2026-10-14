@@ -61,6 +61,11 @@ File: {{ skill.path }}
 
 {% endfor %}
 {% endif %}
+{% if agents_md %}
+## Project instructions
+
+{{ agents_md | trim }}
+{% endif %}
 ## Contextual information
 
 date: {{ date }}

@@ -301,6 +301,7 @@ def process_args():
     parser.add_argument(      "--export-metrics", metavar="FILE", help="*Export metrics, usage, etc. in json")
     parser.add_argument("-s", "--system", dest="system_prompt", help="System prompt")
     parser.add_argument(      "--system-prompt-template", help="*System prompt Jinja2 template")
+    parser.add_argument(      "--no-agents-md", action="store_true", default=None, help="Do not search for AGENTS.md and add it to the system prompt")
     parser.add_argument(      "--dump-system-prompt", action="store_true", default=None, help="*Print the rendered system prompt and quit")
     parser.add_argument(      "--auto-compact", type=int, help="Automatically compact when the context reaches that many tokens (0 for disabled)")
     parser.add_argument(      "--temperature", type=float, help="Temperature of predictions")

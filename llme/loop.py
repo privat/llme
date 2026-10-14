@@ -1,6 +1,7 @@
 """Main loop: the user/assistant/tool ping-pong and orchestration."""
 
 import logging
+import os
 import time
 
 import httpx
@@ -184,6 +185,25 @@ class LoopMixin:
                 break
 
 
+    def get_agents_md(self):
+        """Search for an AGENTS.md from the current directory up to the root, and return its content."""
+        if self.config.no_agents_md:
+            return None
+        directory = os.getcwd()
+        while True:
+            path = os.path.join(directory, "AGENTS.md")
+            if os.path.isfile(path):
+                try:
+                    with open(path, encoding="utf-8") as f:
+                        return f.read().strip()
+                except OSError as e:
+                    logger.warning("Can't read %s: %s", path, e)
+                    return None
+            parent = os.path.dirname(directory)
+            if parent == directory:
+                return None
+            directory = parent
+
     def prepare_system_prompt(self, **more_context):
         """Build the system message from the system prompt template."""
         if self.config.tool_mode == "markdown":
@@ -198,6 +218,7 @@ class LoopMixin:
                 "system_prompt": self.config.system_prompt,
                 "tools": tools,
                 "skills": self.skills.values(),
+                "agents_md": self.get_agents_md(),
                 "date": date,
                 "pwd": pwd,
                 "compaction_summary": None,
