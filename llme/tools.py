@@ -25,7 +25,7 @@ class Tool:
     def __init__(self, fun, has_parts=False):
         self.name = fun.__name__
         self.fun = fun
-        self.doc = fun.__doc__
+        self.doc = inspect.cleandoc(fun.__doc__)
         self.has_parts = has_parts # Might return an array  of content parts
         all_tools[self.name] = self
         self.build_schema()
