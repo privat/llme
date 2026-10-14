@@ -306,7 +306,7 @@ class UIMixin:
         for cmd, _ in self.slash_commands.values():
             entry = f"/{cmd.name}" + (f" {cmd.metavar}" if cmd.metavar else "")
             entries.append((entry, cmd.doc))
-        width = max(len(entry) for entry, _ in entries)
+        width = max(max(len(entry) for entry, _ in entries),23)
         for entry, doc in entries:
             print(f"{entry:<{width}} {doc}")
 
