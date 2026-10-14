@@ -315,26 +315,27 @@ The command `/help` show the available slash commands.
 <!--slash-help-->
 ```console
 $ llme /help /quit
-/compact      summarize the history and restart fresh
-/skills       list available skills
-/models       list available models
-/history      list condensed conversation history
-/full-history list hierarchical conversation history (with forks)
-/file FILE    attach a file for the next prompt
-/metrics      list current metrics
-/config       list configuration options
-/set OPT=VAL  change a config option
-/quit         exit the program
-/help         show this help
-/tools        list available tools
-/load FILE    load chat
-/save FILE    save chat
-/edit         run EDITOR on the chat (save,editor,load)
-/goto M       jump at message M (e.g `/goto 5c` or just `/5c`
-/undo         cancel the last user message (and the response) [PageUp]
-/redo         cancel and regenerate the last assistant message
-/pass         go forward in history (cancel /undo) [PageDown]
-/clear        clear the conversation history
+/compact                summarize the history and restart fresh
+/skills                 list available skills
+/models                 list available models
+/history                list condensed conversation history
+/full-history           list hierarchical conversation history (with forks)
+/file FILE              attach a file for the next prompt
+/shell CMD              run a shell command in the current environment (alias: !CMD)
+/metrics                list current metrics
+/config                 list configuration options
+/set OPT=VAL            change a config option
+/quit                   exit the program
+/help                   show this help
+/tools                  list available tools
+/load FILE              load chat
+/save FILE              save chat
+/edit                   run EDITOR on the chat (save,editor,load)
+/goto M                 jump at message M (e.g `/goto 5c` or just `/5c`
+/undo                   cancel the last user message (and the response) [PageUp]
+/redo                   cancel and regenerate the last assistant message
+/pass                   go forward in history (cancel /undo) [PageDown]
+/clear                  clear the conversation history
 ```
 <!--/slash-help-->
 
