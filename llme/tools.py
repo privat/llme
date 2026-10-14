@@ -306,10 +306,15 @@ class ToolsMixin:
             j = i + len(prefix_b)
         old = data[i:j]
         new_data = data[:i] + new_content.encode() + data[j:]
-        deletions = old[:-1].count(b'\n') + 1
-        insertions = new_content[:-1].count('\n') + 1
         self.write_file(path, new_data)
-        message = f"{insertions} insertions(+), {deletions} deletions(-)"
+        deletions = insertions = 0
+        import difflib
+        for line in difflib.unified_diff(old.decode().splitlines(), new_data.decode().splitlines(), path, path):
+            if line[0] == '+':
+                insertions += 1
+            elif line[0] == '-':
+                deletions += 1
+        message = f"{path}: {insertions} insertions(+), {deletions} deletions(-)"
         cprint(message, color="yellow")
         return [message]
 
