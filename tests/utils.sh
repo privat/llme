@@ -190,6 +190,8 @@ prepare() {
 	export LLME_YOLO=true
 	unset TIMEOUTED
 
+	export GREP_COLORS="ms=01;36:mc=01;36:sl=:cx=:fn=35:ln=32:bn=32:se=36"
+
 	# create a tmp workdir
 	if [ -z "$WORKDIR" ] || [ -z "$KEEPWORKDIR" ]; then
 		export WORKDIR=`mktemp --tmpdir -d llme-XXXXX`
