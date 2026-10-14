@@ -297,6 +297,7 @@ def process_args():
     parser.add_argument("-i", "--chat-input", metavar="FILE", help="Continue a previous (exported) conversation")
     parser.add_argument(      "--export-metrics", metavar="FILE", help="Export metrics, usage, etc. in json")
     parser.add_argument("-s", "--system", dest="system_prompt", help="System prompt [system_prompt]")
+    parser.add_argument(      "--dump-system-prompt", action="store_true", default=None, help="Print the rendered system prompt and quit")
     parser.add_argument(      "--session", type=str, default=None, help="Resume a previous session")
     parser.add_argument(      "--no-session", action="store_true", default=None, help="Do not save the session")
     parser.add_argument(      "--auto-compact", type=int, help="Automatically compact when the context reaches that many tokens (0 for disabled) [auto_compact]")
@@ -413,6 +414,10 @@ def main():
         register_builtin_tools(llme)
         if config.list_tools:
             list_tools()
+            sys.exit(0)
+
+        if config.dump_system_prompt:
+            print(llme.prepare_system_prompt()["content"])
             sys.exit(0)
 
         llme.start()
