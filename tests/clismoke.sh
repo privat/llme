@@ -146,6 +146,22 @@ et s-save3 llme --dummy '/save' hello "$@" &&
 et s-save4 llme --dummy '/save a/bad/file' hello "$@" &&
 	validate_err "No such file"
 
+# /export [FILE]   export the conversation in markdown (FILE optional, stdout if omitted)
+t s-export1 llme --dummy hello '/export tmp.md' world "$@" &&
+	validate_with grep -q '^## user' "$WORKDIR/tmp.md" &&
+	validate_with grep -q '^## assistant' "$WORKDIR/tmp.md" &&
+	validate_with grep -q "I'm assistant." "$WORKDIR/tmp.md" &&
+	validate_chat system hello assistant world assistant
+t s-export2 llme --dummy hello '/export' world "$@" &&
+	smoke '^## user' "I'm assistant." &&
+	validate_with [ ! -f "$WORKDIR/tmp.md" ] &&
+	validate_chat system hello assistant world assistant
+et s-export3 llme --dummy '/export a/bad/file' hello "$@" &&
+	validate_err "No such file"
+t s-export4 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses-toolcall-nocontent.jsonl" --yolo hello '/export tmp.md' "$@" &&
+	validate_with grep -q 'Tool call' "$WORKDIR/tmp.md" &&
+	validate_chat system hello assistant tool assistant
+
 #  -i, --chat-input CHAT_INPUT Continue a previous (exported) conversation
 t input1 llme --dummy -i chat.json world "$@" &&
 	validate_chat system hello assistant world assistant

@@ -330,6 +330,7 @@ $ llme /help /quit
 /tools                  list available tools
 /load FILE              load chat
 /save FILE              save chat
+/export [FILE]          export the conversation in markdown
 /edit                   run EDITOR on the chat (save,editor,load)
 /goto M                 jump at message M (e.g `/goto 5c` or just `/5c`
 /undo                   cancel the last user message (and the response) [PageUp]

@@ -375,6 +375,37 @@ class HistoryMixin:
         except OSError as e:
             raise AppError(f"Can't save chat to {file}") from e
 
+    @slash("export", "export the conversation in markdown", metavar="[FILE]", missing=None, complete="path")
+    def export_chat(self, file):
+        """Export the current conversation as markdown, to file or to stdout"""
+        markdown = self.history_to_markdown()
+        if not file:
+            print(markdown)
+            return
+        try:
+            with open(file, "w") as f:
+                f.write(markdown + "\n")
+        except OSError as e:
+            raise AppError(f"Can't export chat to {file}") from e
+        logger.info("Exported %s messages to %s", len(self.history), file)
+
+    def history_to_markdown(self, messages=None):
+        """Render the conversation as a markdown document"""
+        if messages is None:
+            messages = self.history
+        sections = []
+        for message in messages:
+            content = message.content().strip()
+            for tool_call in message.tool_calls() or []:
+                function = tool_call["function"]
+                arguments = function["arguments"]
+                if not isinstance(arguments, str):
+                    arguments = json.dumps(arguments)
+                call = f"**Tool call:** `{function['name']} {arguments}`"
+                content = f"{content}\n\n{call}" if content else call
+            sections.append(f"## {message.role()}\n\n{content}")
+        return "\n\n---\n\n".join(sections)
+
     def rollback(self, roles = ["user", "tool"]):
         "Move message_index to the previous message of role, return the message on success"
         candidate = None

@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- `/export [FILE]`: export the current conversation as markdown to FILE (or to stdout if omitted)
 - `--system-prompt-template`: the system prompt is now built from a configurable Jinja2 template
 - `--dump-system-prompt` to print the rendered system prompt and quit
 
