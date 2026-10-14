@@ -236,6 +236,8 @@ options:
   --no-session          Do not save the session [no_session]
   -s, --system SYSTEM_PROMPT
                         System prompt [system_prompt]
+  --no-agents-md        Do not search for AGENTS.md and add it to the system
+                        prompt [no_agents_md]
   --auto-compact AUTO_COMPACT
                         Automatically compact when the context reaches that
                         many tokens (0 for disabled) [auto_compact]
