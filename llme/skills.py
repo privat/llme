@@ -13,10 +13,11 @@ logger = logging.getLogger('llme')
 
 
 class Skill:
-    def __init__(self, name, desc, dirpath, meta, body):
+    def __init__(self, name, desc, dirpath, path, meta, body):
         self.name = name
         self.desc = desc
         self.dirpath = dirpath
+        self.path = path
         self.meta = meta
         self.body = body
 
@@ -151,6 +152,7 @@ def discover_skills_rec(directory):
                 skill_name,
                 desc,
                 str(directory),
+                str(skill_file),
                 meta,
                 body,
         )
