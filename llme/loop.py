@@ -241,8 +241,8 @@ class LoopMixin:
         return {"role": "system", "content": rendered.strip()}
 
 
-    @slash("compact", "summarize the history and restart fresh")
-    def compact(self):
+    @slash("compact", "summarize the history and restart fresh, then process the given prompt", metavar="[PROMPT]", missing=None)
+    def compact(self, prompt=""):
         """Force the summarization of the conversation"""
         compaction_prompt = self.config.compaction_prompt
         message = {"role": "user", "content": compaction_prompt}
@@ -255,3 +255,7 @@ class LoopMixin:
             logger.error("Agent did not compact. Bad agent!")
             return
         self.reset_messages([self.prepare_system_prompt(compaction_summary=content)])
+        # If the user gave a next prompt, queue it so it is processed as soon as
+        # the compaction is done (without the user having to wait and retype it).
+        if prompt:
+            self.prompts.insert(0, prompt)

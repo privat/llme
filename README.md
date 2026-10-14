@@ -350,7 +350,7 @@ The command `/help` show the available slash commands.
 <!--slash-help-->
 ```console
 $ llme /help /quit
-/compact                summarize the history and restart fresh
+/compact [PROMPT]       summarize the history and restart fresh, then process the given prompt
 /skills                 list available skills
 /models                 list available models
 /history                list condensed conversation history

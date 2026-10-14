@@ -202,11 +202,18 @@ t s-metrics llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses.json"
 	smoke "message_n: 1" &&
 	validate_chat system hello assistant
 
-# /compact      summarize the history and restart fresh
+# /compact [PROMPT]  summarize the history and restart fresh, then process the given prompt
 t s-compact1 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses-compact.jsonl" hello /compact world "$@" &&
 	validate_log "0a system" "1a user: hello" "2a assistant" "3a user:.*Summarize" "4a assistant.*SUMMARY-TEXT" "SUMMARY-TEXT" "1b user: world" "2b assistant"
 t s-compact2 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses-compact-empty.jsonl" hello /compact "$@" &&
 	validate_err "did not compact"
+# /compact with a next prompt: it is queued and processed right after the compaction
+t s-compact3 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses-compact.jsonl" hello "/compact world" "$@" &&
+	validate_log "0a system" "1a user: hello" "2a assistant" "3a user:.*Summarize" "4a assistant.*SUMMARY-TEXT" "SUMMARY-TEXT" "1b user: world" "2b assistant"
+# /compact with a next prompt, but the compaction fails: the prompt is NOT processed
+t s-compact4 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses-compact-empty.jsonl" hello "/compact world" "$@" &&
+	validate_err "did not compact" &&
+	validate_log "0a system" "1a user: hello" "2a assistant" "3a user:.*Summarize" "4a assistant"
 # B1 regression: --auto-compact (threshold not reached) must not hang the main loop
 t auto-compact1 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses.jsonl" --auto-compact 100000 hello world "$@" &&
 	validate_chat system hello assistant world assistant
