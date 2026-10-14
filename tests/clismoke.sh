@@ -451,4 +451,26 @@ export EDITOR="echo 'badquote"
 et s-edit5 llme --dummy hello /edit "$@" &&
 	validate_err "Invalid editor command"
 
+#  --system-prompt-template TEMPLATE  System prompt Jinja2 template [system_prompt_template]
+#  --dump-system-prompt               Print the rendered system prompt and quit
+t tpl1 llme --dummy -s "you are a robot" --system-prompt-template 'BASE: {{ system_prompt }}' --dump-system-prompt "$@" &&
+	smoke "BASE: you are a robot"
+t tpl2 llme --dummy -s "you are a robot" --system-prompt-template 'BASE: {{ system_prompt }}' hello "$@" &&
+	validate_chat "BASE: you are a robot" hello assistant
+t tpl3 llme --dummy -s "you are a robot" --system-prompt-template 'ONLY-TEMPLATE' hello "$@" &&
+	validate_chat 'ONLY-TEMPLATE' hello assistant
+t tpl4 llme --dummy -s "you are a robot" --system-prompt-template '' hello "$@" &&
+	validate_chat "you are a robot" hello assistant
+t tpl5 llme --dummy --tool-mode markdown hello "$@" &&
+	validate_chat "run cat file.txt" "user" "assistant"
+t tpl6 llme --dummy --skills-path "$ORIGDIR/$TESTDIR/data/skills" --system-prompt-template '{% for skill in skills %}SKILL: {{ skill.name }} - {{ skill.desc }} {% endfor %}' hello "$@" &&
+	validate_chat "SKILL: smoke-skill" "user" "assistant"
+et tpl7 llme --dummy --system-prompt-template '{{ nope }}' --dump-system-prompt "$@" &&
+	validate_err "template error"
+et tpl8 llme --dummy --system-prompt-template '{% if %}' --dump-system-prompt "$@" &&
+	validate_err "template error"
+t tpl9 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses-compact.jsonl" --system-prompt-template 'SUMMARY: {{ compaction_summary }}' hello /compact "$@" &&
+
+	validate_chat "SUMMARY: None" "hello" "assistant" "user" "SUMMARY-TEXT" "SUMMARY: SUMMARY-TEXT"
+
 exit "$errorcode"
