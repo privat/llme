@@ -151,6 +151,9 @@ class UIMixin:
         if user_input[0] == '/':
             self.slash_command(user_input)
             return None
+        if user_input[0] == '!':
+            self.cmd_shell(user_input[1:])
+            return None
 
         while file := self.next_asset():
             self.files.append(file)
@@ -263,6 +266,17 @@ class UIMixin:
         import shlex
         for path in shlex.split(rest):
             self.files.append(Asset(path))
+
+    @slash("shell", "run a shell command in the current environment (alias: !CMD)", metavar="CMD", missing="command")
+    def cmd_shell(self, command):
+        import subprocess
+        if self.config.box:
+            import shlex
+            cmd = shlex.split(self.config.box, posix=True)
+            cmd.append(command)
+        else:
+            cmd = ["bash", "-c", command]
+        subprocess.run(cmd)
 
     @slash("metrics", "list current metrics")
     def cmd_metrics(self):

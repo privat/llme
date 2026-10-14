@@ -77,6 +77,16 @@ t s-models llme --dummy /models hello "$@" &&
 	smoke "Models of" &&
 	validate_chat system hello assistant
 
+#  /shell CMD    run a shell command in the current environment (alias: !CMD)
+t s-shell1 llme --dummy '/shell echo shell-output-xyz' hello "$@" &&
+	smoke "shell-output-xyz" &&
+	validate_chat system hello assistant
+t s-shell2 llme --dummy '!echo bang-output-xyz' hello "$@" &&
+	smoke "bang-output-xyz" &&
+	validate_chat system hello assistant
+t s-shell3 llme --dummy --box "env FOO=shell-output-xyz sh -c" '/shell echo XYZ$FOO' hello "$@" &&
+	smoke "XYZshell-output-xyz" &&
+	validate_chat system hello assistant
 
 #  --api-key API_KEY     The API key [api_key]
 t key1 llme --dummy --api-key SECRET_KEY hello "$@" &&
