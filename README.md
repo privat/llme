@@ -219,39 +219,23 @@ llme --box my-sandbox-command-runner "Improve the .bashrc file" --yolo
 
 <!--help-->
 ```console
-$ llme --help
+$ llme --help-full
 usage: llme [options...] [prompts...]
 
 OpenAI-compatible chat CLI.
 
 positional arguments:
-  prompts               An initial list of prompts
+  prompts               An initial list of prompts [prompts]
 
 options:
-  -h, --help            show this help message and exit
   -u, --base-url URL    API base URL [base_url]
   -m, --model NAME      Model name or identifier [model]
-  --list-models         List available models then exit
+  --list-models         List available models then exit [list_models]
   --api-key SECRET      The API key [api_key]
-  -b, --batch           Run non-interactively. Implicit if stdin is not a tty
-                        [batch]
-  -p, --plain           No colors or tty fanciness. Implicit if stdout is not
-                        a tty [plain]
-  --bulk                Disable stream-mode. Not that useful but it helps
-                        debugging APIs [bulk]
-  -o, --chat-output FILE
-                        Export the full conversation in json
-  -i, --chat-input FILE
-                        Continue a previous (exported) conversation
-  --export-metrics FILE
-                        Export metrics, usage, etc. in json
+  --session SESSION     Resume a previous session [session]
+  --no-session          Do not save the session [no_session]
   -s, --system SYSTEM_PROMPT
                         System prompt [system_prompt]
-  --system-prompt-template SYSTEM_PROMPT_TEMPLATE
-                        System prompt Jinja2 template [system_prompt_template]
-  --dump-system-prompt  Print the rendered system prompt and quit
-  --session SESSION     Resume a previous session
-  --no-session          Do not save the session
   --auto-compact AUTO_COMPACT
                         Automatically compact when the context reaches that
                         many tokens (0 for disabled) [auto_compact]
@@ -260,12 +244,14 @@ options:
   --extra-body YAML     YAML/JSON element merged with requests (ex: `--extra-
                         body 'top_p: 0.95'`) [extra_body]
   --no-skills           Disable defaults skills (excepts those from --skills-
-                        path)
+                        path) [no_skills]
   --skills-path DIR     Add a skills directory for skill recursive search
+                        [skills_path]
   --list-skills         List all discoverable agent skills then exit
-  --tool-mode {markdown,native}
-                        How tools and functions are given to the LLM
-                        [tool_mode]
+                        [list_skills]
+  --list-tools          List available tools then exit [list_tools]
+  --plugin PATH         Add additional tool (python file or directory)
+                        [plugins]
   --box BOX             The (sand)box tool used to run commands [box]
   --max-tool-len MAX_TOOL_LEN
                         Maximum size of tool output in bytes (0 for unlimited)
@@ -278,29 +264,18 @@ options:
                         [timeout_http]
   --file-mode {part,path,json}
                         How (non image) files are given to the LLM [file_mode]
-  -c, --config FILE     Custom configuration files
-  --list-tools          List available tools then exit
-  --dump-config         Print the effective config and quit
-  --raw-request-dump FILE
-                        Export the full POSTed json payload [raw_request_dump]
-  --raw-response-dump FILE
-                        Export the full json message response, one per line
-                        (jsonl) [raw_response_dump]
-  --dummy-responses FILE
-                        Mock the server responses with FILE: a json array, a
-                        single message, or a jsonl of --raw-response-dump
-                        outputs. No server needed [dummy_responses]
-  --plugin PATH         Add additional tool (python file or directory)
-                        [plugins]
-  -H, --history-filename FILE
-                        Read/write command history from FILE
-                        [history_filename]
+  -c, --config FILE     Custom configuration files [config]
+  --dump-config         Print the effective config and quit [dump_config]
   -v, --verbose         Increase verbosity level (can be used multiple times)
-  --log-file FILE       Write logs to a file [log_file]
+                        [verbose]
   -Y, --yolo            UNSAFE: Do not ask for confirmation before running
-                        tools. Combine with --batch to reach the singularity.
-  --version             Display version information and quit
-  --completion          Print shell completion script
+                        tools. Combine with --batch to reach the singularity
+                        [yolo]
+  --version             Display version information and quit [version]
+  --completion          Print shell completion script [completion]
+  -h, --help            Show the basic options and exit [help]
+  --help-full           Show all options and exit (advanced ones have * in
+                        help) [help_full]
 
 Boolean flags can be negated with `--no-`. Example `--no-plain` to force
 colors in a non TTY
