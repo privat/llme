@@ -285,6 +285,7 @@ def process_args():
         usage='%(prog)s [options...] [prompts...]',
         description="OpenAI-compatible chat CLI.",
         epilog="Boolean flags can be negated with `--no-`. Example `--no-plain` to force colors in a non TTY",
+        add_help=False,
     )
     # Trick: "store_true" options are defaulted to None, so we can distinguish between explicit --foo (True), --no-foo (False) and unset (None)
     parser.add_argument("-u", "--base-url", metavar="URL", help="API base URL")
@@ -329,6 +330,8 @@ def process_args():
     parser.add_argument(      "--version", action="store_true", default=None, help="Display version information and quit")
     parser.add_argument(      "--completion", action="store_true", default=None, help="Print shell completion script")
     parser.add_argument(      "--compaction-prompt", default=None, help="*Prompt used in automatic and manual compaction")
+    parser.add_argument("-h", "--help", action="store_true", default=None, help="Show the basic options and exit")
+    parser.add_argument(      "--help-full", action="store_true", default=None, help="Show all options and exit (advanced ones have * in help)")
     parser.add_argument("prompts", nargs='*', help="An initial list of prompts")
     for action in parser._actions:
         # Trick: iterate on store_true options to add the --no- variants
@@ -344,6 +347,17 @@ def process_args():
     args = parser.parse_intermixed_args()
     if args.version:
         show_version()
+        sys.exit(0)
+
+    if args.help:
+        for action in parser._actions:
+            if action.help[0] == '*':
+                action.help = argparse.SUPPRESS
+        parser.print_help()
+        sys.exit(0)
+
+    if args.help_full:
+        parser.print_help()
         sys.exit(0)
 
     # We need to that first because `can_colorize()` is cached.
