@@ -14,7 +14,7 @@ class SlashCommand:
         self.name = name         # The command name, without the leading /
         self.doc = doc           # The description shown by /help
         self.metavar = metavar   # The argument placeholder; "" = no argument
-        self.missing = missing   # The word shown in the "Missing ..." error
+        self.missing = missing   # The word shown in the "Missing ..." error; None = the argument is optional
         self.complete = complete # The argument completion, if any (e.g. "path")
 
 
@@ -22,9 +22,9 @@ def slash(name, doc, metavar="", missing=None, complete=None):
     """Register a method as a /slash command.
 
     When metavar is set, the method is called as method(llme, arg) with the
-    rest of the line as a single (non empty) string; the argument checking
-    and parsing is left to the method. Otherwise it is called as
-    method(llme).
+    rest of the line as a single string (possibly empty when the argument is
+    optional, i.e. missing is None); the argument checking and parsing is left
+    to the method. Otherwise it is called as method(llme).
     """
     def deco(fn):
         fn.__slash__ = SlashCommand(name, doc, metavar, missing, complete)

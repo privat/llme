@@ -334,8 +334,9 @@ class UIMixin:
         if cmd is None:
             raise AppError(f"{user_input}: Unknown slash command. Use /help for help.")
         slash_cmd, fn = cmd
-        if slash_cmd.metavar and not arg:
-            raise AppError(f"/{slash_cmd.name}: Missing {slash_cmd.missing or 'argument'}")
+        if slash_cmd.metavar and not arg and slash_cmd.missing is not None:
+            # missing=None: the argument is optional, the method is called with ""
+            raise AppError(f"/{slash_cmd.name}: Missing {slash_cmd.missing}")
         return fn(self, arg) if slash_cmd.metavar else fn(self)
 
     def set_config(self, opt, val):
