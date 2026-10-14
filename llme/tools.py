@@ -277,34 +277,33 @@ class ToolsMixin:
             contents = contents.encode()
         self.direct_run_command(f"cat > {path}", contents)
 
-    def update_file(self, path: str, begin: str, end: str, new_content: str):
+    def update_file(self, path: str, prefix: str, suffix: str = "", new_content: str = ""):
         """Update the content of a file.
 
-        Replace the part of the file from `begin` to the closest `end` (both
-        matched verbatim) with `new_content` (verbatim).
-        If `end` is empty, only `begin` is replaced.
+        Replace the part of the file from `prefix` to the closest `suffix` (both matched verbatim) with `new_content` (verbatim).
+        If `suffix` is empty, only `prefix` is replaced.
+        If `new_content` is empty, the part is removed.
 
-        `begin` must appear exactly once in the file, and `end` must appear
-        after `begin`, or an error is thrown.
+        `prefix` should be a short prefix (a few words or lines). It must appear exactly once in the file.
+        `suffix` should also be short. It must appear in the file after `prefix`.
+        Otherwise, an error is thrown and the file remain unchanged.
 
-        example:
-
-        * `update_file("README.md", "# Introduction", "# Usage", "# Introduction\n\nlorem ipsum...\n\n# Usage")`
+        example: `update_file("README.md", "# Introduction", "# Usage", "# Introduction\n\nlorem ipsum...\n\n# Usage")`
         """
         data = self.read_file(path)
-        begin_b = begin.encode()
-        end_b = end.encode()
-        count = data.count(begin_b)
+        prefix_b = prefix.encode()
+        suffix_b = suffix.encode()
+        count = data.count(prefix_b)
         if count != 1:
-            raise Exception(f"begin {begin!r} occurs {count} times in {path}; it must be unique")
-        i = data.index(begin_b)
-        if end:
-            j = data.find(end_b, i + len(begin_b))
+            raise Exception(f"prefix {prefix!r} occurs {count} times in {path}; it must be unique")
+        i = data.index(prefix_b)
+        if suffix:
+            j = data.find(suffix_b, i + len(prefix_b))
             if j < 0:
-                raise Exception(f"end {end!r} not found after begin in {path}")
-            j += len(end_b)
+                raise Exception(f"suffix {suffix!r} not found after prefix in {path}")
+            j += len(suffix_b)
         else:
-            j = i + len(begin_b)
+            j = i + len(prefix_b)
         old = data[i:j]
         new_data = data[:i] + new_content.encode() + data[j:]
         deletions = old[:-1].count(b'\n') + 1
