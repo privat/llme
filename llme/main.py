@@ -330,12 +330,14 @@ def process_args():
     parser.add_argument(      "--completion", action="store_true", default=None, help="Print shell completion script")
     parser.add_argument(      "--compaction-prompt", default=None, help="*Prompt used in automatic and manual compaction")
     parser.add_argument("prompts", nargs='*', help="An initial list of prompts")
-    # Trick: iterate on store_true options to add the --no- variants
     for action in parser._actions:
+        # Trick: iterate on store_true options to add the --no- variants
         if action.const is True:
             for name in action.option_strings:
                 if name.startswith("--") and not name.startswith("--no-"):
                     x=parser.add_argument("--no" + name[1:], dest=action.dest, action="store_false", help=argparse.SUPPRESS)
+        if action.help != argparse.SUPPRESS:
+            action.help += f" [{action.dest}]"
 
     argcomplete.autocomplete(parser)
 
