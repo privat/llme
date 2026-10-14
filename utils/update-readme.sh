@@ -5,7 +5,7 @@ set -e
 sed -n '1,/^<!--help-->$/p' README.md
 echo '```console'
 echo '$ llme --help-full'
-llme --help
+llme --help-full
 echo '```'
 sed -n '/^<!--\/help-->$/,/^<!--slash-help-->$/p' README.md
 echo '```console'

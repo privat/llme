@@ -226,12 +226,30 @@ options:
   -m, --model NAME      Model name or identifier [model]
   --list-models         List available models then exit [list_models]
   --api-key SECRET      The API key [api_key]
+  -b, --batch           *Run non-interactively. Implicit if stdin is not a tty
+                        [batch]
+  -p, --plain           *No colors or tty fanciness. Implicit if stdout is not
+                        a tty [plain]
+  --bulk                *Disable stream-mode. Not that useful but it helps
+                        debugging APIs [bulk]
   --session SESSION     Resume a previous session [session]
   --no-session          Do not save the session [no_session]
+  -o, --chat-output FILE
+                        *Export the full conversation in json [chat_output]
+  -i, --chat-input FILE
+                        *Continue a previous (exported) conversation
+                        [chat_input]
+  --export-metrics FILE
+                        *Export metrics, usage, etc. in json [export_metrics]
   -s, --system SYSTEM_PROMPT
                         System prompt [system_prompt]
+  --system-prompt-template SYSTEM_PROMPT_TEMPLATE
+                        *System prompt Jinja2 template
+                        [system_prompt_template]
   --no-agents-md        Do not search for AGENTS.md and add it to the system
                         prompt [no_agents_md]
+  --dump-system-prompt  *Print the rendered system prompt and quit
+                        [dump_system_prompt]
   --auto-compact AUTO_COMPACT
                         Automatically compact when the context reaches that
                         many tokens (0 for disabled) [auto_compact]
@@ -248,6 +266,9 @@ options:
   --list-tools          List available tools then exit [list_tools]
   --plugin PATH         Add additional tool (python file or directory)
                         [plugins]
+  --tool-mode {markdown,native}
+                        *How tools and functions are given to the LLM
+                        [tool_mode]
   --box BOX             The (sand)box tool used to run commands [box]
   --max-tool-len MAX_TOOL_LEN
                         Maximum size of tool output in bytes (0 for unlimited)
@@ -262,13 +283,31 @@ options:
                         How (non image) files are given to the LLM [file_mode]
   -c, --config FILE     Custom configuration files [config]
   --dump-config         Print the effective config and quit [dump_config]
+  --raw-request-dump FILE
+                        *Export the full POSTed json payload
+                        [raw_request_dump]
+  --raw-response-dump FILE
+                        *Export the full json message response, one per line
+                        (jsonl) [raw_response_dump]
+  --dummy               *Disable LLM server for testing the UI alone [dummy]
+  --dummy-responses FILE
+                        *Mock the server responses with FILE: a json array, a
+                        single message, or a jsonl of --raw-response-dump
+                        outputs [dummy_responses]
+  -H, --history-filename FILE
+                        *Read/write command history from FILE
+                        [history_filename]
   -v, --verbose         Increase verbosity level (can be used multiple times)
                         [verbose]
+  --log-file FILE       *Write logs to a file [log_file]
   -Y, --yolo            UNSAFE: Do not ask for confirmation before running
                         tools. Combine with --batch to reach the singularity
                         [yolo]
   --version             Display version information and quit [version]
   --completion          Print shell completion script [completion]
+  --compaction-prompt COMPACTION_PROMPT
+                        *Prompt used in automatic and manual compaction
+                        [compaction_prompt]
   -h, --help            Show the basic options and exit [help]
   --help-full           Show all options and exit (advanced ones have * in
                         help) [help_full]
