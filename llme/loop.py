@@ -245,6 +245,9 @@ class LoopMixin:
     def compact(self, prompt=""):
         """Force the summarization of the conversation"""
         compaction_prompt = self.config.compaction_prompt
+        if not compaction_prompt:
+            logger.error("No compaction prompt defined")
+            return
         message = {"role": "user", "content": compaction_prompt}
         self.add_message(message)
 
