@@ -1,5 +1,6 @@
 """User interface: prompt, key bindings, slash commands, and printable views."""
 
+import argparse
 import logging
 import os
 import re
@@ -8,6 +9,7 @@ import prompt_toolkit
 from termcolor import cprint, colored
 
 from . import skills
+from .config import search_action
 from .slash import slash
 from .errors import AppError, CancelEvent, QuitEvent
 from .logging import set_verbose
@@ -368,9 +370,7 @@ class SlashCompleter(prompt_toolkit.completion.Completer):
         self.nesting = {}
         for cmd, fn in llme.slash_commands.values():
             self.nesting[cmd.name] = prompt_toolkit.completion.PathCompleter(expanduser=True) if cmd.complete == "path" else None
-        notsettable = ["config", "plugins", "version", "dump_config", "list_tools", "list_models", "prompts"]
-        settings = {x + "=" for x in llme.config.to_dict() if x not in notsettable}
-        self.nesting["set"] = settings
+        self.nesting["set"] = SetOptionCompleter(llme)
 
         self.completer = prompt_toolkit.completion.NestedCompleter.from_nested_dict(self.nesting)
 
@@ -392,3 +392,42 @@ class SlashCompleter(prompt_toolkit.completion.Completer):
             return
         # Completing an argument: delegate to the nested completer
         yield from self.completer.get_completions(new_document, complete_event)
+
+class SetOptionCompleter(prompt_toolkit.completion.Completer):
+    """A completer for the option of /set."""
+    notsettable = ["config", "no_session", "no_skills", "plugins", "prompts", "session"]
+
+    def __init__(self, llme):
+        self.llme = llme
+        self.config = llme.config
+
+    def get_completions(self, document, complete_event):
+        # The last whitespace-separated chunk before the cursor: "OPT" or "OPT=VALUE"
+        # ("=" is a word boundary for prompt_toolkit, so the default word extraction is not enough)
+        word = re.split(r"\s", document.text_before_cursor, 1)[-1]
+        name, sep, val = word.partition("=")
+        if sep:
+            # A value is being typed
+            return
+        # A option name is being typed
+        for opt, value in self.config.to_dict().items():
+            if opt in self.notsettable:
+                continue
+            if not opt.startswith(name):
+                continue
+            action = search_action(self.config.parser, opt)
+            if action.help:
+                meta = f"{action.help} (current value: {value!r})"
+            else:
+                meta = f"current value: {value!r}"
+            if action.metavar:
+                display = opt + "=" + action.metavar
+            elif isinstance(action, argparse._StoreTrueAction):
+                display = opt + "=BOOL"
+            elif isinstance(action, argparse._CountAction):
+                display = opt + "=INT"
+            elif action.type:
+                display = opt + action.type.__name__.upper()
+            else:
+                display = opt + "=STR"
+            yield prompt_toolkit.completion.Completion(text=opt, start_position=-len(word), display=display, display_meta=meta)
