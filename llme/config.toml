@@ -1,8 +1,16 @@
 ## llme config file
 # run llmn --help to see the available options (they are in brackets) and a description
 
+# this file contains the basic default andnfallback configuration shipped with llme.
+# it's better than hard-coded values in py files :)
+
 base_url = "http://localhost:8080/v1"
 #model = "unsloth/Qwen3-4B-Instruct-2507-GGUF"
+
+timeout_tool = 600 # 10 min
+timeout_http = 600 # 10 min
+max_tool_len = 100000
+
 system_prompt = """
 You are an autonomous agent specialized in programming and system administration.
 

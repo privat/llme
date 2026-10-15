@@ -110,12 +110,6 @@ def resolve_config(parser, args):
             d = os.path.join(i,"skills")
             if os.path.isdir(d):
                 args.skills_path.append(d)
-    if args.timeout_tool is None:
-        args.timeout_tool = 600 # 10 min
-    if args.timeout_http is None:
-        args.timeout_http = 600
-    if args.max_tool_len is None:
-        args.max_tool_len = 100000
 
 
     logger.debug("Final config: %s", {k:v for k,v in vars(args).items() if v is not None})
