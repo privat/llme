@@ -273,7 +273,7 @@ t s-tools1 llme --dummy /tools hello "$@" &&
 
 #  --dump-config         Print the effective config and quit
 t dump-config1 llme --dump-config hello "$@" &&
-	smoke '"dump_config": true'
+	smoke '"base_url"'
 # /config       list configuration options
 t s-config1 llme --dummy '/config' hello "$@" &&
 	smoke 'base_url' &&

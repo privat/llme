@@ -134,7 +134,11 @@ def search_action(parser, name):
     "Return the first action according its dest name"
     for action in parser._actions:
         if action.dest and action.dest == name:
-            return action
+            if action.default is None:
+                return action
+            else:
+                # action without default are not configuration option (but basic flags)
+                return  None
     return None
 
 def setconf(parser, args, name, value):
@@ -178,7 +182,7 @@ class Config(argparse.Namespace):
 
     def to_dict(self):
         """The settings as a plain dict (dumping, logging)."""
-        return {k: v for k, v in vars(self).items() if k != "parser"}
+        return { k: v for k, v in vars(self).items() if search_action(self.parser, k) }
 
 class YAMLAction(argparse.Action):
     """Special action that takes, parse and deep-merge YAML-ish arguments"""

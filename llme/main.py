@@ -283,18 +283,18 @@ def process_args():
     parser = argparse.ArgumentParser(
         usage='%(prog)s [options...] [prompts...]',
         description="OpenAI-compatible chat CLI.",
-        epilog="Boolean flags can be negated with `--no-`. Example `--no-plain` to force colors in a non TTY",
+        epilog="Boolean flags can be negated with `--no-`. Example `--no-plain` to force colors in a non TTY. --- Use bracketed names in config files.",
         add_help=False,
     )
     # Trick: "store_true" options are defaulted to None, so we can distinguish between explicit --foo (True), --no-foo (False) and unset (None)
     parser.add_argument("-u", "--base-url", metavar="URL", help="API base URL")
     parser.add_argument("-m", "--model", metavar="NAME", help="Model name or identifier").completer = model_completer
-    parser.add_argument(      "--list-models", action="store_true", default=None, help="List available models then exit")
+    parser.add_argument(      "--list-models", action="store_true", help="List available models then exit")
     parser.add_argument(      "--api-key", metavar="SECRET", help="The API key")
     parser.add_argument("-b", "--batch", action="store_true", default=None, help="*Run non-interactively. Implicit if stdin is not a tty")
     parser.add_argument("-p", "--plain", action="store_true", default=None, help="*No colors or tty fanciness. Implicit if stdout is not a tty")
     parser.add_argument(      "--bulk", action="store_true", default=None, help="*Disable stream-mode. Not that useful but it helps debugging APIs")
-    parser.add_argument(      "--session", type=str, default=None, help="Resume a previous session")
+    parser.add_argument(      "--session", help="Resume a previous session")
     parser.add_argument(      "--no-session", action="store_true", default=None, help="Do not save the session")
     parser.add_argument("-o", "--chat-output", metavar="FILE", help="*Export the full conversation in json")
     parser.add_argument("-i", "--chat-input", metavar="FILE", help="*Continue a previous (exported) conversation")
@@ -302,24 +302,24 @@ def process_args():
     parser.add_argument("-s", "--system", dest="system_prompt", help="System prompt")
     parser.add_argument(      "--system-prompt-template", help="*System prompt Jinja2 template")
     parser.add_argument(      "--no-agents-md", action="store_true", default=None, help="Do not search for AGENTS.md and add it to the system prompt")
-    parser.add_argument(      "--dump-system-prompt", action="store_true", default=None, help="*Print the rendered system prompt and quit")
+    parser.add_argument(      "--dump-system-prompt", action="store_true", help="*Print the rendered system prompt and quit")
     parser.add_argument(      "--auto-compact", type=int, help="Automatically compact when the context reaches that many tokens (0 for disabled)")
     parser.add_argument(      "--temperature", type=float, help="Temperature of predictions")
     parser.add_argument(      "--extra-body", metavar="YAML", action=YAMLAction, help="YAML/JSON element merged with requests (ex: `--extra-body 'top_p: 0.95'`)")
     parser.add_argument(      "--no-skills", action="store_true", default=None, help="Disable defaults skills (excepts those from --skills-path)")
     parser.add_argument(      "--skills-path", metavar="DIR", action="append", help="Add a skills directory for skill recursive search")
-    parser.add_argument(      "--list-skills", action="store_true", default=None, help="List all discoverable agent skills then exit")
-    parser.add_argument(      "--list-tools", action="store_true", default=None, help="List available tools then exit")
+    parser.add_argument(      "--list-skills", action="store_true", help="List all discoverable agent skills then exit")
+    parser.add_argument(      "--list-tools", action="store_true", help="List available tools then exit")
     parser.add_argument(      "--plugin", metavar="PATH", action="append", dest="plugins", help="Add additional tool (python file or directory)")
     parser.add_argument(      "--tool-mode", choices=["markdown", "native"], help="*How tools and functions are given to the LLM")
-    parser.add_argument(      "--box", type=str, help="The (sand)box tool used to run commands")
+    parser.add_argument(      "--box", help="The (sand)box tool used to run commands")
     parser.add_argument(      "--max-tool-len", type=int, help="Maximum size of tool output in bytes (0 for unlimited)")
     parser.add_argument(      "--timeout-tool", type=int, help="Maximum duration in seconds of tool runs (0 for unlimited)")
     parser.add_argument(      "--timeout-http", type=int, help="Timeout of LLM connexion (0 for unlimited)")
     parser.add_argument(      "--file-mode", choices=["part", "path","json"], help="How (non image) files are given to the LLM")
     parser.add_argument("-c", "--config", metavar="FILE", action="append", help="Custom configuration files").completer = config_completer
     parser.add_argument(      "--no-config", action="store_true", help="*Disable default configuration files")
-    parser.add_argument(      "--dump-config", action="store_true", default=None, help="Print the effective config and quit")
+    parser.add_argument(      "--dump-config", action="store_true", help="*Print the effective config and quit")
     parser.add_argument(      "--raw-request-dump", metavar="FILE", help="*Export the full POSTed json payload")
     parser.add_argument(      "--raw-response-dump", metavar="FILE", help="*Export the full json message response, one per line (jsonl)")
     parser.add_argument(      "--dummy", action="store_true", default=None, help="*Disable LLM server for testing the UI alone")
@@ -328,19 +328,20 @@ def process_args():
     parser.add_argument("-v", "--verbose", action="count", help="Increase verbosity level (can be used multiple times)")
     parser.add_argument(      "--log-file", metavar="FILE", help="*Write logs to a file")
     parser.add_argument("-Y", "--yolo", action="store_true", default=None, help="UNSAFE: Do not ask for confirmation before running tools. Combine with --batch to reach the singularity")
-    parser.add_argument(      "--version", action="store_true", default=None, help="Display version information and quit")
-    parser.add_argument(      "--completion", action="store_true", default=None, help="Print shell completion script")
+    parser.add_argument(      "--version", action="store_true", help="Display version information and quit")
+    parser.add_argument(      "--completion", action="store_true", help="Print shell completion script")
     parser.add_argument(      "--compaction-prompt", default=None, help="*Prompt used in automatic and manual compaction")
-    parser.add_argument("-h", "--help", action="store_true", default=None, help="Show the basic options and exit")
-    parser.add_argument(      "--help-full", action="store_true", default=None, help="Show all options and exit (advanced ones have * in help)")
+    parser.add_argument("-h", "--help", action="store_true", help="Show the basic options and exit")
+    parser.add_argument(      "--help-full", action="store_true", help="Show all options and exit (advanced ones have * in help)")
     parser.add_argument("prompts", nargs='*', help="An initial list of prompts")
     for action in parser._actions:
         # Trick: iterate on store_true options to add the --no- variants
         if action.const is True:
             for name in action.option_strings:
                 if name.startswith("--") and not name.startswith("--no-"):
-                    x=parser.add_argument("--no" + name[1:], dest=action.dest, action="store_false", help=argparse.SUPPRESS)
-        if action.help != argparse.SUPPRESS:
+                    parser.add_argument("--no" + name[1:], dest=action.dest, action="store_false", help=argparse.SUPPRESS)
+        # Extends help with the config name (default is None means the option is settable in config)
+        if action.help != argparse.SUPPRESS and action.default is None:
             action.help += f" [{action.dest}]"
 
     argcomplete.autocomplete(parser)
