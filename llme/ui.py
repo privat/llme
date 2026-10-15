@@ -4,6 +4,7 @@ import argparse
 import logging
 import os
 import re
+import time
 
 import prompt_toolkit
 from termcolor import cprint, colored
@@ -360,6 +361,9 @@ class UIMixin:
         logger.info("set %s: %r", opt, val)
         self.config.set(opt, val)
 
+path_completer = prompt_toolkit.completion.PathCompleter(expanduser=True)
+dir_completer = prompt_toolkit.completion.PathCompleter(expanduser=True, only_directories=True)
+
 class SlashCompleter(prompt_toolkit.completion.Completer):
     """A completer for slash commands.
     For some reasons, the provided completers do not like 'words' with / at the beginning"""
@@ -369,7 +373,7 @@ class SlashCompleter(prompt_toolkit.completion.Completer):
         # nesting completer: a dict associates a command to a sub-completer
         self.nesting = {}
         for cmd, fn in llme.slash_commands.values():
-            self.nesting[cmd.name] = prompt_toolkit.completion.PathCompleter(expanduser=True) if cmd.complete == "path" else None
+            self.nesting[cmd.name] = path_completer if cmd.complete == "path" else None
         self.nesting["set"] = SetOptionCompleter(llme)
 
         self.completer = prompt_toolkit.completion.NestedCompleter.from_nested_dict(self.nesting)
@@ -396,10 +400,13 @@ class SlashCompleter(prompt_toolkit.completion.Completer):
 class SetOptionCompleter(prompt_toolkit.completion.Completer):
     """A completer for the option of /set."""
     notsettable = ["config", "no_session", "no_skills", "plugins", "prompts", "session"]
+    models_cache_ttl = 5 # seconds: completions are frequent, don't hammer the server
 
     def __init__(self, llme):
         self.llme = llme
         self.config = llme.config
+        self._models = None
+        self._models_time = 0
 
     def get_completions(self, document, complete_event):
         # The last whitespace-separated chunk before the cursor: "OPT" or "OPT=VALUE"
@@ -408,6 +415,8 @@ class SetOptionCompleter(prompt_toolkit.completion.Completer):
         name, sep, val = word.partition("=")
         if sep:
             # A value is being typed
+            new_document = prompt_toolkit.document.Document(text=val, cursor_position=len(val))
+            yield from self.value_completions(name, val, new_document, complete_event)
             return
         # A option name is being typed
         for opt, value in self.config.to_dict().items():
@@ -431,3 +440,65 @@ class SetOptionCompleter(prompt_toolkit.completion.Completer):
             else:
                 display = opt + "=STR"
             yield prompt_toolkit.completion.Completion(text=opt, start_position=-len(word), display=display, display_meta=meta)
+
+    def resolve_option(self, name):
+        """Resolve an option name or its unique prefix to the exact option name"""
+        opts = [k for k in self.config.to_dict() if k.startswith(name)]
+        return opts[0] if len(opts) == 1 else None
+
+    def value_completions(self, name, val, document, complete_event):
+        """The value completions for an option"""
+        opt = self.resolve_option(name)
+        if opt is None:
+            return
+        if opt == "model":
+            yield from self.model_completions(val)
+            return
+        action = search_action(self.config.parser, opt)
+        if action is None:
+            return
+        # Enumeration: complete the choices
+        if action.choices:
+            current = getattr(self.config, opt)
+            for choice in action.choices:
+                if choice.startswith(val):
+                    meta = "current" if choice == current else ""
+                    yield prompt_toolkit.completion.Completion(text=choice, start_position=-len(val), display_meta=meta)
+        # Boolean: complete the canonical string values
+        elif action.type is bool or isinstance(action, argparse._StoreTrueAction):
+            current = getattr(self.config, opt)
+            for b, choice in ((True, "true"), (False, "false")):
+                if choice.startswith(val):
+                    meta = "current" if b is current else ""
+                    yield prompt_toolkit.completion.Completion(text=choice, start_position=-len(val), display_meta=meta)
+        # File: complete the existing files (and directories)
+        elif action.metavar in ("FILE", "PATH"):
+            yield from path_completer.get_completions(document, complete_event)
+        elif action.metavar == "DIR":
+            yield from dir_completer.get_completions(document, complete_event)
+
+    def server_models(self):
+        """The models provided by the server, cached for a few seconds"""
+        if self._models is None or time.monotonic() - self._models_time > self.models_cache_ttl:
+            try:
+                self._models = self.llme.get_models()
+            except Exception:
+                self._models = None
+            self._models_time = time.monotonic()
+        return self._models
+
+    def model_completions(self, val):
+        """Complete the model value with the models provided by the server"""
+        models = self.server_models()
+        if not models:
+            return
+        for m in sorted(models, key=lambda m: m["id"]):
+            mid = m["id"]
+            if not mid.lower().startswith(val.lower()):
+                continue
+            if mid == self.llme.model:
+                meta = "current model"
+            else:
+                state = m.get("state")
+                meta = state if state not in (None, "unloaded") else ""
+            yield prompt_toolkit.completion.Completion(text=mid, start_position=-len(val), display_meta=meta)
