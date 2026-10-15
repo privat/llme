@@ -27,7 +27,6 @@ def deep_update(orig, delta):
 def apply_config(parser, args, config, path):
     """Apply a config dict to an args namespace without overwriting existing values (precedence).
     The method is a little ugly but it works... """
-    #TODO check types
     variables = vars(args)
     for k in variables:
         if variables[k] is None and k in config:
@@ -43,7 +42,6 @@ def apply_env(parser, args):
         var = f"LLME_{k.upper()}"
         env = os.environ.get(var)
         if variables[k] is None and env:
-            # TODO type conversion
             setconf(parser, args, k, env)
     for k in os.environ:
         m = re.match(r'LLME_(.*)', k)
@@ -115,7 +113,7 @@ def resolve_config(parser, args):
     logger.debug("Final config: %s", {k:v for k,v in vars(args).items() if v is not None})
 
 def str2bool(s):
-    "Convert a boolean value from a string in a config file or env var"
+    "Convert a boolean value from a string (or another type) in a config file or env var"
     if isinstance(s, bool):
        return s
     if isinstance(s, (int, float)):
