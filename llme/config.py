@@ -90,8 +90,11 @@ def resolve_config(parser, args):
     for directory in config_dirs:
         path = os.path.join(directory, "config.toml")
         if os.path.exists(path):
-            config = load_config_file(path)
-            apply_config(parser, args, config, path)
+            if args.no_config:
+                logger.debug("no_config: ignoring %s", path)
+            else:
+                config = load_config_file(path)
+                apply_config(parser, args, config, path)
 
     # 5. ultimate defaults where argparse default value is None
     if args.tool_mode is None:
@@ -108,7 +111,6 @@ def resolve_config(parser, args):
             d = os.path.join(i,"skills")
             if os.path.isdir(d):
                 args.skills_path.append(d)
-
 
     logger.debug("Final config: %s", {k:v for k,v in vars(args).items() if v is not None})
 

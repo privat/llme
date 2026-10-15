@@ -318,6 +318,7 @@ def process_args():
     parser.add_argument(      "--timeout-http", type=int, help="Timeout of LLM connexion (0 for unlimited)")
     parser.add_argument(      "--file-mode", choices=["part", "path","json"], help="How (non image) files are given to the LLM")
     parser.add_argument("-c", "--config", metavar="FILE", action="append", help="Custom configuration files").completer = config_completer
+    parser.add_argument(      "--no-config", action="store_true", help="*Disable default configuration files")
     parser.add_argument(      "--dump-config", action="store_true", default=None, help="Print the effective config and quit")
     parser.add_argument(      "--raw-request-dump", metavar="FILE", help="*Export the full POSTed json payload")
     parser.add_argument(      "--raw-response-dump", metavar="FILE", help="*Export the full json message response, one per line (jsonl)")
