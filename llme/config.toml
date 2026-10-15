@@ -70,16 +70,23 @@ File: {{ skill.path }}
 {% endfor %}
 {% endif %}
 {% if agents_md %}
-## Project instructions
+## Project Instructions
 
+<CONTENT name="AGENTS.md">
 {{ agents_md | trim }}
+</CONTENT>
+
 {% endif %}
-## Contextual information
+{% if compaction_summary %}
+## Current Situation and Memory
+
+<CONTENT>
+{{ compaction_summary }}
+</CONTENT>
+
+{% endif %}
+## Contextual Information
 
 date: {{ date }}
 pwd: {{ pwd }}
-{% if compaction_summary %}
-
-{{ compaction_summary }}
-{% endif %}
 """
