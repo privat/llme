@@ -384,7 +384,7 @@ class SetOptionCompleter(prompt_toolkit.completion.Completer):
     def get_completions(self, document, complete_event):
         # The last whitespace-separated chunk before the cursor: "OPT" or "OPT=VALUE"
         # ("=" is a word boundary for prompt_toolkit, so the default word extraction is not enough)
-        word = re.split(r"\s", document.text_before_cursor, 1)[-1]
+        word = re.split(r"\s", document.text_before_cursor, maxsplit=1)[-1]
         name, sep, val = word.partition("=")
         if sep:
             # A value is being typed
@@ -409,7 +409,7 @@ class SetOptionCompleter(prompt_toolkit.completion.Completer):
             elif isinstance(action, argparse._CountAction):
                 display = opt + "=INT"
             elif action.type:
-                display = opt + action.type.__name__.upper()
+                display = opt + "=" + action.type.__name__.upper()
             else:
                 display = opt + "=STR"
             yield prompt_toolkit.completion.Completion(text=opt, start_position=-len(word), display=display, display_meta=meta)

@@ -242,8 +242,8 @@ def model_completer(prefix, parsed_args, parser, **kwargs):
         return ()
     return (m["id"] for m in models if m["id"].startswith(prefix))
 
-def process_args():
-    """Handle command line arguments and envs."""
+def build_parser():
+    """Build the argparse parser with all the CLI options (extracted from process_args so tests can reuse it)."""
     parser = argparse.ArgumentParser(
         usage='%(prog)s [options...] [prompts...]',
         description="OpenAI-compatible chat CLI.",
@@ -308,6 +308,11 @@ def process_args():
         if action.help != argparse.SUPPRESS and action.default is None:
             action.help += f" [{action.dest}]"
 
+    return parser
+
+def process_args():
+    """Handle command line arguments and envs."""
+    parser = build_parser()
     argcomplete.autocomplete(parser)
 
     config = Config(parser)
