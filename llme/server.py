@@ -302,12 +302,12 @@ class ServerMixin:
     def dump_raw_response(self, message):
         """Append the raw response message to the raw_response_dump file.
         That file is a jsonl file: one complete json message per line.
-        The file is opened once in append mode and kept open."""
+        The file is opened once and kept open."""
         if not self.config.raw_response_dump:
             return
         if self.raw_response_dump_file is None:
             try:
-                self.raw_response_dump_file = open(self.config.raw_response_dump, "a")
+                self.raw_response_dump_file = open(self.config.raw_response_dump, "w")
             except OSError as e:
                 raise AppError(f"Can't open raw response dump {self.config.raw_response_dump}") from e
         self.raw_response_dump_file.write(json.dumps(message) + "\n")
