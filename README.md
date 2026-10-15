@@ -224,7 +224,7 @@ positional arguments:
 options:
   -u, --base-url URL    API base URL [base_url]
   -m, --model NAME      Model name or identifier [model]
-  --list-models         List available models then exit [list_models]
+  --list-models         List available models then exit
   --api-key SECRET      The API key [api_key]
   -b, --batch           *Run non-interactively. Implicit if stdin is not a tty
                         [batch]
@@ -249,7 +249,6 @@ options:
   --no-agents-md        Do not search for AGENTS.md and add it to the system
                         prompt [no_agents_md]
   --dump-system-prompt  *Print the rendered system prompt and quit
-                        [dump_system_prompt]
   --auto-compact AUTO_COMPACT
                         Automatically compact when the context reaches that
                         many tokens (0 for disabled) [auto_compact]
@@ -262,8 +261,7 @@ options:
   --skills-path DIR     Add a skills directory for skill recursive search
                         [skills_path]
   --list-skills         List all discoverable agent skills then exit
-                        [list_skills]
-  --list-tools          List available tools then exit [list_tools]
+  --list-tools          List available tools then exit
   --plugin PATH         Add additional tool (python file or directory)
                         [plugins]
   --tool-mode {markdown,native}
@@ -282,7 +280,8 @@ options:
   --file-mode {part,path,json}
                         How (non image) files are given to the LLM [file_mode]
   -c, --config FILE     Custom configuration files [config]
-  --dump-config         Print the effective config and quit [dump_config]
+  --no-config           *Disable default configuration files
+  --dump-config         *Print the effective config and quit
   --raw-request-dump FILE
                         *Export the full POSTed json payload
                         [raw_request_dump]
@@ -303,17 +302,17 @@ options:
   -Y, --yolo            UNSAFE: Do not ask for confirmation before running
                         tools. Combine with --batch to reach the singularity
                         [yolo]
-  --version             Display version information and quit [version]
-  --completion          Print shell completion script [completion]
+  --version             Display version information and quit
+  --completion          Print shell completion script
   --compaction-prompt COMPACTION_PROMPT
                         *Prompt used in automatic and manual compaction
                         [compaction_prompt]
-  -h, --help            Show the basic options and exit [help]
+  -h, --help            Show the basic options and exit
   --help-full           Show all options and exit (advanced ones have * in
-                        help) [help_full]
+                        help)
 
 Boolean flags can be negated with `--no-`. Example `--no-plain` to force
-colors in a non TTY
+colors in a non TTY. --- Use bracketed names in config files.
 ```
 <!--/help-->
 
