@@ -221,9 +221,9 @@ class Warmup:
         Note: because of httpx limitation there is no real way to cancel the request. This is mildly annoying."""
 
         url = f"{self.llm.config.base_url}/chat/completions"
-        json = {
+        payload = {
             "model": self.llm.model,
-            "messages": self.llm.raw_messages, # use the raw message with system prompt for warmup
+            "messages": self.llm.raw_messages or [{"role":"user","content":"hello"}], # use the raw message with system prompt for warmup
             "max_completion_tokens":1,
             "max_tokens":1,
             "temperature":0,
@@ -233,7 +233,7 @@ class Warmup:
         try:
             # note: most of the warmup time is spend in httpx.get, response is only set when a response is transmitted
             # there is no sane way to cancel it, unfortunately
-            response = httpx.post(url=url, headers=self.llm.api_headers, json=json, timeout=None)
+            response = httpx.post(url=url, headers=self.llm.api_headers, json=payload, timeout=None)
             response.raise_for_status() # Care for errors
             response.close() # Do not care for content
         except httpx.HTTPError as e:
