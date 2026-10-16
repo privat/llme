@@ -33,7 +33,7 @@ from .errors import AppError
 from .history import HistoryMixin
 from .logging import set_verbose
 from .loop import LoopMixin
-from .server import ServerMixin, Warmup, extract_requests_error
+from .server import Metrics, ServerMixin, Warmup, extract_requests_error
 from .terminal import Spinner
 from .tools import Asset, Tool, ToolsMixin, all_tools, list_tools, load_plugin, register_builtin_tools, tool
 from .ui import SlashCompleter, UIMixin
@@ -173,66 +173,6 @@ class LLME(HistoryMixin, ServerMixin, ToolsMixin, UIMixin, LoopMixin):
             cprint(f"Total: {self.metrics.infoline(self.metrics.total, self)}", "light_grey")
         if self.config.session:
             cprint(f"Continue this session with --session {self.config.session}", "light_cyan")
-
-def add_in_dict(total, delta):
-    """Deep increase of all values in total"""
-    for key, value in delta.items():
-        if key in total:
-            if isinstance(value, dict):
-                add_in_dict(total[key], value)
-            elif isinstance(value, int) or isinstance(value, float):
-                total[key] += value
-            else:
-                logger.warning("Metrics: unmanaged type for key %s: %r", key, value)
-        else:
-            total[key] = value
-
-
-class Metrics:
-    """Help accounting various metrics"""
-    def __init__(self):
-        self.total = {}
-        self.history = []
-
-    def predicted_n(self):
-        return self.total.get("predicted_n", 0)
-
-    def update(self, d):
-        """Add all"""
-        self.history.append(d)
-        add_in_dict(self.total, d)
-
-    def infoline(self, d, llme=None):
-        """Write a concise infoline"""
-        info = []
-        if llme and llme.token_budget:
-            # token_budget is guaranteed non-zero by the condition above
-            used = self.predicted_n() - llme.token_budget_start
-            info.append(f"budget:%dt/%dt %.0f%%" % (used, llme.token_budget, 100.0 * used / llme.token_budget))
-        if "cache_n" in d:
-            # The durations can be zero (ex: a fully cached prompt)
-            prompt_rate = (1000.0 * d["prompt_n"] / d["prompt_ms"]) if d.get("prompt_ms") else 0.0
-            predicted_rate = (1000.0 * d["predicted_n"] / d["predicted_ms"]) if d.get("predicted_ms") else 0.0
-            info.append(f"cache:%dt prompt:%dt %.2ft/s predicted:%dt %.2ft/s" % (
-                d["cache_n"],
-                d["prompt_n"],
-                prompt_rate,
-                d["predicted_n"],
-                predicted_rate,
-            ))
-        elif "prompt_tokens" in d:
-            info.append(f"prompt:%dt predicted:%dt" % (
-                d["prompt_tokens"],
-                d["completion_tokens"],
-            ))
-        info.append(f"resp:%.2fs + 1st:%.2fs + last:%.2fs = %.2fs" % (
-            d["response_ms"] / 1000.0,
-            d["first_token_ms"] / 1000.0,
-            d["last_token_ms"] / 1000.0,
-            d["total_ms"] / 1000.0,
-        ))
-        return " ".join(info)
-
 
 def main():
     """The main CLI entry point."""
