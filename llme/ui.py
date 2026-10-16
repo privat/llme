@@ -301,6 +301,11 @@ class UIMixin:
             set_verbose(val)
         elif opt == "model":
             self.model = val
+        elif opt == "api_key":
+            if val:
+                self.api_headers["Authorization"] = f"Bearer {val}"
+            else:
+                self.api_headers.pop("Authorization", None)
         logger.info("set %s: %r", opt, val)
         self.config.set(opt, val)
 
