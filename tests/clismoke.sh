@@ -390,6 +390,11 @@ et s-set2 llme --dummy '/set bad' hello "$@" &&
 	validate_err "Syntax error"
 et s-set3 llme --dummy '/set' hello "$@" &&
 	validate_err "Missing setting"
+# an exact match must not be ambiguous (system_prompt vs system_prompt_template)
+t s-set4 llme --dummy '/set system_prompt=foo' /clear hello "$@" &&
+	validate_log '0a system' '0b system: foo' '1b user: hello' '2b assistant'
+et s-set5 llme --dummy '/set system_p=foo' hello "$@" &&
+	validate_err "Ambiguous setting"
 # prefix
 t slash1 llme --dummy /he hello "$@" &&
 	smoke "list available models"

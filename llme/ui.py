@@ -296,7 +296,9 @@ class UIMixin:
         opts = [ k for k in self.config.to_dict() if k.startswith(opt)]
         if not opts:
             raise AppError(f"Unknown setting: {opt}")
-        if len(opts) > 1:
+        if opt in opts:
+            opts = [opt]  # an exact match is never ambiguous
+        elif len(opts) > 1:
             raise AppError(f"Ambiguous setting: {opt} could match {', '.join(opts)}")
         opt = opts[0]
 
