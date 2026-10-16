@@ -18,6 +18,10 @@ from .tools import Asset
 
 logger = logging.getLogger('llme')
 
+# Options that have no runtime effect (read-only at startup or one-shot)
+notsettable = ["chat_input", "config", "no_session", "no_skills", "plugins", "prompts", "session"]
+# Options that take effect only after reset/compact (warn on change)
+later_warn = [ "system_prompt", "system_prompt_template", "tool_mode", "skills_path", "no_agents_md" ]
 
 class UIMixin:
     """LLME mixin: interactive UI (prompt, key bindings, slash commands)."""
@@ -296,6 +300,9 @@ class UIMixin:
             raise AppError(f"Ambiguous setting: {opt} could match {', '.join(opts)}")
         opt = opts[0]
 
+        if opt in notsettable:
+            raise AppError(f"Setting {opt!r} cannot be changed at runtime")
+
         if opt == "verbose":
             val = int(val)
             set_verbose(val)
@@ -318,6 +325,9 @@ class UIMixin:
                 self.raw_response_dump_file = None
         logger.info("set %s: %r", opt, val)
         self.config.set(opt, val)
+        if opt in later_warn:
+            cprint(f"Setting {opt!r} will only take effect after /reset or /compact", color="light_cyan")
+
 
 path_completer = prompt_toolkit.completion.PathCompleter(expanduser=True)
 dir_completer = prompt_toolkit.completion.PathCompleter(expanduser=True, only_directories=True)
@@ -357,7 +367,6 @@ class SlashCompleter(prompt_toolkit.completion.Completer):
 
 class SetOptionCompleter(prompt_toolkit.completion.Completer):
     """A completer for the option of /set."""
-    notsettable = ["config", "no_session", "no_skills", "plugins", "prompts", "session"]
     models_cache_ttl = 5 # seconds: completions are frequent, don't hammer the server
 
     def __init__(self, llme):
@@ -378,7 +387,7 @@ class SetOptionCompleter(prompt_toolkit.completion.Completer):
             return
         # A option name is being typed
         for opt, value in self.config.to_dict().items():
-            if opt in self.notsettable:
+            if opt in notsettable:
                 continue
             if not opt.startswith(name):
                 continue
