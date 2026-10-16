@@ -17,34 +17,22 @@
 
 """A command-line assistant for local LLMs"""
 
-import argparse
-import argcomplete
-import json
 import logging
 import os
-import subprocess
 import sys
 
-from . import skills
-
 from .slash import all_slash_commands
-from .config import Config, YAMLAction, config_completer, process_args, resolve_config
+from .config import process_args
 from .errors import AppError
 from .history import HistoryMixin
-from .logging import set_verbose
 from .loop import LoopMixin
 from .server import Metrics, ServerMixin, Warmup, extract_requests_error
-from .terminal import Spinner
-from .tools import Asset, Tool, ToolsMixin, all_tools, list_tools, load_plugin, register_builtin_tools, tool
+from .tools import ToolsMixin, list_tools, register_builtin_tools
 from .ui import SlashCompleter, UIMixin
 
 import prompt_toolkit
 import httpx
 from termcolor import cprint
-try:
-    from termcolor import can_colorize # Exported since v3.2.0
-except ImportError:
-    from termcolor.termcolor import _can_do_colour as can_colorize # Was private before v3.2.0
 
 # The global logger of the module
 logger = logging.getLogger('llme')
