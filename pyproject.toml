@@ -27,6 +27,9 @@ dependencies = [
     "jinja2",
 ]
 
+[dependency-groups]
+dev = ["pytest"]
+
 [project.urls]
 Repository = "https://github.com/privat/llme"
 
