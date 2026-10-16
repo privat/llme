@@ -5,6 +5,8 @@ import sys
 
 from termcolor import colored
 
+from .errors import AppError
+
 logger = logging.getLogger('llme')
 
 
@@ -25,6 +27,21 @@ def set_verbose(level):
     consolehandler.setLevel(logging_level)
     consolehandler.setFormatter(ColorFormatter())
     logger.info("Log level set to %s", logging.getLevelName(logger.level))
+
+def set_log_file(path):
+    """Switch the logger's file handler to write to a new path.
+    Removes any existing FileHandler and adds a new one."""
+    for h in [h for h in logger.handlers if isinstance(h, logging.FileHandler)]:
+        logger.removeHandler(h)
+        h.close()
+    try:
+        filehandler = logging.FileHandler(path)
+    except OSError as e:
+        raise AppError(f"Can't open log file {path}") from e
+    filehandler.setLevel(logging.DEBUG)
+    logger.setLevel(logging.DEBUG)
+    filehandler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+    logger.addHandler(filehandler)
 
 class ColorFormatter(logging.Formatter):
     """A simple colored formatter."""

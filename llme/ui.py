@@ -13,7 +13,7 @@ from . import skills
 from .config import search_action
 from .slash import slash
 from .errors import AppError, CancelEvent, QuitEvent
-from .logging import set_verbose
+from .logging import set_verbose, set_log_file
 from .tools import Asset
 
 logger = logging.getLogger('llme')
@@ -323,6 +323,10 @@ class UIMixin:
             if self.raw_response_dump_file is not None:
                 self.raw_response_dump_file.close()
                 self.raw_response_dump_file = None
+        elif opt == "log_file":
+            # Switch the log file handler to write to a new path
+            if val:
+                set_log_file(val)
         logger.info("set %s: %r", opt, val)
         self.config.set(opt, val)
         if opt in later_warn:
