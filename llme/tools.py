@@ -380,3 +380,30 @@ class ToolsMixin:
     @slash("tools", "list available tools")
     def cmd_tools(self):
         list_tools()
+
+
+def load_module(path):
+    """Just load a random python file. I'm not sure why its so complex"""
+    import importlib.machinery
+    basename = os.path.basename(path)
+    name, ext = os.path.splitext(basename)
+    try:
+        return importlib.machinery.SourceFileLoader(name, path).load_module()
+    except OSError as e:
+        raise AppError(f"Can't load plugin {path}") from e
+
+def load_plugin(path):
+    """Load a single python module, or all python modules of a directory."""
+    if os.path.isdir(path):
+        for filename in os.listdir(path):
+            if filename.endswith(".py"):
+                filepath = os.path.join(path, filename)
+                load_module(filepath)
+    else:
+        load_module(path)
+
+def register_builtin_tools(llme):
+    """Register the built-in tools bound to the given LLME instance."""
+    tool(llme.run_command)
+    tool(llme.update_file)
+    tool(llme.image_description, has_parts=True)

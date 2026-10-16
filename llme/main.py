@@ -35,7 +35,7 @@ from .logging import set_verbose
 from .loop import LoopMixin
 from .server import ServerMixin, Warmup, extract_requests_error
 from .terminal import Spinner
-from .tools import Asset, Tool, ToolsMixin, all_tools, list_tools, tool
+from .tools import Asset, Tool, ToolsMixin, all_tools, list_tools, load_plugin, register_builtin_tools, tool
 from .ui import SlashCompleter, UIMixin
 
 import prompt_toolkit
@@ -234,26 +234,6 @@ class Metrics:
         return " ".join(info)
 
 
-def load_module(path):
-    """Just load a random python file. I'm not sure why its so complex"""
-    import importlib.machinery
-    basename = os.path.basename(path)
-    name, ext = os.path.splitext(basename)
-    try:
-        return importlib.machinery.SourceFileLoader(name, path).load_module()
-    except OSError as e:
-        raise AppError(f"Can't load plugin {path}") from e
-
-def load_plugin(path):
-    """Load a single python module, or all python modules of a directory."""
-    if os.path.isdir(path):
-        for filename in os.listdir(path):
-            if filename.endswith(".py"):
-                filepath = os.path.join(path, filename)
-                load_module(filepath)
-    else:
-        load_module(path)
-
 def show_version():
     """Print the version number.
     Note: version information with importlib.metadata is garbage as this mishandle both "dev" installation, and a possible concurrent old version. So we do it the old way with git and a _version file"""
@@ -417,13 +397,6 @@ def process_args():
         args.history_filename = os.path.expanduser("~/.config/llme/history")
 
     return config
-
-
-def register_builtin_tools(llme):
-    """Register the built-in tools bound to the given LLME instance."""
-    tool(llme.run_command)
-    tool(llme.update_file)
-    tool(llme.image_description, has_parts=True)
 
 
 def main():
