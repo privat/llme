@@ -306,6 +306,16 @@ class UIMixin:
                 self.api_headers["Authorization"] = f"Bearer {val}"
             else:
                 self.api_headers.pop("Authorization", None)
+        elif opt == "chat_output":
+            # Close old file so the next write opens the new path
+            if self.chat_output_file is not None:
+                self.chat_output_file.close()
+                self.chat_output_file = None
+        elif opt == "raw_response_dump":
+            # Close old file so the next write opens the new path
+            if self.raw_response_dump_file is not None:
+                self.raw_response_dump_file.close()
+                self.raw_response_dump_file = None
         logger.info("set %s: %r", opt, val)
         self.config.set(opt, val)
 
