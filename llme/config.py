@@ -154,9 +154,16 @@ def setconf(parser, args, name, value):
     action = search_action(parser, name)
     if not action:
         raise AppError(f"Unknown setting {name}")
+    if value == "":
+        # An empty value unsets the option (ex: /set temperature=)
+        setattr(args, action.dest, [] if isinstance(action, argparse._AppendAction) else None)
+        return
     if action.type == bool or isinstance(action, argparse._StoreTrueAction):
         # Special case for bool, as the action just store True
-        value = str2bool(value)
+        try:
+            value = str2bool(value)
+        except ValueError:
+            raise AppError(f"Invalid value for {name}: {value}")
         setattr(args, action.dest, value)
         return
     elif isinstance(action, argparse._CountAction):
@@ -173,8 +180,16 @@ def setconf(parser, args, name, value):
         setattr(args, action.dest, list(items) + list(value))
         return
     elif action.type:
-        value = action.type(value)
-    action(parser, args, value)
+        try:
+            value = action.type(value)
+        except ValueError:
+            raise AppError(f"Invalid value for {name}: {value}")
+    if action.choices is not None and value not in action.choices:
+        raise AppError(f"Invalid value for {name}: {value} (choose from {', '.join(action.choices)})")
+    try:
+        action(parser, args, value)
+    except ValueError as e:
+        raise AppError(f"Invalid value for {name}: {e}") from e
 
 class Config(argparse.Namespace):
     """The effective configuration.
@@ -201,7 +216,10 @@ class YAMLAction(argparse.Action):
             orig = {}
             setattr(namespace, self.dest, orig)
         # QOL hack
-        delta = yaml.safe_load(values)
+        try:
+            delta = yaml.safe_load(values)
+        except yaml.YAMLError as e:
+            raise ValueError(f"bad YAML: {e}") from e
         if type(delta) != dict:
             s = json.dumps(delta)
             raise ValueError(f"Expected JSON object, got {s}")

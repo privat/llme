@@ -306,10 +306,13 @@ class UIMixin:
             raise AppError(f"Setting {opt!r} cannot be changed at runtime")
 
         if opt == "verbose":
-            val = int(val)
+            try:
+                val = int(val) if val else 0
+            except ValueError:
+                raise AppError(f"Invalid value for verbose: {val}")
             set_verbose(val)
         elif opt == "model":
-            self.model = val
+            self.model = val or None
         elif opt == "api_key":
             if val:
                 self.api_headers["Authorization"] = f"Bearer {val}"

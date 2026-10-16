@@ -395,6 +395,21 @@ t s-set4 llme --dummy '/set system_prompt=foo' /clear hello "$@" &&
 	validate_log '0a system' '0b system: foo' '1b user: hello' '2b assistant'
 et s-set5 llme --dummy '/set system_p=foo' hello "$@" &&
 	validate_err "Ambiguous setting"
+# /set with suspicious values must fail cleanly (no traceback), an empty value unsets the option
+t s-set6 llme --dummy '/set temperature=0.5' hello "$@" &&
+	validate_chat system hello assistant
+et s-set7 llme --dummy '/set plain=5' "$@" &&
+	validate_err "Invalid value for plain: 5"
+et s-set8 llme --dummy '/set temperature=abc' "$@" &&
+	validate_err "Invalid value for temperature: abc"
+et s-set9 llme --dummy '/set verbose=x' "$@" &&
+	validate_err "Invalid value for verbose: x"
+et s-set10 llme --dummy '/set tool_mode=foo' "$@" &&
+	validate_err "Invalid value for tool_mode: foo"
+et s-set11 llme --dummy '/set extra_body=[1,2' "$@" &&
+	validate_err "Invalid value for extra_body"
+t s-set12 llme --dummy '/set temperature=' /config "$@" &&
+	validate_with grep -q "temperature: None" "$LOGDIR/out.txt"
 # prefix
 t slash1 llme --dummy /he hello "$@" &&
 	smoke "list available models"
