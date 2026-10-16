@@ -205,63 +205,6 @@ class UIMixin:
             logger.warning("Selected model %s not listed", self.model)
         return models
 
-    def print_message(self, i, message, before=""):
-        role = message.role()
-        if before:
-            colors = {"system": "yellow", "user": "green", "assistant": "blue", "tool": "yellow"}
-        else:
-            colors = {"system": "light_yellow", "user": "light_green", "assistant": "light_blue", "tool": "light_yellow"}
-        color = colors[role]
-        content = message.content()
-        tools = message.tool_calls()
-        if tools:
-            content += f"[tools: {', '.join(t['function']['name']+str(t['function']['arguments']) for t in tools)}]"
-        content = re.sub(r"\s+", " ", content).strip()
-        import shutil
-        size = shutil.get_terminal_size()
-        prefix = f"{i} {role}: "
-        width = size.columns - len(prefix) - 5 - len(before)
-        if len(content) > width:
-            content = content[:width].rstrip() + "..."
-        if before != "":
-            content = colored(content, "light_grey")
-        print(before + colored(prefix, color) + content)
-
-
-    @slash("history", "list condensed conversation history")
-    def list_history(self):
-        "Print the history of messages"
-        for i, message in enumerate(self.history):
-            if self.message_index and i >= self.message_index:
-                break
-            self.print_message(i, message)
-
-    @slash("full-history", "list hierarchical conversation history (with forks)")
-    def list_full_history(self):
-        "Print the full history with nice indentation."
-        siblings = self.roots
-        for i, message in enumerate(self.history):
-            if self.message_index and i >= self.message_index:
-                break
-            self.print_tree(siblings, "", message)
-            self.print_message(message.prefix(), message)
-            siblings = message.children # next siblings
-        self.print_tree(siblings, "", True)
-
-    def print_tree(self, messages, prefix="", special=None):
-        if not messages:
-            return
-        if special:
-            last = -1
-        else:
-            last = len(messages) - 1
-        for i, child in enumerate(messages):
-            if child == special:
-                continue
-            cid = child.prefix()
-            self.print_message(cid, child, prefix + ("├─" if i != last else ""))
-            self.print_tree(child.children, prefix + ("│ " if i != last else ""))
-
     # ---- Slash commands (dispatched by slash_command) ----
 
     @slash("file", "attach a file for the next prompt", metavar="FILE", missing="paths", complete="path")
