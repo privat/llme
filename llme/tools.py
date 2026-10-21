@@ -288,7 +288,7 @@ class ToolsMixin:
         `suffix` should also be short. It must appear in the file after `prefix`.
         Otherwise, an error is thrown and the file remain unchanged.
 
-        example: `update_file("README.md", "# Introduction", "# Usage", "# Introduction\n\nlorem ipsum...\n\n# Usage")`
+        example: `update_file("README.md", "# Introduction", "# Usage", "# Introduction\\n\\nlorem ipsum...\\n\\n# Usage")`
         """
         data = self.read_file(path)
         prefix_b = prefix.encode()
