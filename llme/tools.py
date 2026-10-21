@@ -307,12 +307,12 @@ class ToolsMixin:
         old = data[i:j]
         new_data = data[:i] + new_content.encode() + data[j:]
         self.write_file(path, new_data)
-        deletions = insertions = 0
+        deletions = insertions = -1 # cancel the --- +++ tags
         import difflib
-        for line in difflib.unified_diff(old.decode().splitlines(), new_data.decode().splitlines(), path, path):
-            if line[0] == '+':
+        for line in difflib.unified_diff(old.decode().splitlines(), new_content.splitlines(), path, path):
+            if line[0] == "+":
                 insertions += 1
-            elif line[0] == '-':
+            elif line[0] == "-":
                 deletions += 1
         message = f"{path}: {insertions} insertions(+), {deletions} deletions(-)"
         cprint(message, color="yellow")
