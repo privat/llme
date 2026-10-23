@@ -573,6 +573,10 @@ t agents4 llme --dummy hello "$@" &&
 t agents5 sh -c 'mkdir sub && cd sub && llme --dummy --dump-system-prompt "$@"' sh "$@" &&
 	smoke "DUMMY-AGENTS-MD"
 
+# a broken --box must give a clean error, not a traceback
+et box-broken llme --dummy -s hi --box nonexistent-cmd hello "$@" &&
+	validate_err "Box command failed"
+
 # a single malformed SKILL.md (unclosed frontmatter) must
 # not crash llme at startup; it is skipped with a warning naming the file
 t badskill sh -c '

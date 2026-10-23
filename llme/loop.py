@@ -2,6 +2,7 @@
 
 import logging
 import os
+import subprocess
 import time
 
 import httpx
@@ -241,8 +242,13 @@ class LoopMixin:
         else:
             tools = None
         self.skills = skills.discover_skills(self.config.skills_path)
-        date = self.direct_run_command("date").decode().strip()
-        pwd = self.direct_run_command("pwd").decode().strip()
+        # A broken box (missing command, ssh drop, ...) must give a clean
+        # error, not a traceback at startup
+        try:
+            date = self.direct_run_command("date").decode().strip()
+            pwd = self.direct_run_command("pwd").decode().strip()
+        except (OSError, subprocess.CalledProcessError) as e:
+            raise AppError(f"Box command failed: {e}")
 
         context = {
                 "system_prompt": self.config.system_prompt,
