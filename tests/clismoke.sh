@@ -573,6 +573,16 @@ t agents4 llme --dummy hello "$@" &&
 t agents5 sh -c 'mkdir sub && cd sub && llme --dummy --dump-system-prompt "$@"' sh "$@" &&
 	smoke "DUMMY-AGENTS-MD"
 
+# update_file must count insertions/deletions in the
+# replaced region only (1 line -> 2 lines = 2 insertions, 1 deletion),
+# not against the whole new file
+t updatefile sh -c '
+    printf "alpha\nbeta\ngamma\n" > f.txt
+    llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses-updatefile.jsonl" --yolo hello
+' "$@" &&
+	smoke "f.txt: 2 insertions(+), 1 deletions(-)" &&
+	validate_with grep -qx "BETA2" "$WORKDIR/f.txt"
+
 # with a box, image_description must look for the file
 # through the box, not locally. box-emptydir.sh runs commands in an empty
 # directory: img.jpg exists locally but not "in the box", so the tool must

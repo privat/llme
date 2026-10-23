@@ -1,0 +1,2 @@
+{"role": "assistant", "tool_calls": [{"index": 0, "id": "tc1", "type": "function", "function": {"name": "update_file", "arguments": "{\"path\": \"f.txt\", \"prefix\": \"beta\", \"suffix\": \"\", \"new_content\": \"BETA1\\nBETA2\"}"}}]}
+{"role": "assistant", "content": "Updated."}
