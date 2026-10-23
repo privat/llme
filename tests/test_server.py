@@ -342,6 +342,23 @@ def test_get_models_states(server, app):
     assert {m["id"]: m["state"] for m in models} == {"a": None, "b": "loaded"}
 
 
+def test_get_models_skips_bogus_entries(server, app):
+    """Entries without an id, with a non-dict status (or non-dict) must be skipped, not crash /models."""
+    server.add(200, {"data": [
+        {"id": "m1"},
+        {"status": {"value": "loaded"}},  # no id
+        {"id": "m2", "status": "loaded"},  # status is not a dict
+        "not-a-dict",
+    ]}, {"Content-Type": "application/json"})
+    models = app.get_models()
+    assert {m["id"]: m["state"] for m in models} == {"m1": None, "m2": None}
+
+
+def test_get_models_unexpected_response(server, app):
+    server.add(200, [1, 2, 3], {"Content-Type": "application/json"})
+    assert app.get_models() is None
+
+
 def _queue_models(server, data):
     body = {"data": data}
     # both start() and list_models() fetch the model list

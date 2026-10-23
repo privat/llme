@@ -573,6 +573,11 @@ t agents4 llme --dummy hello "$@" &&
 t agents5 sh -c 'mkdir sub && cd sub && llme --dummy --dump-system-prompt "$@"' sh "$@" &&
 	smoke "DUMMY-AGENTS-MD"
 
+# a malformed --dummy-responses jsonl gives a clean error
+# with the line number, not a raw JSONDecodeError traceback
+et dummyres-badfile llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses-bad.jsonl" hello "$@" &&
+	validate_err "bad json on line 1"
+
 # a corrupted session file (e.g. llme killed mid-write, or
 # a line without role) must give a clean error WITHOUT losing data: the
 # reload used to truncate and rewrite the session file as it re-added

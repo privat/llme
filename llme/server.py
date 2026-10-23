@@ -139,7 +139,14 @@ def load_dummy_responses(path):
         data = None
     if data is None:
         # Not a single json document: assume jsonl (one raw response per line)
-        data = [json.loads(line) for line in content.splitlines() if line.strip()]
+        data = []
+        for n, line in enumerate(content.splitlines(), 1):
+            if not line.strip():
+                continue
+            try:
+                data.append(json.loads(line))
+            except json.JSONDecodeError as e:
+                raise AppError(f"Invalid dummy responses file {path}: bad json on line {n}") from e
     elif isinstance(data, dict):
         data = [data]
     if not isinstance(data, list):
@@ -345,12 +352,23 @@ class ServerMixin:
             logger.error("Error getting models: %s", extract_requests_error(e))
             return None
         models = response.json()
-        ids = [m["id"] for m in models["data"]]
+        # Be defensive on the model list: entries without an "id" or
+        # with a non-dict "status" must not crash /models or the model
+        # auto-selection.
+        if not isinstance(models, dict) or not isinstance(models.get("data"), list):
+            logger.error("Unexpected /models response: %s", str(models)[:200])
+            return None
+        data = []
         for m in models["data"]:
+            if not isinstance(m, dict) or "id" not in m:
+                logger.warning("Skipping model entry without id: %r", m)
+                continue
             # llama.cpp give a status field
-            m["state"] = m.get("status", {}).get("value")
-        logger.info("Available models: %s", ids)
-        return models["data"]
+            status = m.get("status")
+            m["state"] = status.get("value") if isinstance(status, dict) else None
+            data.append(m)
+        logger.info("Available models: %s", [m["id"] for m in data])
+        return data
 
 
     def next_dummy_response(self):
@@ -361,7 +379,7 @@ class ServerMixin:
             self.dummy_responses_queue = load_dummy_responses(self.config.dummy_responses)
         if self.dummy_responses_index >= len(self.dummy_responses_queue):
             if self.dummy_responses_index == len(self.dummy_responses_queue):
-                logger.info("No more dummy responses in %s (needed response #%d", self.config.dummy_responses, self.dummy_responses_index+1)
+                logger.info("No more dummy responses in %s (needed response #%d)", self.config.dummy_responses, self.dummy_responses_index+1)
             message = {"role":"assistant","content":"Dummy response filler"}
         else:
             message = self.dummy_responses_queue[self.dummy_responses_index]
