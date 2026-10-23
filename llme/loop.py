@@ -153,8 +153,11 @@ class LoopMixin:
                 cprint(f"Throttled for {delay}s...", "light_cyan")
                 time.sleep(delay)
                 return
-            with Spinner("light_cyan", self.config.plain):
+            with Spinner("light_cyan", self.config.plain) as am:
                 for i in range(delay, 0, -1):
+                    # Stop the spinner while printing, or the two write
+                    # over each other on the same line
+                    am.stop()
                     cprint(f"  Throttled for {i}s... ", "light_cyan", end="")
                     time.sleep(1)
         except KeyboardInterrupt:
@@ -210,7 +213,7 @@ class LoopMixin:
                 self.failsafe = True
                 import traceback
                 traceback.print_exc()
-                logger.error("Unexpected and uncatched exception: %s\nllme might be now, proceed with caution.", e)
+                logger.error("Unexpected and uncatched exception: %s\nllme might be in a bad state, proceed with caution.", e)
                 self.rollback()
             if self.config.batch:
                 break
