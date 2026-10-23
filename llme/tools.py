@@ -320,7 +320,21 @@ class ToolsMixin:
 
     def image_description(self, path: str):
         """Returns a description of the given image. Useful for OCR, general description or any meaningful information."""
-        # FIXME: work with sandbox
+        import base64
+        import magic
+        if self.config.box:
+            # The file is on the other side of the box: read it through
+            # the box, not locally
+            import shlex
+            try:
+                raw = self.direct_run_command(f"cat {shlex.quote(path)}")
+            except (OSError, subprocess.CalledProcessError):
+                return f"Error: path {path} not found"
+            mime = magic.from_buffer(raw, mime=True)
+            if not mime.startswith("image/"):
+                return f"Error: {path} is not an image but {mime}"
+            url = f"data:{mime};base64,{base64.b64encode(raw).decode()}"
+            return [{"type": "image_url", "image_url": {"url": url}}]
         if not os.path.exists(path):
             return f"Error: path {path} not found"
         file = Asset(path)

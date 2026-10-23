@@ -1,0 +1,2 @@
+{"role":"assistant","tool_calls":[{"index":0,"id":"tc1","type":"function","function":{"name":"image_description","arguments":"{\"path\": \"img.jpg\"}"}}]}
+{"role":"assistant","content":"Described."}

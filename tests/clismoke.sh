@@ -573,6 +573,17 @@ t agents4 llme --dummy hello "$@" &&
 t agents5 sh -c 'mkdir sub && cd sub && llme --dummy --dump-system-prompt "$@"' sh "$@" &&
 	smoke "DUMMY-AGENTS-MD"
 
+# with a box, image_description must look for the file
+# through the box, not locally. box-emptydir.sh runs commands in an empty
+# directory: img.jpg exists locally but not "in the box", so the tool must
+# answer "not found" (a string), not return the local image part (a list
+# of content parts).
+t imagebox sh -c '
+    cp "$ORIGDIR/$TESTDIR/data/image.jpg" img.jpg
+    llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses-imagedesc.jsonl" --yolo --box "sh $ORIGDIR/$TESTDIR/data/box-emptydir.sh" hello
+' "$@" &&
+	validate_with jq -se '[.[] | select(.role == "tool")][0].content | type == "string" and contains("not found")' "$LOGDIR/chat.jsonl"
+
 # the --model completion (argcomplete) must work
 t modelcompleter sh -c '
     COMP_LINE="llme --dummy --model " COMP_POINT=21 _ARGCOMPLETE=1 _ARGCOMPLETE_SHELL=bash llme 8>&1
