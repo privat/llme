@@ -573,6 +573,20 @@ t agents4 llme --dummy hello "$@" &&
 t agents5 sh -c 'mkdir sub && cd sub && llme --dummy --dump-system-prompt "$@"' sh "$@" &&
 	smoke "DUMMY-AGENTS-MD"
 
+# a corrupted session file (e.g. llme killed mid-write, or
+# a line without role) must give a clean error WITHOUT losing data: the
+# reload used to truncate and rewrite the session file as it re-added
+# the messages, so the failure point became the new (shorter) end of file.
+et corrupt-resume sh -c '
+    unset LLME_CHAT_OUTPUT
+    mkdir -p s1
+    llme --dummy -s SP --session s1 hello hello2 || exit 1
+    sed -i "3s/.*/{\"content\":\"no role\"}/" s1/chat.jsonl
+    llme --dummy -s SP --session s1 world
+' "$@" &&
+	validate_err "Can.t load chat" &&
+	validate_with [ "$(grep -c . "$WORKDIR/s1/chat.jsonl")" -eq 5 ]
+
 # /edit must not resurrect the messages cancelled by
 # /undo: the chat is reloaded from the visible prefix (up to the
 # message_index), so the next prompt forks from the position, not from

@@ -311,14 +311,30 @@ class HistoryMixin:
                     messages = yaml.safe_load(f)
                 elif format == "jsonl":
                     messages = []
-                    for line in f:
+                    for n, line in enumerate(f, 1):
                         line = line.strip()
-                        if line:
+                        if not line:
+                            continue
+                        try:
                             messages.append(json.loads(line))
+                        except json.JSONDecodeError as e:
+                            # A truncated last line (e.g. llme killed
+                            # mid-write) must give a clean error, not
+                            # destroy the session file below
+                            raise AppError(f"Can't load chat from {file}: invalid json on line {n}") from e
                 else:
                     if format != "json":
                         logger.error("Unknown format %s. Default as json", format)
                     messages = json.load(f)
+            # Validate everything BEFORE touching the history: the reload
+            # writes the messages to the chat output file (which is the
+            # session file itself on resume), so a single bad line mid-
+            # load used to lose all the following messages.
+            if not isinstance(messages, list):
+                raise AppError(f"Can't load chat from {file}: expected a list of messages")
+            for n, message in enumerate(messages, 1):
+                if not isinstance(message, dict) or "role" not in message:
+                    raise AppError(f"Can't load chat from {file}: message {n} has no role")
             self.reset_messages(messages)
         except (OSError, json.JSONDecodeError, yaml.YAMLError) as e:
             raise AppError(f"Can't load chat from {file}") from e
