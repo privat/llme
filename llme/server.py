@@ -604,9 +604,16 @@ class ServerMixin:
             if v[-1] == 's':
                 v = v[:-1]
             try:
-                return int(v)
-            except:
-                pass
+                delay = int(v)
+            except ValueError:
+                # HTTP-date (retry-after) or other non-numeric value: skip
+                continue
+            if delay < 0 or delay > 86400:
+                # Some providers use epoch timestamps for the x-ratelimit-*
+                # headers: that is not a duration, ignore it
+                logger.warning("Ignoring implausible throttling delay %ss from %s", v, h)
+                continue
+            return delay
         if e.response.status_code == 429:
             # Default throttling
             return 60

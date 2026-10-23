@@ -355,6 +355,8 @@ def make_http_error(status, headers=None):
     ({"x-ratelimit-reset-tokens": "8"}, 8),
     ({"retry-after": "soon"}, 60),  # non numeric, fall back to the default
     ({}, 60),  # 429 default
+    ({"x-ratelimit-reset-requests": "1791674509"}, 60),  # epoch timestamp, not a duration
+    ({"retry-after": "999999999"}, 60),  # implausibly large
 ])
 def test_get_throttling_delay_429(app, headers, expected):
     assert app.get_throttling_delay(make_http_error(429, headers)) == expected
