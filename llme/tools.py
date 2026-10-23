@@ -112,12 +112,14 @@ def list_tools():
 class ToolsMixin:
     """LLME mixin: built-in tools (run_command, file editing, assets)."""
     def cat_write(self, file, stdin):
-        if not os.path.exists(file):
+        # Read the existing file through the box (it may be on the other
+        # side of it), not locally
+        try:
+            old = self.read_file(file).decode().splitlines(keepends=True)
+        except (OSError, subprocess.CalledProcessError):
             return
 
         import difflib
-        with open(file, "r") as f:
-            old = f.readlines()
         new = stdin.splitlines(keepends=True)
         for line in difflib.unified_diff(old, new, file, file):
             if line[0] == '+':
@@ -316,7 +318,9 @@ class ToolsMixin:
                 deletions += 1
         message = f"{path}: {insertions} insertions(+), {deletions} deletions(-)"
         cprint(message, color="yellow")
-        return [message]
+        # Return the plain string: run_tool() would str() a list and the
+        # LLM would see a python repr, "['/path: 2 insertions...']"
+        return message
 
     def image_description(self, path: str):
         """Returns a description of the given image. Useful for OCR, general description or any meaningful information."""

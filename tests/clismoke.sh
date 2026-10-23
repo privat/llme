@@ -573,6 +573,21 @@ t agents4 llme --dummy hello "$@" &&
 t agents5 sh -c 'mkdir sub && cd sub && llme --dummy --dump-system-prompt "$@"' sh "$@" &&
 	smoke "DUMMY-AGENTS-MD"
 
+# the update_file tool result given to the LLM must be
+# the plain message, not a python repr of a list
+t updatefile-str sh -c '
+    printf "alpha\nbeta\ngamma\n" > f.txt
+    llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses-updatefile.jsonl" --yolo hello
+' "$@" &&
+	validate_with jq -se "[.[] | select(.role == \"tool\")][0].content | startswith(\"f.txt: \")" "$LOGDIR/chat.jsonl"
+# cat > file with a box: the diff against the old content
+# must be computed through the box, not against the (local) file
+t catwrite-box sh -c '
+    printf "OLD-CONTENT\n" > f.txt
+    llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses-catwrite.jsonl" --yolo --box "sh $ORIGDIR/$TESTDIR/data/box-emptydir.sh" hello
+' "$@" &&
+	validate_with [ "$(grep -c OLD-CONTENT "$LOGDIR/out.txt")" -eq 0 ]
+
 # a malformed --dummy-responses jsonl gives a clean error
 # with the line number, not a raw JSONDecodeError traceback
 et dummyres-badfile llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses-bad.jsonl" hello "$@" &&
