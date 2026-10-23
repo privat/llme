@@ -434,7 +434,8 @@ class HistoryMixin:
         "Move message_index to the previous message of role, return the message on success"
         candidate = None
         for i, message in enumerate(self.history):
-            if self.message_index and i >= self.message_index:
+            # message_index can be 0 (after /goto 0): use is not None
+            if self.message_index is not None and i >= self.message_index:
                 break
             if message.role() in roles:
                 candidate = i
@@ -587,7 +588,7 @@ class HistoryMixin:
     def list_history(self):
         "Print the history of messages"
         for i, message in enumerate(self.history):
-            if self.message_index and i >= self.message_index:
+            if self.message_index is not None and i >= self.message_index:
                 # A paused tool result is kept in the context: list it
                 if message.role() != "tool":
                     break
@@ -598,7 +599,7 @@ class HistoryMixin:
         "Print the full history with nice indentation."
         siblings = self.roots
         for i, message in enumerate(self.history):
-            if self.message_index and i >= self.message_index:
+            if self.message_index is not None and i >= self.message_index:
                 # A paused tool result is kept in the context: list it
                 if message.role() != "tool":
                     break

@@ -573,6 +573,14 @@ t agents4 llme --dummy hello "$@" &&
 t agents5 sh -c 'mkdir sub && cd sub && llme --dummy --dump-system-prompt "$@"' sh "$@" &&
 	smoke "DUMMY-AGENTS-MD"
 
+# with message_index = 0 (/goto 0), 0 is falsy: /undo must
+# say "nothing to undo" instead of undoing the first user message
+et undo-at-0 llme --dummy hello "/goto 0" /undo "$@" &&
+	validate_err "No user message to undo"
+# and /history must not display messages after the index
+t history-at-0 llme --dummy hello world "/goto 0" /history "$@" &&
+	validate_with [ -z "$(grep 'user: hello' "$LOGDIR/out.txt")" ]
+
 # every result.json must be valid json with a numeric start date (START_DATE
 # is set in prepare() for every test type, not only tllme)
 t resultjson llme --dummy hello "$@" &&
