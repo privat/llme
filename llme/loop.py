@@ -83,8 +83,9 @@ class LoopMixin:
             message = self.history[self.message_index]
             role = message.role()
             logger.info("Index: %s; role: %s", self.message_index, role)
-            if role in ("user", "system"):
+            if role in ("user", "system", "developer"):
                 # A paused user message: edit it and resend
+                # ('developer' is the new OpenAI role that replaces 'system')
                 self.do_user()
             elif role == "tool":
                 # A paused tool result: let the user intervene (insert a
@@ -108,7 +109,7 @@ class LoopMixin:
         previous_role = previous_message.role()
         if previous_role == "user" or previous_role == "tool":
             role = "assistant"
-        elif previous_role == "system":
+        elif previous_role in ("system", "developer"):
             role = "user"
         elif previous_role == "assistant":
             tool_calls = previous_message.tool_calls()
@@ -119,7 +120,7 @@ class LoopMixin:
                 self.add_message({"role": "user", "content": "final answer now. No more tools available. You have to conclude."})
                 tools=[]
             self.do_assistant(tools=tools)
-        elif previous_role == "system":
+        elif previous_role in ("system", "developer"):
             self.do_user()
         elif previous_role == "assistant":
             tool_calls = previous_message.tool_calls()
@@ -137,6 +138,11 @@ class LoopMixin:
                             cprint(f"{self.prompt_prefix()}> Auto-compaction ({context_tokens} tokens)", color="light_cyan")
                             self.compact()
                 self.do_user()
+        else:
+            # Unknown role at the end of the history: get the next user
+            # prompt instead of looping forever
+            logger.warning("Unknown role %r at the end of the history", previous_role)
+            self.do_user()
         return None
 
     def do_sleep(self, delay):

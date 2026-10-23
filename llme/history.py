@@ -51,7 +51,7 @@ class Message:
             meta["parent"] = parent.id
 
     def role(self):
-        return self.data["role"]
+        return self.data.get("role", "unknown")
 
     def content(self):
         """The text content of a message"""
@@ -567,7 +567,9 @@ class HistoryMixin:
             colors = {"system": "yellow", "user": "green", "assistant": "blue", "tool": "yellow"}
         else:
             colors = {"system": "light_yellow", "user": "light_green", "assistant": "light_blue", "tool": "light_yellow"}
-        color = colors[role]
+        # Unknown roles (e.g. the OpenAI 'developer' role) must not crash
+        # the history display
+        color = colors.get(role, "light_yellow")
         content = message.content()
         tools = message.tool_calls()
         if tools:

@@ -573,6 +573,14 @@ t agents4 llme --dummy hello "$@" &&
 t agents5 sh -c 'mkdir sub && cd sub && llme --dummy --dump-system-prompt "$@"' sh "$@" &&
 	smoke "DUMMY-AGENTS-MD"
 
+# an unknown role (e.g. OpenAI 'developer') must not crash
+# /history (KeyError on the colors dict)
+t devrole sh -c '
+    printf "{\"role\": \"developer\", \"content\": \"dev msg\"}\n" > dev.jsonl
+    llme --dummy -s sys "/load dev.jsonl" /history
+' "$@" &&
+	smoke "developer: dev msg"
+
 # with message_index = 0 (/goto 0), 0 is falsy: /undo must
 # say "nothing to undo" instead of undoing the first user message
 et undo-at-0 llme --dummy hello "/goto 0" /undo "$@" &&
