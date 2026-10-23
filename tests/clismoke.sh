@@ -573,6 +573,12 @@ t agents4 llme --dummy hello "$@" &&
 t agents5 sh -c 'mkdir sub && cd sub && llme --dummy --dump-system-prompt "$@"' sh "$@" &&
 	smoke "DUMMY-AGENTS-MD"
 
+# the --model completion (argcomplete) must work
+t modelcompleter sh -c '
+    COMP_LINE="llme --dummy --model " COMP_POINT=21 _ARGCOMPLETE=1 _ARGCOMPLETE_SHELL=bash llme 8>&1
+' "$@" &&
+	smoke dummy
+
 # a broken --box must give a clean error, not a traceback
 et box-broken llme --dummy -s hi --box nonexistent-cmd hello "$@" &&
 	validate_err "Box command failed"

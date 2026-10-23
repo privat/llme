@@ -253,9 +253,14 @@ def model_completer(prefix, parsed_args, parser, **kwargs):
     """completer on --model for argcomplete"""
     from .main import LLME # Local import: main imports config, so this must not be at module level
     # Models list depend on the other options (config and url), so parse them before!
-    resolve_config(parser, parsed_args)
-    llme = LLME(parsed_args)
-    models = llme.get_models()
+    # argcomplete passes a partial namespace: anything can fail here, and a
+    # failing completer must just mean "no completion", never an error.
+    try:
+        resolve_config(parser, parsed_args)
+        llme = LLME(parsed_args)
+        models = llme.get_models()
+    except Exception:
+        return ()
     if not models:
         return ()
     return (m["id"] for m in models if m["id"].startswith(prefix))

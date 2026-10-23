@@ -2,12 +2,14 @@
 The completers run against the real CLI parser and the real slash command registry, covering the space of options, metavars, choices and completion kinds.
 The server is never contacted: get_models is mocked.
 """
+import argparse
+
 import pytest
 from prompt_toolkit.completion import CompleteEvent
 from prompt_toolkit.document import Document
 from prompt_toolkit.formatted_text import to_plain_text
 
-from llme.config import Config, build_parser
+from llme.config import Config, build_parser, model_completer
 from llme.main import LLME
 from llme.slash import all_slash_commands
 from llme.ui import notsettable, SetOptionCompleter, SlashCompleter
@@ -218,3 +220,12 @@ class TestSetOptionCompleter:
         assert complete(sc, "model=") == []
         assert complete(sc, "model=") == []
         assert len(calls) == 2  # failures are not cached, each request retries
+
+
+# --- model_completer (argcomplete, --model) ---------------------------------------
+
+def test_model_completer_partial_namespace():
+    """argcomplete passes a partial namespace: the completer must not raise, it just has no completion."""
+    parser = build_parser()
+    partial = argparse.Namespace(model=None)
+    assert list(model_completer("", partial, parser)) == []
