@@ -36,7 +36,7 @@ class LoopMixin:
             self.add_message({"role": "assistant", "content": content})
             return
         """Add the assistant response to the conversation"""
-        self.fork_if_required()
+        self.fork_if_required("assistant")
         message = self.chat_completion(**kwargs)
         if message:
             self.add_message(message)
@@ -46,11 +46,31 @@ class LoopMixin:
         """Run the tool, and add result to the conversation"""
         message = self.run_tool(tool_call)
         if message:
+            # Stash the tool call before adding: it is used to re-run the tool
+            # from a paused tool result (and is persisted in session dumps)
+            message.setdefault("llme-meta", {})["tool_call"] = tool_call
             self.add_message(message)
-            message["llme-meta"]["tool_call"] = tool_call
         else:
             # The user cancelled the tool execution. Let they answer instead of the tool
             self.do_user()
+
+    def do_tool_pause(self, tool_call):
+        """Prompt the user at a paused tool result.
+        An empty answer re-runs the tool (the default action of the pause,
+        like confirming an unchanged user message), a typed message is
+        inserted after the tool result, and slash commands (/redo, /pass,
+        /goto, !) are handled as usual."""
+        while file := self.next_asset():
+            self.files.append(file)
+        user_input = self.next_input()
+        if user_input == "":
+            self.do_tool(tool_call)
+        elif user_input[0] == "/":
+            self.slash_command(user_input)
+        elif user_input[0] == "!":
+            self.cmd_shell(user_input[1:])
+        else:
+            self.add_message(self.prompt_message(user_input))
 
     def do_role(self, oneround=False, tools=None):
         """Process the next role (user, assistant, tool...)"""
@@ -63,16 +83,20 @@ class LoopMixin:
             message = self.history[self.message_index]
             role = message.role()
             logger.info("Index: %s; role: %s", self.message_index, role)
-            if role == "user" or role == "system":
+            if role in ("user", "system"):
+                # A paused user message: edit it and resend
                 self.do_user()
             elif role == "tool":
+                # A paused tool result: let the user intervene (insert a
+                # message, re-run the tool with enter, /redo the assistant,
+                # or /pass to continue). A tool result is never re-run
+                # silently, as it might not be idempotent.
                 tool_call = message.data["llme-meta"].get("tool_call")
                 if tool_call is None:
-                    logger.warn("Warning, tool result without associated tool call")
+                    logger.warning("Tool result without associated tool call, cannot re-run")
                     self.do_user()
-                    return None
-                self.do_tool(tool_call)
-                # Fixme
+                else:
+                    self.do_tool_pause(tool_call)
             elif role == "assistant":
                 # We relaunch the prompt and might get a different answer
                 self.do_assistant(tools=tools)

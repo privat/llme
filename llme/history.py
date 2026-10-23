@@ -67,6 +67,17 @@ class Message:
     def tool_calls(self):
         return self.data.get("tool_calls")
 
+    def tool_call_label(self, tool_call, width=60):
+        """A short one-line label of a tool call (name + arguments), truncated to width"""
+        function = tool_call["function"]
+        args = function.get("arguments")
+        if not isinstance(args, str):
+            args = json.dumps(args)
+        label = f"{function['name']} {args}"
+        if len(label) > width:
+            label = label[:width - 3].rstrip() + "..."
+        return label
+
     def prefix(self):
         """Return the prefix for the message"""
         return self.id
@@ -142,7 +153,7 @@ class HistoryMixin:
         Add it as is in message but transform it in raw_messages.
         """
 
-        self.fork_if_required()
+        self.fork_if_required(message.get("role"))
 
         logger.debug("Add %s message: %s", message['role'], message)
         result = self.build_message_object(message)
@@ -204,17 +215,28 @@ class HistoryMixin:
 
         message["content"] = "\n\n".join(text_content)
 
-    def fork_if_required(self):
+    def fork_if_required(self, new_role):
         """Fork the conversation to a new generation, if required.
-        This will reset the conversation history"""
+        This will reset the conversation history so that the new message
+        (of role new_role) is added at the paused position:
+        - a tool result (a re-run) replaces the paused message,
+        - any other message is inserted after a paused tool result, which
+          must stay in the context to answer its call (and so does the rest
+          of its tool run, to keep the conversation valid)."""
         if self.message_index is None:
             return
-        # Here we need to reset the current conversation to fork it
-        # And replace the "message_index" wit a new one
-        if self.message_index > 0:
-            self.reset_to_history(self.history[self.message_index-1])
+        index = self.message_index
+        if new_role == "tool":
+            keep = index - 1
         else:
+            keep = index
+            while keep < len(self.history) and self.history[keep].role() == "tool":
+                keep += 1
+            keep -= 1
+        if keep < 0:
             self.reset_messages([])
+        else:
+            self.reset_to_history(self.history[keep])
         logger.debug(f"Fork performed. New history: %s", self.history)
 
 
@@ -506,7 +528,7 @@ class HistoryMixin:
 
     # ---- Slash commands ----
 
-    @slash("undo", "cancel the last user message (and the response) [PageUp]")
+    @slash("undo", "pause at the last user message or tool result (enter re-runs the tool) [PageUp]")
     def cmd_undo(self):
         if not self.rollback():
             raise AppError("/undo: No user message to undo")
@@ -514,6 +536,14 @@ class HistoryMixin:
 
     @slash("redo", "cancel and regenerate the last assistant message")
     def cmd_redo(self):
+        if self.message_index is not None:
+            message = self.history[self.message_index]
+            if message.role() == "tool" and self.message_index + 1 < len(self.history) \
+                    and self.history[self.message_index + 1].role() == "assistant":
+                # Paused after a tool result: redo the assistant message that follows it
+                self.message_index += 1
+                self.list_history()
+                return
         if not self.rollback("assistant"):
             raise AppError("/redo: No assistant message to redo")
         self.list_history()
@@ -558,7 +588,9 @@ class HistoryMixin:
         "Print the history of messages"
         for i, message in enumerate(self.history):
             if self.message_index and i >= self.message_index:
-                break
+                # A paused tool result is kept in the context: list it
+                if message.role() != "tool":
+                    break
             self.print_message(i, message)
 
     @slash("full-history", "list hierarchical conversation history (with forks)")
@@ -567,7 +599,9 @@ class HistoryMixin:
         siblings = self.roots
         for i, message in enumerate(self.history):
             if self.message_index and i >= self.message_index:
-                break
+                # A paused tool result is kept in the context: list it
+                if message.role() != "tool":
+                    break
             self.print_tree(siblings, "", message)
             self.print_message(message.prefix(), message)
             siblings = message.children # next siblings

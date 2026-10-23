@@ -102,11 +102,26 @@ class UIMixin:
         try:
             if self.warmup:
                 self.warmup.check()
-            if self.message_index is not None:
-                default = self.history[self.message_index].content()
-            else:
-                default = ""
+            default = ""
+            color, session_color = "light_green", "#00ff00"
+            placeholder = "A prompt, /h for help, Ctrl-C to interrupt. Alt-Enter for multi-line"
             prompt = f"{self.prompt_prefix()}> "
+            if self.message_index is not None:
+                message = self.history[self.message_index]
+                if message.role() in ("user", "system"):
+                    # A paused user message is pre-filled so it can be edited
+                    default = message.content()
+                elif message.role() == "tool":
+                    # A paused tool result: the tool (name + truncated arguments)
+                    # is shown, enter re-runs it, and the placeholder explains the options
+                    color, session_color = "light_yellow", "#ffff00"
+                    placeholder = "Enter to re-run the tool, or type a message to insert it after the tool, /pass to continue"
+                    tool_call = message.data["llme-meta"].get("tool_call")
+                    if tool_call:
+                        import shutil
+                        prefix = f"{self.prompt_prefix()}> re-run: "
+                        width = max(shutil.get_terminal_size().columns - len(prefix) - 2, 20)
+                        prompt = prefix + message.tool_call_label(tool_call, width)
             if self.session:
                 rprompt = []
                 if self.files:
@@ -116,9 +131,9 @@ class UIMixin:
                         s = ("bg:grey", os.path.basename(f.path))
                         rprompt.append(s)
 
-                user_input = self.session.prompt([("#00ff00", prompt)], default=default, placeholder=[("#7f7f7f", "A prompt, /h for help, Ctrl-C to interrupt. Alt-Enter for multi-line")], rprompt=rprompt)
+                user_input = self.session.prompt([(session_color, prompt)], default=default, placeholder=[("#7f7f7f", placeholder)], rprompt=rprompt)
             else:
-                user_input = input(colored(prompt, "light_green"))
+                user_input = input(colored(prompt, color))
             self.failsafe = False
             if self.warmup:
                 self.warmup.stop()
@@ -143,6 +158,23 @@ class UIMixin:
             user_input = self.input_prompt()
         return user_input
 
+    def prompt_message(self, user_input):
+        """Build the user message for a prompt text, with attached files"""
+        while file := self.next_asset():
+            self.files.append(file)
+
+        content_parts = []
+        for asset in self.files:
+            content_part = asset.content_part()
+            if content_part:
+                content_parts.append(content_part)
+        self.files = []
+        if len(content_parts) > 0:
+            content_parts.insert(0, {"type": "text", "text": user_input})
+            return {"role": "user", "content": content_parts}
+        else:
+            return {"role": "user", "content": user_input}
+
     def next_prompt(self):
         """Get the next prompt from the user.
         Returns None or a user message"""
@@ -162,20 +194,7 @@ class UIMixin:
             self.cmd_shell(user_input[1:])
             return None
 
-        while file := self.next_asset():
-            self.files.append(file)
-
-        content_parts = []
-        for asset in self.files:
-            content_part = asset.content_part()
-            if content_part:
-                content_parts.append(content_part)
-        self.files = []
-        if len(content_parts) > 0:
-            content_parts.insert(0, {"type": "text", "text": user_input})
-            return {"role": "user", "content": content_parts}
-        else:
-            return {"role": "user", "content": user_input}
+        return self.prompt_message(user_input)
 
 
     @slash("skills", "list available skills")

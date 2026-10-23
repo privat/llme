@@ -361,8 +361,29 @@ t dummyres4 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses.jsonl
 # undo, redo, pass with tool calls
 t nav_tools0 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses-toolcalls.json" hello "$@" &&
 	validate_log "0a system" "1a user: hello" "2a assistant" "3a tool:.*DUMMY_TOOL1_RAN" "4a tool:.*DUMMY_TOOL2_RAN" "5a assistant"
+# /undo after a tool pauses before the next message: the tool result is NOT
+# re-run (no interactive user to confirm, in batch the conversation just ends)
 t nav_tools1 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses-toolcalls.json" hello /undo "$@" &&
+	validate_log "0a system" "1a user: hello" "2a assistant" "3a tool:.*DUMMY_TOOL1_RAN" "4a tool:.*DUMMY_TOOL2_RAN" "5a assistant"
+# ... but an explicit empty answer (enter) re-runs the tool, without re-running
+# the assistant that called it: the assistant only sees the clean new result
+t nav_tools6 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses-toolcall-error.jsonl" --yolo hello /undo "" "$@" &&
+	validate_log "0a system" "1a user: hello" "2a assistant" "3a tool:.*Error during update_file" "4a assistant" "3b tool:.*Error during update_file" "4b assistant"
+# a re-run of run_command always goes through the confirmation
+t nav_tools7 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses-toolcalls.json" hello /undo "" "$@" &&
 	validate_log "0a system" "1a user: hello" "2a assistant" "3a tool:.*DUMMY_TOOL1_RAN" "4a tool:.*DUMMY_TOOL2_RAN" "5a assistant" "4b tool:.*Confirmation unavailable in batch mode" "5b assistant"
+# /undo after a tool, then a user message: inserted after the (kept) tool result
+t nav_tools2 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses-toolcalls.json" hello /undo world "$@" &&
+	validate_log "0a system" "1a user: hello" "2a assistant" "3a tool:.*DUMMY_TOOL1_RAN" "4a tool:.*DUMMY_TOOL2_RAN" "5a assistant" "5b user: world" "6b assistant"
+# /undo then /pass: the /undo is cancelled, no fork
+t nav_tools3 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses-toolcalls.json" hello /undo /pass "$@" &&
+	validate_log "0a system" "1a user: hello" "2a assistant" "3a tool:.*DUMMY_TOOL1_RAN" "4a tool:.*DUMMY_TOOL2_RAN" "5a assistant"
+# /undo then /redo: the assistant after the tool is regenerated, the tool is NOT re-run
+t nav_tools4 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses-toolcalls.json" hello /undo /redo "$@" &&
+	validate_log "0a system" "1a user: hello" "2a assistant" "3a tool:.*DUMMY_TOOL1_RAN" "4a tool:.*DUMMY_TOOL2_RAN" "5a assistant" "5b assistant"
+# same, with a tool that has no confirmation mechanism (update_file)
+t nav_tools5 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses-toolcall-error.jsonl" --yolo hello /undo world "$@" &&
+	validate_log "0a system" "1a user: hello" "2a assistant" "3a tool:.*Error during update_file" "4a assistant" "4b user: world" "5b assistant"
 
 # B18 regression: a tool call whose arguments are already a json object (not a string)
 t tool-args1 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses-toolcall-dictargs.jsonl" --yolo hello "$@" &&
@@ -463,6 +484,10 @@ t s-goto04 llme --dummy hello world "/goto 4" goodbye "$@" &&
 	validate_log "0a system" "1a user: hello" "2a assistant" "3a user: world" "4a assistant" "4b assistant" "5b user: goodbye" "6b assistant"
 t s-goto10 llme --dummy hello /undo world "/goto 2a" "$@" &&
 	validate_log "0a system" "1a user: hello" "2a assistant" "1b user: world" "2b assistant" "2c assistant"
+# /goto a tool message pauses (no re-run), the next prompt is inserted after
+# the whole tool run (kept, so the conversation stays valid)
+t s-goto11 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses-toolcalls.json" hello "/goto 3" world "$@" &&
+	validate_log "0a system" "1a user: hello" "2a assistant" "3a tool:.*DUMMY_TOOL1_RAN" "4a tool:.*DUMMY_TOOL2_RAN" "5a assistant" "5b user: world" "6b assistant"
 et s-goto12 llme --dummy hello /undo world "/goto" "$@" &&
 	validate_err "Missing message label"
 et s-goto13 llme --dummy hello /undo world "/goto bad" "$@" &&
@@ -483,6 +508,11 @@ t s-history2 llme --dummy hello /undo world /history "$@" &&
 t s-history3 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses-toolcall-nocontent.jsonl" --yolo hello /history "$@" &&
 	smoke "DUMMY_TOOL_RAN" &&
 	validate_chat system hello assistant tool assistant
+# paused on a tool: the (kept) tool result is listed, the assistant after it is not
+t s-history4 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses-toolcalls.json" hello /undo /history "$@" &&
+	smoke "4 tool:.*DUMMY_TOOL2_RAN" &&
+	validate_with [ "$(grep -c '5 assistant:' "$LOGDIR/out.txt")" -eq 0 ] &&
+	validate_log "0a system" "1a user: hello" "2a assistant" "3a tool:.*DUMMY_TOOL1_RAN" "4a tool:.*DUMMY_TOOL2_RAN" "5a assistant"
 
 # /full-history list hierarchical conversation history (with forks)
 t s-full-history1 llme --dummy hello /full-history "$@" &&
