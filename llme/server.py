@@ -450,7 +450,9 @@ class ServerMixin:
             # A whole message is just a big delta! So reuse the whole code path
             delta = choice0.get('message')
             if not delta:
-                delta = choice0['delta']
+                # Some providers send choices with only a finish_reason (or
+                # usage-only chunks): be defensive
+                delta = choice0.get('delta') or {}
 
             # last_chunk is used for debugging, it's usually too much to print each chunk
             last_chunk = data

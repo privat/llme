@@ -184,6 +184,16 @@ def test_malformed_chunks_are_skipped(server, app):
     assert app.history[-1].data["content"] == "ok"
 
 
+def test_choice_without_delta(server, app):
+    """A choice with only a finish_reason (no delta, no message) must not crash the stream."""
+    server.add(200, sse([
+        {"choices": [{"delta": {"role": "assistant", "content": "ok"}}]},
+        {"choices": [{"finish_reason": "stop"}]},
+    ]), {"Content-Type": "text/event-stream"})
+    run(app)
+    assert app.history[-1].data["content"] == "ok"
+
+
 def test_stream_closed_early(server, app):
     """The server may close the connection without [DONE]: the message ends as is."""
     server.add(200, sse([{"choices": [{"delta": {"role": "assistant", "content": "partial"}}]}]),
