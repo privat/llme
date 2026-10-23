@@ -573,6 +573,16 @@ t agents4 llme --dummy hello "$@" &&
 t agents5 sh -c 'mkdir sub && cd sub && llme --dummy --dump-system-prompt "$@"' sh "$@" &&
 	smoke "DUMMY-AGENTS-MD"
 
+# a single malformed SKILL.md (unclosed frontmatter) must
+# not crash llme at startup; it is skipped with a warning naming the file
+t badskill sh -c '
+    mkdir -p badskills/bad-skill
+    printf -- "---\nname: bad-skill\ndescription: unclosed frontmatter\n" > badskills/bad-skill/SKILL.md
+    llme --dummy --no-agents-md --skills-path badskills hello
+' "$@" &&
+	validate_err "Failed to parse frontmatter in.*badskills" &&
+	validate_chat system hello assistant
+
 # an unknown role (e.g. OpenAI 'developer') must not crash
 # /history (KeyError on the colors dict)
 t devrole sh -c '

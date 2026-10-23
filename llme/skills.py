@@ -41,7 +41,7 @@ def validate_skill_name(name: str) -> bool:
     return True
 
 
-def parse_skill_md(content: str) -> tuple[dict, str]:
+def parse_skill_md(content: str, path: str = "<unknown>") -> tuple[dict, str]:
     """
     Parse a SKILL.md file. Returns (frontmatter_dict, body_string).
     """
@@ -59,8 +59,11 @@ def parse_skill_md(content: str) -> tuple[dict, str]:
             metadata = {}
             
         return metadata, body
-    except yaml.YAMLError as e:
-        logger.warning(f"Failed to parse YAML frontmatter in SKILL.md: {e}")
+    except (yaml.YAMLError, ValueError) as e:
+        # ValueError: unclosed frontmatter (content.index raises).
+        # A single bad SKILL.md must not kill llme at startup:
+        # report it with the file path and treat it as no frontmatter.
+        logger.warning(f"Failed to parse frontmatter in {path}: {e}")
         return {}, content
 
 def discover_skills(directories):
@@ -105,7 +108,7 @@ def discover_skills_rec(directory):
         except OSError:
             continue
         
-        meta, body = parse_skill_md(raw_content)
+        meta, body = parse_skill_md(raw_content, str(skill_file))
         skill_name = meta.get('name', '').strip()
         
         # Validation
