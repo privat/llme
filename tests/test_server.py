@@ -212,6 +212,22 @@ def test_http_error(server, app, status, headers, body, expected):
     assert "<" not in message  # html tags are stripped
 
 
+@pytest.mark.parametrize("body, expected", [
+    ({"error": {"code": 500}}, "500"),  # dict without message
+    ({"error": "the message was too long"}, "the message was too long"),  # error as a string
+    ({"error": {"message": "boom"}}, "boom"),
+    ({"message": "direct message"}, "direct message"),
+    ({"error": {"message": 123}}, "123"),  # non-string message: fall back to the raw text
+    ("plain text error", "plain text error"),
+])
+def test_error_shapes(server, app, body, expected):
+    """extract_requests_error must not crash on the various error shapes providers use."""
+    server.add(500, body, {"Content-Type": "application/json"})
+    with pytest.raises(httpx.HTTPStatusError) as exc:
+        run(app)
+    assert expected in extract_requests_error(exc.value)
+
+
 def test_long_error_body_is_truncated(server, app):
     server.add(500, "x" * 300)
     with pytest.raises(httpx.HTTPStatusError) as exc:

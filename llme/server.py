@@ -163,11 +163,19 @@ def extract_requests_error(e):
             data = json.loads(text)
         except:
             data = {}
-        if "error" in data:
-            data = data["error"]
-            text = data
-        if "message" in data:
-            text = data["message"]
+        # Providers format their errors in various ways:
+        # {"error": {"message": ...}}, {"error": "..."}, {"message": ...}
+        # (or {"error": {...}} without any message). Check the types before
+        # dereferencing, and only use a string value.
+        if isinstance(data, dict):
+            if "error" in data:
+                err = data["error"]
+                if isinstance(err, str):
+                    text = err
+                elif isinstance(err, dict) and isinstance(err.get("message"), str):
+                    text = err["message"]
+            elif isinstance(data.get("message"), str):
+                text = data["message"]
 
     text = re.sub(r"<[^>]*>", "", text)
     text = re.sub(r"\s+", " ", text).strip()
