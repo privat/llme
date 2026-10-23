@@ -573,4 +573,10 @@ t agents4 llme --dummy hello "$@" &&
 t agents5 sh -c 'mkdir sub && cd sub && llme --dummy --dump-system-prompt "$@"' sh "$@" &&
 	smoke "DUMMY-AGENTS-MD"
 
+# every result.json must be valid json with a numeric start date (START_DATE
+# is set in prepare() for every test type, not only tllme)
+t resultjson llme --dummy hello "$@" &&
+	validate_chat system hello assistant &&
+	validate_with jq -e '.start | type == "number"' "$LOGDIR/result.json"
+
 exit "$errorcode"

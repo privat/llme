@@ -176,6 +176,10 @@ prepare() {
 
 	cd "$ORIGDIR"
 
+	# result.json uses START_DATE, which must be set for every test type
+	# (t, et, tllme), not only tllme
+	export START_DATE=$(date +%s)
+
 	# Tests results are stored in logs/$id/ where id is a unique identifier
 	id=$SUITE-$task-$(date +%s)
 	export LOGDIR="logs/$UTILID/$id"
