@@ -573,6 +573,14 @@ t agents4 llme --dummy hello "$@" &&
 t agents5 sh -c 'mkdir sub && cd sub && llme --dummy --dump-system-prompt "$@"' sh "$@" &&
 	smoke "DUMMY-AGENTS-MD"
 
+# /edit must not resurrect the messages cancelled by
+# /undo: the chat is reloaded from the visible prefix (up to the
+# message_index), so the next prompt forks from the position, not from
+# the cancelled assistant message
+export EDITOR=true
+t edit-undo llme --dummy -s SP hello /undo /edit hello2 "$@" &&
+	validate_log "0a system" "1a user: hello" "2a assistant" "1b user: hello2" "2b assistant"
+
 # update_file must count insertions/deletions in the
 # replaced region only (1 line -> 2 lines = 2 insertions, 1 deletion),
 # not against the whole new file

@@ -460,9 +460,15 @@ class HistoryMixin:
     def edit(self):
         "Save the chat in a tmpfile, edit it, and load it back"
         import tempfile
+        # Only the visible history is saved (up to the /goto or /undo
+        # position): the reload resets message_index, so saving the full
+        # history would resurrect the cancelled messages
+        messages = self.history
+        if self.message_index is not None:
+            messages = self.history[:self.message_index]
         with tempfile.NamedTemporaryFile(mode='w', suffix=".yaml", delete=True) as tmp:
             import shlex
-            self.save_chat(tmp.name, self.history, format="yaml")
+            self.save_chat(tmp.name, messages, format="yaml")
             editor = os.environ.get("EDITOR", "editor")
             try:
                 cmd = shlex.split(editor) + [tmp.name]
