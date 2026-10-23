@@ -573,6 +573,13 @@ t agents4 llme --dummy hello "$@" &&
 t agents5 sh -c 'mkdir sub && cd sub && llme --dummy --dump-system-prompt "$@"' sh "$@" &&
 	smoke "DUMMY-AGENTS-MD"
 
+# two plugins with the same basename in two --plugin
+# directories must both be loaded (unique module name per path), not
+# silently dropped by the importlib cache
+t plugincollide llme --list-tools --plugin "$ORIGDIR/$TESTDIR/data/plugin-collision/a" --plugin "$ORIGDIR/$TESTDIR/data/plugin-collision/b" "$@" &&
+	smoke plugin_tool_a &&
+	smoke plugin_tool_b
+
 # a message whose content parts contain no text part
 # (e.g. image-only) must not crash /history (content() used to return
 # None -> TypeError in print_message)

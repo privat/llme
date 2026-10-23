@@ -403,8 +403,14 @@ class ToolsMixin:
 def load_module(path):
     """Just load a random python file. I'm not sure why its so complex"""
     import importlib.machinery
+    import hashlib
     basename = os.path.basename(path)
     name, ext = os.path.splitext(basename)
+    # Make the module name unique per path: two plugins with the same
+    # basename in two different --plugin directories would otherwise
+    # collide in the importlib cache, and the second would never be
+    # loaded
+    name = f"{name}-{hashlib.md5(os.path.abspath(path).encode()).hexdigest()[:8]}"
     try:
         return importlib.machinery.SourceFileLoader(name, path).load_module()
     except OSError as e:
