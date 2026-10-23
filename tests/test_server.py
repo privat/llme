@@ -264,6 +264,20 @@ def test_read_timeout(server, app):
     assert "chat/completions" in message
 
 
+def test_timeout_http_0_means_unlimited(server, app):
+    """timeout_http=0 is documented as "0 for unlimited", not "timeout immediately" (httpx: None)."""
+    app.config.timeout_http = 0
+    server.add(200, ok_stream("slow but ok"), {"Content-Type": "text/event-stream"}, delay=2)
+    run(app)
+    assert app.history[-1].data["content"] == "slow but ok"
+
+
+def test_timeout_http_0_get_models(server, app):
+    app.config.timeout_http = 0
+    server.add(200, {"data": [{"id": "m1"}]}, {"Content-Type": "application/json"}, delay=2)
+    assert [m["id"] for m in app.get_models()] == ["m1"]
+
+
 # --- throttling ---------------------------------------------------------------------------
 
 class TestThrottling:

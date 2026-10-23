@@ -336,8 +336,10 @@ class ServerMixin:
             return [{"id": "dummy", "state": "loaded"}]
         url = f"{self.config.base_url}/models"
         logger.info("Get models from %s", url)
+        # 0 means "no timeout" (documented), and httpx wants None for that
+        timeout = None if self.config.timeout_http == 0 else self.config.timeout_http
         try:
-            response = httpx.get(url, headers=self.api_headers, timeout=self.config.timeout_http)
+            response = httpx.get(url, headers=self.api_headers, timeout=timeout)
             response.raise_for_status()
         except httpx.HTTPError as e:
             logger.error("Error getting models: %s", extract_requests_error(e))
@@ -417,11 +419,13 @@ class ServerMixin:
         if self.config.dummy_responses:
             logger.info("Dummy response from %s (no server contacted)", self.config.dummy_responses)
             return DummyResponse(self.next_dummy_response(), self.model)
+        # 0 means "no timeout" (documented), and httpx wants None for that
+        timeout = None if self.config.timeout_http == 0 else self.config.timeout_http
         return httpx.stream("POST",
             url,
             json=data,
             headers=self.api_headers,
-            timeout=self.config.timeout_http,
+            timeout=timeout,
         )
 
     def receive_chat_completion_message(self, response):
