@@ -63,6 +63,9 @@ class Message:
         for c in content:
             if c["type"] == "text":
                 return c["text"]
+        # No text part (e.g. an image-only message): return "" instead of
+        # an implicit None, which crashed the display
+        return ""
 
     def tool_calls(self):
         return self.data.get("tool_calls")

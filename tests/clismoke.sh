@@ -573,6 +573,14 @@ t agents4 llme --dummy hello "$@" &&
 t agents5 sh -c 'mkdir sub && cd sub && llme --dummy --dump-system-prompt "$@"' sh "$@" &&
 	smoke "DUMMY-AGENTS-MD"
 
+# a message whose content parts contain no text part
+# (e.g. image-only) must not crash /history (content() used to return
+# None -> TypeError in print_message)
+t no-textpart llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses-imagecontent.jsonl" hello /history "$@" &&
+	smoke "1 user: hello" &&
+	smoke "2 assistant" &&
+	validate_chat system hello assistant
+
 # the update_file tool result given to the LLM must be
 # the plain message, not a python repr of a list
 t updatefile-str sh -c '
