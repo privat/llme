@@ -339,6 +339,11 @@ class HistoryMixin:
                 if not isinstance(message, dict) or "role" not in message:
                     raise AppError(f"Can't load chat from {file}: message {n} has no role")
             self.reset_messages(messages)
+            # In interactive mode, pause so the user can intervene before
+            # the assistant or the tools re-execute the tail of the loaded
+            # chat, instead of forcing them to react fast and ctrl-c.
+            if not self.config.batch:
+                self.rollback(pause=True)
         except (OSError, json.JSONDecodeError, yaml.YAMLError) as e:
             raise AppError(f"Can't load chat from {file}") from e
 
@@ -449,8 +454,15 @@ class HistoryMixin:
             sections.append(f"## {message.role()}\n\n{content}")
         return "\n\n---\n\n".join(sections)
 
-    def rollback(self, roles = ["user", "tool"]):
+    def rollback(self, roles = ["user", "tool"], pause=False):
         "Move message_index to the previous message of role, return the message on success"
+        if pause:
+            # Pause at the end of a freshly loaded chat (see load_chat):
+            # only if the last message would execute immediately (a user
+            # prompt or a tool result, or an assistant tool call)
+            last = self.history[-1] if self.history else None
+            if last is None or (last.role() not in roles and not last.tool_calls()):
+                return None
         candidate = None
         for i, message in enumerate(self.history):
             # message_index can be 0 (after /goto 0): use is not None

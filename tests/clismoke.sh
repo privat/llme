@@ -3,7 +3,7 @@
 . "$(dirname "$0")/utils.sh"
 
 setup() {
-	copy README.md chat.json chat.jsonl chat-fork.jsonl corrupt.jsonl AGENTS.md
+	copy README.md chat.json chat.jsonl chat-fork.jsonl chat-user.jsonl chat-toolcall.jsonl corrupt.jsonl AGENTS.md
 }
 
 t prompt01 llme --dummy hello world "$@" &&
@@ -170,6 +170,18 @@ t input1b llme --dummy -i chat.jsonl world "$@" &&
 
 t input2 llme --dummy -i chat.json -i '' world "$@" &&
 	validate_chat system world assistant
+# non-batch: a loaded chat that would execute immediately (user prompt,
+# assistant tool call) is paused (like /undo) so the user can intervene
+# instead of reacting fast and ctrl-c. An empty stdin line re-prompts,
+# EOF quits: nothing is executed, the chat stays as loaded.
+t input5 llme --dummy --no-batch -i chat-user.jsonl "$@" <<<'' &&
+	validate_chat system hello
+t input6 llme --dummy --no-batch -i chat-toolcall.jsonl "$@" <<<'' &&
+	validate_chat system hello assistant
+# A prompt given at the pause point intervenes: it forks on the paused
+# user message, the assistant answers it, and the tool call never runs
+t input7 llme --dummy --no-batch -i chat-toolcall.jsonl world "$@" <<<'' &&
+	validate_chat system hello assistant world assistant
 
 et input3 llme --dummy -i a/bad/file hello "$@" &&
 	validate_err "No such file"
@@ -188,6 +200,11 @@ et s-load3 llme --dummy '/load' world "$@" &&
 	validate_err "Missing filename"
 et s-load4 llme --dummy '/load a/bad/file' hello "$@" &&
 	validate_err "No such file"
+# non-batch: /load of a chat that ends on a user prompt pauses (like
+# /undo) so the user can intervene instead of the assistant answering
+# immediately
+t s-load5 llme --dummy --no-batch -s SP hello2 '/load chat-user.jsonl' "$@" <<<'' &&
+	validate_log "0a system" "1a user: hello2" "2a assistant" "0b system: You are assistant." "1b user: hello"
 
 #  --export-metrics EXPORT_METRICS Export metrics, usage, etc. in json
 t export-metrics1 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses.json" --export-metrics tmp.json hello "$@" &&
@@ -629,6 +646,13 @@ et corrupt-resume sh -c '
 export EDITOR=true
 t edit-undo llme --dummy -s SP hello /undo /edit hello2 "$@" &&
 	validate_log "0a system" "1a user: hello" "2a assistant" "1b user: hello2" "2b assistant"
+# non-batch: /edit that ends the chat on a user prompt pauses (the
+# editor above drops the last message), the assistant must not answer
+# immediately
+export EDITOR="python3 $ORIGDIR/$TESTDIR/data/edit-drop-last.py"
+t edit-load llme --dummy --no-batch -s SP hello /edit "$@" <<<'' &&
+	smoke "1/2>" &&
+	validate_log "0a system" "1a user: hello" "2a assistant"
 
 # update_file must count insertions/deletions in the
 # replaced region only (1 line -> 2 lines = 2 insertions, 1 deletion),
