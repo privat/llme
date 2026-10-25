@@ -238,7 +238,13 @@ t s-clear1 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses.jsonl"
 # /clear without a summary: the old behavior is unchanged
 t s-clear2 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses.jsonl" hello /clear world "$@" &&
 	validate_log "0a system" "1a user: hello" "2a assistant" "0b system" "1b user: world" "2b assistant"
-
+# /clearkeep: the last assistant answer is kept as the compaction summary
+t s-clearkeep1 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses.jsonl" hello /clearkeep world "$@" &&
+	validate_log "0a system" "1a user: hello" "2a assistant" "0b system" "1b user: world" "2b assistant" &&
+	validate_with jq -se '[.[] | select(.role=="system" and (.content|contains("Jsonl response one.")))] | length > 0' "$LOGDIR/chat.jsonl"
+# /clearkeep with no assistant answer to keep: clean error
+et s-clearkeep2 llme --dummy /clearkeep hello "$@" &&
+	validate_err "No assistant answer to keep"
 # B1 regression: --auto-compact (threshold not reached) must not hang the main loop
 t auto-compact1 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses.jsonl" --auto-compact 100000 hello world "$@" &&
 	validate_chat system hello assistant world assistant

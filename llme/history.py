@@ -600,6 +600,20 @@ class HistoryMixin:
         kwargs = {"compaction_summary": summary} if summary else {}
         self.reset_messages([self.prepare_system_prompt(**kwargs)])
 
+    @slash("clearkeep", "clear the history, keeping the last assistant answer as the summary")
+    def cmd_clearkeep(self):
+        # A do-it-yourself /compact: the last assistant answer (the one with
+        # some text, skipping bare tool calls) becomes the compaction summary
+        summary = ""
+        for message in reversed(self.history):
+            if message.role() == "assistant":
+                summary = message.content().strip()
+                if summary:
+                    break
+        if not summary:
+            raise AppError("/clearkeep: No assistant answer to keep")
+        self.reset_messages([self.prepare_system_prompt(compaction_summary=summary)])
+
     # ---- History display ----
 
     def print_message(self, i, message, before=""):
