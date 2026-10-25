@@ -592,9 +592,13 @@ class HistoryMixin:
             raise AppError("/pass: Already at latest message")
         self.list_history()
 
-    @slash("clear", "clear the conversation history")
-    def cmd_clear(self):
-        self.reset_messages([self.prepare_system_prompt()])
+    @slash("clear", "clear the conversation history", metavar="[SUMMARY]", missing=None)
+    def cmd_clear(self, summary=""):
+        # An optional summary is injected in the new system prompt as the
+        # compaction summary: the fresh conversation starts with that context
+        summary = summary.strip()
+        kwargs = {"compaction_summary": summary} if summary else {}
+        self.reset_messages([self.prepare_system_prompt(**kwargs)])
 
     # ---- History display ----
 

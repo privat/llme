@@ -231,6 +231,14 @@ t s-compact3 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses-comp
 t s-compact4 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses-compact-empty.jsonl" hello "/compact world" "$@" &&
 	validate_err "did not compact" &&
 	validate_log "0a system" "1a user: hello" "2a assistant" "3a user:.*Summarize" "4a assistant"
+# /clear [SUMMARY]: the optional summary is injected in the new system prompt
+t s-clear1 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses.jsonl" hello "/clear this is my summary" world "$@" &&
+	validate_log "0a system" "1a user: hello" "2a assistant" "0b system" "1b user: world" "2b assistant" &&
+	validate_with jq -se '[.[] | select(.role=="system" and (.content|contains("this is my summary")))] | length > 0' "$LOGDIR/chat.jsonl"
+# /clear without a summary: the old behavior is unchanged
+t s-clear2 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses.jsonl" hello /clear world "$@" &&
+	validate_log "0a system" "1a user: hello" "2a assistant" "0b system" "1b user: world" "2b assistant"
+
 # B1 regression: --auto-compact (threshold not reached) must not hang the main loop
 t auto-compact1 llme --dummy-responses "$ORIGDIR/$TESTDIR/data/dummy-responses.jsonl" --auto-compact 100000 hello world "$@" &&
 	validate_chat system hello assistant world assistant
