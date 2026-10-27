@@ -70,17 +70,6 @@ class Message:
     def tool_calls(self):
         return self.data.get("tool_calls")
 
-    def tool_call_label(self, tool_call, width=60):
-        """A short one-line label of a tool call (name + arguments), truncated to width"""
-        function = tool_call["function"]
-        args = function.get("arguments")
-        if not isinstance(args, str):
-            args = json.dumps(args)
-        label = f"{function['name']} {args}"
-        if len(label) > width:
-            label = label[:width - 3].rstrip() + "..."
-        return label
-
     def prefix(self):
         """Return the prefix for the message"""
         return self.id

@@ -112,16 +112,13 @@ class UIMixin:
                     # A paused user message is pre-filled so it can be edited
                     default = message.content()
                 elif message.role() == "tool":
-                    # A paused tool result: the tool (name + truncated arguments)
-                    # is shown, enter re-runs it, and the placeholder explains the options
+                    # A paused tool result
                     color, session_color = "light_yellow", "#ffff00"
-                    placeholder = "Enter to re-run the tool, or type a message to insert it after the tool, /pass to continue"
+                    placeholder = "Enter to re-run the tool, /pass (pgdown) to continue, /redo to re-run LLM answer, or type a message to insert it after the tool"
                     tool_call = message.data["llme-meta"].get("tool_call")
                     if tool_call:
-                        import shutil
-                        prefix = f"{self.prompt_prefix()}> re-run: "
-                        width = max(shutil.get_terminal_size().columns - len(prefix) - 2, 20)
-                        prompt = prefix + message.tool_call_label(tool_call, width)
+                        label = tool_call["function"]['name']
+                        prompt = f"{self.prompt_prefix()} re-run: {label}> "
             if self.session:
                 rprompt = []
                 if self.files:
